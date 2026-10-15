@@ -1,3 +1,6 @@
+// Importación de las cotas de la habitación para calcular la posición de la lámpara sin números fijos
+import { FLOOR_Y, BACK_WALL_Z } from '@/scene/Room'
+
 // Constantes de configuración de la luz ambiental
 const AMBIENT_LIGHT_COLOR = '#ffe3c6' // Tono cálido tenue para la luz de ambiente general
 const AMBIENT_LIGHT_INTENSITY = 0.25  // Intensidad baja para mantener una atmósfera íntima y acogedora
@@ -7,12 +10,28 @@ const DIR_LIGHT_COLOR = '#cce0ff'          // Tono ligeramente azulado que simul
 const DIR_LIGHT_INTENSITY = 0.5            // Intensidad suave para no sobreexponer la escena
 const DIR_LIGHT_POSITION = [3.0, 4.0, 2.5] // Posición situada arriba y a la derecha de la habitación
 
+// Constantes de colocación de la lámpara
+const LAMP_HEIGHT = 1.6                   // Altura de la lámpara en metros sobre el suelo (1.6 m)
+const LAMP_DISTANCE_FROM_BACK_WALL = 1.5  // Distancia en metros por delante de la pared del fondo
+
+// Cálculo de la posición 3D de la lámpara a partir de las dimensiones de la habitación:
+// - X = 0: centrada en la habitación a lo ancho
+// - Y = FLOOR_Y + LAMP_HEIGHT: a 1.6 m sobre el suelo (-1.0 + 1.6 = 0.6 m)
+// - Z = BACK_WALL_Z + LAMP_DISTANCE_FROM_BACK_WALL: 1.5 m por delante de la pared trasera (-2.0 + 1.5 = -0.5 m)
+// Al estar en Z = -0.5 m, queda 1.15 m por delante del frente de las estanterías (Z = -1.65 m), fuera de cualquier módulo.
+const POINT_LIGHT_POSITION = [
+  0,
+  FLOOR_Y + LAMP_HEIGHT,
+  BACK_WALL_Z + LAMP_DISTANCE_FROM_BACK_WALL,
+]
+
 // Constantes de configuración de la lámpara puntual (pointLight)
 const POINT_LIGHT_COLOR = '#ffa53b'          // Color ámbar cálido característico de bombilla incandescente
 const POINT_LIGHT_INTENSITY = 8.5            // Intensidad luminosa que genera el foco
-const POINT_LIGHT_DISTANCE = 3.8             // Distancia máxima (en metros) hasta donde alcanza la iluminación
+// Alcance en metros: desde Z = -0.5 m hasta la pared del fondo (1.5 m) y hasta las esquinas delanteras opuestas
+// a Z = +4.0 m (distancia diagonal sqrt(2^2 + 1.6^2 + 4.5^2) ≈ 5.18 m). Con 6.5 m cubre toda la estancia.
+const POINT_LIGHT_DISTANCE = 6.5
 const POINT_LIGHT_DECAY = 2                  // Atenuación cuadrática física de la luz con la distancia
-const POINT_LIGHT_POSITION = [0.9, 0.6, -1.4] // Cerca de la estantería (a su derecha) y a 1.6m sobre el suelo (Y=-1.0 + 1.6 = 0.6)
 const BULB_RADIUS = 0.05                     // Radio de 5 cm para la bombilla esférica visible
 
 // Constantes de configuración de sombras para la luz puntual

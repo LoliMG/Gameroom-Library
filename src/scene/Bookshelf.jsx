@@ -1,173 +1,145 @@
 // Importación del componente Book usando el alias "@"
 import Book from '@/scene/Book'
-// Importación del listado de libros reales usando el alias "@"
-import books from '@/data/books'
+// Importación de la función pura de reparto de libros por baldas
+import { layoutBooksOnShelves } from '@/utils/shelfLayout'
 
-// Constantes de dimensiones de la estantería en metros (1 unidad = 1 metro)
-const BOOKSHELF_WIDTH = 1.2
-const BOOKSHELF_HEIGHT = 2.0
-const BOOKSHELF_DEPTH = 0.35
-const BOARD_THICKNESS = 0.04
+// Constantes de dimensiones de la estantería en metros
+export const BOOKSHELF_WIDTH = 1.2    // Ancho total exterior de una estantería
+export const SHELF_HEIGHT = 2.7       // Altura total de la estantería (de suelo a techo)
+export const BOOKSHELF_DEPTH = 0.35   // Profundidad de la estantería
+export const BOARD_THICKNESS = 0.04   // Grosor de todos los tablones de madera (4 cm)
+export const SHELF_COUNT = 6          // Número de niveles de baldas disponibles para libros
 
-// Separación horizontal uniforme entre libros contiguos sobre la balda (1.5 cm)
-const BOOK_GAP = 0.015
+// Separación uniforme entre libros contiguos sobre la misma balda (1.5 cm)
+export const BOOK_GAP = 0.015
 
-// Color marrón para el material de madera de todos los tablones
+// Color madera para el material de todos los tablones
 const WOOD_COLOR = '#5c3a21'
 
-// Ancho interior libre para las baldas horizontales entre ambos laterales
-const INNER_WIDTH = BOOKSHELF_WIDTH - 2 * BOARD_THICKNESS
+// Ancho interior libre para las baldas entre los paneles laterales
+export const INNER_WIDTH = BOOKSHELF_WIDTH - 2 * BOARD_THICKNESS
 
 // Altura interior libre disponible entre la base inferior y la tapa superior
-const INNER_HEIGHT = BOOKSHELF_HEIGHT - 2 * BOARD_THICKNESS
+export const INNER_HEIGHT = SHELF_HEIGHT - 2 * BOARD_THICKNESS
 
-// Espacio vertical libre de cada uno de los 3 huecos creados por las 2 baldas intermedias
-const COMPARTMENT_HEIGHT = (INNER_HEIGHT - 2 * BOARD_THICKNESS) / 3
+// Espacio vertical libre de cada hueco entre baldas calculado dinámicamente sin números fijos
+export const COMPARTMENT_HEIGHT =
+  (INNER_HEIGHT - (SHELF_COUNT - 1) * BOARD_THICKNESS) / SHELF_COUNT
 
-// Coordenada Y de la base (tablón horizontal inferior)
-const BASE_Y = -BOOKSHELF_HEIGHT / 2 + BOARD_THICKNESS / 2
+// Coordenada Y del centro del tablón horizontal de la base
+const BASE_BOARD_Y = -SHELF_HEIGHT / 2 + BOARD_THICKNESS / 2
 
-// Coordenada Y de la primera balda intermedia (suelo del hueco central donde descansan los libros)
-const LOWER_SHELF_Y = BASE_Y + BOARD_THICKNESS + COMPARTMENT_HEIGHT
+// Coordenada Y de la superficie de apoyo de la balda inferior (balda 0)
+const SHELF_SURFACE_0_Y = BASE_BOARD_Y + BOARD_THICKNESS / 2
 
-// Coordenada Y de la segunda balda intermedia (techo del hueco central)
-const UPPER_SHELF_Y = LOWER_SHELF_Y + BOARD_THICKNESS + COMPARTMENT_HEIGHT
-
-// Coordenada Y de la tapa (tablón horizontal superior)
-const TOP_Y = BOOKSHELF_HEIGHT / 2 - BOARD_THICKNESS / 2
-
-// Coordenada Y de la superficie de apoyo de la balda intermedia donde descansan los libros
-const SHELF_TOP_SURFACE_Y = LOWER_SHELF_Y + BOARD_THICKNESS / 2
+// Coordenada Y del centro del tablón horizontal de la tapa superior
+const TOP_BOARD_Y = SHELF_HEIGHT / 2 - BOARD_THICKNESS / 2
 
 // Margen desde el borde delantero de la balda para alinear los lomos hacia el frente
 const FRONT_MARGIN = 0.04
 
-// Posición Z frontal donde quedan alineados los lomos mirando hacia la cámara (+Z)
+// Posición Z frontal donde quedan alineados los lomos mirando hacia el interior (+Z)
 const FRONT_SPINE_Z = BOOKSHELF_DEPTH / 2 - FRONT_MARGIN
 
-function Bookshelf({ onSelectBook }) {
+/**
+ * Calcula la cota Y de la superficie de apoyo de una balda según su índice (0 a SHELF_COUNT - 1)
+ */
+function getShelfSurfaceY(shelfIndex) {
+  return SHELF_SURFACE_0_Y + shelfIndex * (COMPARTMENT_HEIGHT + BOARD_THICKNESS)
+}
 
-  // Ancho total ocupado por los libros de canto sumando sus grosores y los pequeños espacios entre ellos
-  const totalBooksWidth =
-    books.reduce((acc, b) => acc + b.width, 0) +
-    (books.length - 1) * BOOK_GAP
+/**
+ * Calcula la cota Y del centro del tablón intermedio correspondiente a una balda (1 a SHELF_COUNT - 1)
+ */
+function getIntermediateBoardY(shelfIndex) {
+  return getShelfSurfaceY(shelfIndex) - BOARD_THICKNESS / 2
+}
 
-  // Posición inicial en el eje X para colocar el conjunto de libros centrado en la estantería
-  const startX = -totalBooksWidth / 2
+function Bookshelf({ books = [], onSelectBook }) {
+  // Comprobación de seguridad: advertir en español si el libro más alto excede el hueco vertical
+  if (books && books.length > 0) {
+    const maxHeight = Math.max(...books.map((b) => b.height || 0))
+    if (maxHeight > COMPARTMENT_HEIGHT) {
+      console.warn(
+        `[Bookshelf] El libro más alto (${maxHeight} m) no cabe en el hueco entre baldas (${COMPARTMENT_HEIGHT.toFixed(3)} m).`
+      )
+    }
+  }
+
+  // Reparto algorítmico de los libros recibidos a lo largo de las 6 baldas
+  const { placed } = layoutBooksOnShelves(books, {
+    innerWidth: INNER_WIDTH,
+    shelfCount: SHELF_COUNT,
+    bookGap: BOOK_GAP,
+  })
+
+  // Array de índices para generar los tablones intermedios (de balda 1 a SHELF_COUNT - 1)
+  const intermediateBoardIndices = Array.from(
+    { length: SHELF_COUNT - 1 },
+    (_, i) => i + 1
+  )
 
   return (
-    // Grupo contenedor 3D que agrupa todos los elementos que forman la estantería y los libros
+    // Grupo contenedor 3D que agrupa la estructura de tablones y los libros colocados
     <group>
-      {/* Lateral izquierdo de la estantería */}
+      {/* 1. Lateral izquierdo vertical */}
       <mesh
         position={[-BOOKSHELF_WIDTH / 2 + BOARD_THICKNESS / 2, 0, 0]}
-        // castShadow: proyecta sombras sobre el suelo, las paredes y baldas vecinas
         castShadow
-        // receiveShadow: recibe sombras proyectadas por la lámpara y otros elementos
         receiveShadow
       >
-        {/* Geometría que define las dimensiones del tablón vertical izquierdo */}
-        <boxGeometry args={[BOARD_THICKNESS, BOOKSHELF_HEIGHT, BOOKSHELF_DEPTH]} />
-        {/* Material de madera para el lateral izquierdo */}
+        <boxGeometry args={[BOARD_THICKNESS, SHELF_HEIGHT, BOOKSHELF_DEPTH]} />
         <meshStandardMaterial color={WOOD_COLOR} />
       </mesh>
 
-      {/* Lateral derecho de la estantería */}
+      {/* 2. Lateral derecho vertical */}
       <mesh
         position={[BOOKSHELF_WIDTH / 2 - BOARD_THICKNESS / 2, 0, 0]}
-        // castShadow: proyecta sombras hacia la derecha y la pared
         castShadow
-        // receiveShadow: recibe sombras proyectadas sobre su superficie
         receiveShadow
       >
-        {/* Geometría que define las dimensiones del tablón vertical derecho */}
-        <boxGeometry args={[BOARD_THICKNESS, BOOKSHELF_HEIGHT, BOOKSHELF_DEPTH]} />
-        {/* Material de madera para el lateral derecho */}
+        <boxGeometry args={[BOARD_THICKNESS, SHELF_HEIGHT, BOOKSHELF_DEPTH]} />
         <meshStandardMaterial color={WOOD_COLOR} />
       </mesh>
 
-      {/* Tablón horizontal de la base */}
-      <mesh
-        position={[0, BASE_Y, 0]}
-        // castShadow: proyecta sombras sobre el suelo
-        castShadow
-        // receiveShadow: recibe sombras de los laterales y baldas
-        receiveShadow
-      >
-        {/* Geometría para el tablón horizontal de la base */}
+      {/* 3. Tablón horizontal de la base */}
+      <mesh position={[0, BASE_BOARD_Y, 0]} castShadow receiveShadow>
         <boxGeometry args={[INNER_WIDTH, BOARD_THICKNESS, BOOKSHELF_DEPTH]} />
-        {/* Material de madera para la base */}
         <meshStandardMaterial color={WOOD_COLOR} />
       </mesh>
 
-      {/* Balda intermedia inferior (soporte del hueco central donde van los libros) */}
-      <mesh
-        position={[0, LOWER_SHELF_Y, 0]}
-        // castShadow: proyecta sombras hacia el hueco inferior
-        castShadow
-        // receiveShadow: recibe sombras arrojadas por los libros colocados encima
-        receiveShadow
-      >
-        {/* Geometría para el tablón de la balda intermedia inferior */}
+      {/* 4. Tablones horizontales intermedios calculados dinámicamente */}
+      {intermediateBoardIndices.map((shelfIndex) => (
+        <mesh
+          key={shelfIndex}
+          position={[0, getIntermediateBoardY(shelfIndex), 0]}
+          castShadow
+          receiveShadow
+        >
+          <boxGeometry args={[INNER_WIDTH, BOARD_THICKNESS, BOOKSHELF_DEPTH]} />
+          <meshStandardMaterial color={WOOD_COLOR} />
+        </mesh>
+      ))}
+
+      {/* 5. Tablón horizontal de la tapa superior */}
+      <mesh position={[0, TOP_BOARD_Y, 0]} castShadow receiveShadow>
         <boxGeometry args={[INNER_WIDTH, BOARD_THICKNESS, BOOKSHELF_DEPTH]} />
-        {/* Material de madera para la balda intermedia inferior */}
         <meshStandardMaterial color={WOOD_COLOR} />
       </mesh>
 
-      {/* Balda intermedia superior (separador entre el hueco central y el superior) */}
-      <mesh
-        position={[0, UPPER_SHELF_Y, 0]}
-        // castShadow: proyecta sombras sobre los libros del hueco central
-        castShadow
-        // receiveShadow: recibe sombras sobre su cara superior
-        receiveShadow
-      >
-        {/* Geometría para el tablón de la balda intermedia superior */}
-        <boxGeometry args={[INNER_WIDTH, BOARD_THICKNESS, BOOKSHELF_DEPTH]} />
-        {/* Material de madera para la balda intermedia superior */}
-        <meshStandardMaterial color={WOOD_COLOR} />
-      </mesh>
-
-      {/* Tablón horizontal de la tapa superior */}
-      <mesh
-        position={[0, TOP_Y, 0]}
-        // castShadow: proyecta sombras sobre el hueco superior y la pared
-        castShadow
-        // receiveShadow: recibe sombras sobre su superficie
-        receiveShadow
-      >
-        {/* Geometría para el tablón horizontal de la tapa */}
-        <boxGeometry args={[INNER_WIDTH, BOARD_THICKNESS, BOOKSHELF_DEPTH]} />
-        {/* Material de madera para la tapa superior */}
-        <meshStandardMaterial color={WOOD_COLOR} />
-      </mesh>
-
-      {/* Renderizado de los 4 libros colocados de canto con lomo visible hacia la cámara */}
-      {books.map((book, index) => {
-        // Cálculo del grosor acumulado de los libros anteriores
-        const previousWidth = books
-          .slice(0, index)
-          .reduce((sum, prev) => sum + prev.width, 0)
-
-        // Espacio acumulado por las pequeñas separaciones entre libros
-        const previousGaps = index * BOOK_GAP
-
-        // Posición X: inicio + grosores previos + separaciones previas + mitad del grosor propio
-        const posX = startX + previousWidth + previousGaps + book.width / 2
-
-        // Posición Y: superficie superior de la balda + mitad de la altura para descansar sobre ella
-        const posY = SHELF_TOP_SURFACE_Y + book.height / 2
-
-        // Posición Z: lomo alineado al frente (+Z) y profundidad del libro extendiéndose hacia el fondo de la balda
+      {/* 6. Renderizado de los libros distribuidos mediante layoutBooksOnShelves */}
+      {placed.map(({ book, shelfIndex, x }) => {
+        // Altura Y: cota de apoyo de la balda + mitad de la altura del libro
+        const posY = getShelfSurfaceY(shelfIndex) + book.height / 2
+        // Profundidad Z: lomo al frente (+Z) y cuerpo proyectado hacia el fondo
         const posZ = FRONT_SPINE_Z - book.depth / 2
 
         return (
-          // Instancia del componente Book con dimensiones de lomo, texturas y posición calculada
           <Book
             key={book.id}
             book={book}
             onSelect={onSelectBook}
-            position={[posX, posY, posZ]}
+            position={[x, posY, posZ]}
             width={book.width}
             height={book.height}
             depth={book.depth}

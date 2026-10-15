@@ -6,11 +6,11 @@ import Experience from '@/scene/Experience'
 // Importación del panel de detalle HTML mediante el alias "@"
 import BookDetailPanel from '@/components/BookDetailPanel'
 
-// Coordenadas iniciales de la cámara para encuadrar la estantería de frente con la habitación alrededor
-const CAMERA_POSITION = [0, 0.45, 2.7]
+// Coordenadas iniciales de la cámara para visualizar la pared del fondo completa y la profundidad alargada
+const CAMERA_POSITION = [0, 0.65, 4.2]
 
-// Punto de mira inicial de OrbitControls centrado en la estantería apoyada contra la pared del fondo
-const ORBIT_TARGET = [0, 0.15, -1.825]
+// Punto de mira inicial de OrbitControls centrado en el centro geométrico de la pared del fondo
+const ORBIT_TARGET = [0, 0.4, -2.0]
 
 // Color de fondo oscuro y cálido para envolver la habitación y crear atmósfera nocturna/acogedora
 const BACKGROUND_COLOR = '#171413'
