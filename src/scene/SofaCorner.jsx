@@ -5,11 +5,14 @@ import { useGLTF, RoundedBox } from '@react-three/drei'
 // Importación del manifiesto centralizado de modelos 3D
 import { modelsManifest } from '@/data/modelsManifest'
 // Importación de las cotas de la habitación para calcular posiciones relativas
-import { ROOM_WIDTH, ROOM_CENTER_Z, FLOOR_Y } from '@/scene/Room'
+import { ROOM_WIDTH, FLOOR_Y, FRONT_WALL_INNER_Z } from '@/scene/Room'
 // Importación de la maceta con planta de interior (Fase 5)
 import PlantPot from '@/scene/PlantPot'
 // Importación de la alfombra estampada con borlas (Fase 6)
-import Rug from '@/scene/Rug'
+import Rug, { RUG_TOP_HEIGHT } from '@/scene/Rug'
+// Vela con llama titilante (Fase 7) y vapor de la taza (Fase 9c)
+import CandleLight from '@/scene/CandleLight'
+import MugSteam from '@/scene/MugSteam'
 
 // Constantes de dimensiones y separación del conjunto del rincón de lectura
 const WALL_B_X = ROOM_WIDTH / 2 // Cota X de la pared derecha b (+2.25 m)
@@ -19,25 +22,46 @@ const SOFA_X = WALL_B_X - SOFA_OFFSET_FROM_WALL // Posición X del sofá (+1.80 
 const SOFA_Z = 2.10
 const SOFA_Y = FLOOR_Y + modelsManifest.sofa.groundOffset // Cota Y de apoyo sobre el suelo (-1.0 m)
 
-// Constantes de la alfombra estampada bajo el conjunto de lectura (Fase 6)
-const RUG_X = 1.15 // Centrada entre el sofá (+1.80 m) y la mesa (+0.85 m) para enmarcar ambos
-const RUG_Z = SOFA_Z // Centrada longitudinalmente con el sofá (+2.10 m)
-const RUG_Y = FLOOR_Y + modelsManifest.rug.groundOffset // -1.0 + 0.002 = -0.998 m (sin z-fighting)
-const RUG_THICKNESS = 0.009 // Grosor del tejido de la alfombra
-
 // Separación de la mesa de café respecto al sofá hacia el interior de la sala (-X)
 const TABLE_DISTANCE_FROM_SOFA = 0.95
 const TABLE_X = SOFA_X - TABLE_DISTANCE_FROM_SOFA // Posición X de la mesa de café (+0.85 m)
 const TABLE_Z = SOFA_Z // Alineada con el centro del sofá en Z (+2.10 m)
-// Patas de la mesa apoyadas limpiamente sobre la alfombra
-const TABLE_Y = FLOOR_Y + RUG_THICKNESS // -1.0 + 0.009 = -0.991 m
+// Patas de la mesa apoyadas sobre la cara superior de la alfombra
+const TABLE_Y = FLOOR_Y + RUG_TOP_HEIGHT // -1.0 + 0.011 = -0.989 m
+
+// Alfombra estampada (Fase 6): centrada bajo la mesa de café, apoyada en el suelo
+const RUG_X = TABLE_X // +0.85 m; con 1.58 m de fondo llega de X = +0.06 m a +1.64 m (entra bajo el frente del sofá)
+const RUG_Z = TABLE_Z // +2.10 m; con 2.30 m de largo llega de Z = +0.95 m a +3.25 m
 // Altura superior del tablero de la mesa (suelo + grosor alfombra + altura de la mesa)
 const TABLE_TOP_Y = TABLE_Y + modelsManifest.coffeeTable.targetDimensions.height // -0.541 m
 
+// Posiciones de los objetos sobre el tablero (respecto al centro de la mesa) y holgura para no atravesarlo
+const TABLE_ITEM_CLEARANCE = 0.003
+const ITEMS_Y = TABLE_TOP_Y + TABLE_ITEM_CLEARANCE
+const MUG_POSITION = [TABLE_X - 0.12, ITEMS_Y, TABLE_Z + 0.14] // Taza hacia el frente izquierdo
+const CANDLESTICK_POSITION = [TABLE_X - 0.12, ITEMS_Y, TABLE_Z - 0.14] // Candelabro hacia el fondo izquierdo
+// La mecha de candle.glb está en su eje, a 0.1924 unidades de altura original (× escala del manifiesto)
+const CANDLESTICK_WICK_HEIGHT = 0.1924 * modelsManifest.candle.scale // ≈ 0.173 m
+const CANDLE_FLAME_POSITION = [CANDLESTICK_POSITION[0], ITEMS_Y + CANDLESTICK_WICK_HEIGHT, CANDLESTICK_POSITION[2]]
+// La taza de coffee.glb mide ~3.8 cm de alto: el vapor nace justo encima del borde
+const MUG_RIM_HEIGHT = 0.038 * (modelsManifest.coffee.scale / 0.001)
+const STEAM_POSITION = [MUG_POSITION[0], ITEMS_Y + MUG_RIM_HEIGHT, MUG_POSITION[2]]
+
 // Constante para la única maceta decorativa situada en la esquina entre el sofá y el ventanal
-const POT_X = WALL_B_X - 0.40 // Alineada con el fondo del sofá contra la pared b (+1.85 m)
+// Extremo del sofá hacia el ventanal: el modelo llega a +1.613 unidades en su eje X local (× escala),
+// que tras girarlo -90° queda sobre el eje Z del mundo
+const SOFA_END_Z = SOFA_Z + 1.613 * modelsManifest.sofa.scale // 2.10 + 1.226 = +3.33 m
+// Holgura respecto al sofá y a las paredes
+const POT_CLEARANCE = 0.03
+// Copa máxima que cabe en el hueco entre el sofá y el muro del ventanal
+const POT_FOOTPRINT = FRONT_WALL_INNER_Z - SOFA_END_Z - 2 * POT_CLEARANCE // ≈ 0.55 m
+// Lado mayor de la copa del rosal en unidades originales (caja envolvente de rose_in_a_pot.glb: 14.2 x 15.76)
+const ROSE_ORIGINAL_SPREAD = 15.76
+// Escala para que la copa quepa sin atravesar sofá ni paredes (≈ 0.035 → ~0.72 m de alto)
+const POT_SCALE = POT_FOOTPRINT / ROSE_ORIGINAL_SPREAD
+const POT_X = WALL_B_X - POT_FOOTPRINT / 2 - POT_CLEARANCE // Pegada a la pared b (+1.95 m)
 const POT_Y = FLOOR_Y + modelsManifest.roseInAPot.groundOffset // -1.0 m
-const POT_CORNER_Z = 3.45 // Esquina entre el sofá y el ventanal (a 55 cm de la pared c en Z=+4.0 m)
+const POT_CORNER_Z = (SOFA_END_Z + FRONT_WALL_INNER_Z) / 2 // Centrada entre el sofá y el ventanal (+3.63 m)
 
 // Constantes de materiales y colores para cojines y manta
 const CUSHION_COLOR_OLIVE = '#3e4d3a'    // Verde bosque profundo
@@ -94,40 +118,40 @@ function SofaCorner() {
 
       {/* 2. COJINES (3 unidades decorativas apoyadas sobre el asiento del sofá) */}
       {/* Cojín izquierdo verde oliva */}
-      <mesh
+      {/* RoundedBox ya es una malla: recibe directamente posición, giro y sombras */}
+      <RoundedBox
+        args={[0.14, 0.28, 0.28]} radius={0.035} smoothness={4}
         position={[SOFA_X + 0.12, FLOOR_Y + 0.42, SOFA_Z - 0.50]}
         rotation={[0.15, -0.3, 0.1]}
         castShadow
         receiveShadow
       >
-        <RoundedBox args={[0.14, 0.28, 0.28]} radius={0.035} smoothness={4}>
           <meshStandardMaterial color={CUSHION_COLOR_OLIVE} roughness={0.85} />
-        </RoundedBox>
-      </mesh>
+      </RoundedBox>
 
       {/* Cojín central beige */}
-      <mesh
+      {/* RoundedBox ya es una malla: recibe directamente posición, giro y sombras */}
+      <RoundedBox
+        args={[0.12, 0.26, 0.28]} radius={0.03} smoothness={4}
         position={[SOFA_X + 0.14, FLOOR_Y + 0.40, SOFA_Z]}
         rotation={[0.1, -0.05, 0.12]}
         castShadow
         receiveShadow
       >
-        <RoundedBox args={[0.12, 0.26, 0.28]} radius={0.03} smoothness={4}>
           <meshStandardMaterial color={CUSHION_COLOR_BEIGE} roughness={0.8} />
-        </RoundedBox>
-      </mesh>
+      </RoundedBox>
 
       {/* Cojín derecho burdeos */}
-      <mesh
+      {/* RoundedBox ya es una malla: recibe directamente posición, giro y sombras */}
+      <RoundedBox
+        args={[0.14, 0.28, 0.28]} radius={0.035} smoothness={4}
         position={[SOFA_X + 0.12, FLOOR_Y + 0.42, SOFA_Z + 0.50]}
         rotation={[0.12, 0.25, 0.08]}
         castShadow
         receiveShadow
       >
-        <RoundedBox args={[0.14, 0.28, 0.28]} radius={0.035} smoothness={4}>
           <meshStandardMaterial color={CUSHION_COLOR_BURGUNDY} roughness={0.85} />
-        </RoundedBox>
-      </mesh>
+      </RoundedBox>
 
       {/* 3. MANTA DRAPEADA sobre el brazo del sofá (extremo hacia el ventanal) */}
       <mesh
@@ -141,10 +165,10 @@ function SofaCorner() {
       </mesh>
 
       {/* 4. ALFOMBRA ESTAMPADA CON BORLAS (Fase 6): situada bajo la mesa y frente al sofá */}
-      <Rug position={[RUG_X, RUG_Y, RUG_Z]} />
+      <Rug position={[RUG_X, FLOOR_Y, RUG_Z]} />
 
       {/* 5. MACETA CON ROSAL DE INTERIOR: únicamente en la esquina entre el sofá y el ventanal */}
-      <PlantPot position={[POT_X, POT_Y, POT_CORNER_Z]} rotationY={-Math.PI / 3} />
+      <PlantPot position={[POT_X, POT_Y, POT_CORNER_Z]} scale={POT_SCALE} rotationY={-Math.PI / 3} />
 
       {/* 6. MESA DE CAFÉ REDONDA DE MARQUETERÍA: apoyada sobre la alfombra */}
       <primitive
@@ -158,7 +182,7 @@ function SofaCorner() {
       {/* 7a. Libro abierto apoyado sobre el tablero hacia la derecha (+X) */}
       <primitive
         object={bookTableScene}
-        position={[TABLE_X + 0.10, TABLE_TOP_Y + 0.003, TABLE_Z + 0.02]}
+        position={[TABLE_X + 0.10, ITEMS_Y, TABLE_Z + 0.02]}
         scale={modelsManifest.bookTable.scale}
         // Rotación para orientarlo estéticamente hacia el lector sentado en el sofá
         rotation={[0, -Math.PI / 4, 0]}
@@ -167,7 +191,7 @@ function SofaCorner() {
       {/* 7b. Taza de café con plato real (coffee.glb) hacia el frente izquierdo */}
       <primitive
         object={coffeeScene}
-        position={[TABLE_X - 0.12, TABLE_TOP_Y + 0.003, TABLE_Z + 0.14]}
+        position={MUG_POSITION}
         scale={modelsManifest.coffee.scale}
         rotation={[0, Math.PI / 3, 0]}
       />
@@ -175,10 +199,16 @@ function SofaCorner() {
       {/* 7c. Candelabro con vela real de cobre (candle.glb) hacia el fondo izquierdo */}
       <primitive
         object={candleScene}
-        position={[TABLE_X - 0.12, TABLE_TOP_Y + 0.003, TABLE_Z - 0.14]}
+        position={CANDLESTICK_POSITION}
         scale={modelsManifest.candle.scale}
         rotation={[0, 0.2, 0]}
       />
+
+      {/* 7d. Llama titilante sobre la mecha del candelabro (Fase 7); la cera ya viene en el modelo */}
+      <CandleLight position={CANDLE_FLAME_POSITION} withWax={false} />
+
+      {/* 7e. Vapor sutil que sube de la taza (Fase 9c) */}
+      <MugSteam position={STEAM_POSITION} />
     </group>
   )
 }

@@ -3,12 +3,12 @@ import { PALETTE } from '@/scene/ambiencePalette'
 
 // Constantes de configuración de la luz ambiental interior difusa
 // Se eleva la intensidad ambiental suavemente para mantener visibilidad acogedora sin luces artificiales interiores
-const AMBIENT_LIGHT_COLOR = '#e8ecf0' // Tono natural neutro para levantar penumbras sin bombillas artificiales
-const AMBIENT_LIGHT_INTENSITY = 0.65  // Intensidad suficiente para leer lomos y apreciar las texturas de la sala
+const AMBIENT_LIGHT_COLOR = '#f3e4d0' // Tono cálido de atardecer para levantar penumbras sin bombillas artificiales (Fase 11)
+const AMBIENT_LIGHT_INTENSITY = 0.8   // Ajustada en la Fase 11: destacan el ventanal y las velas y los lomos se siguen leyendo
 
 // Constantes de configuración de la luz natural exterior que entra por el gran ventanal
 const WINDOW_LIGHT_COLOR = PALETTE.lightColor         // Color de luz exterior según la paleta activa
-const WINDOW_LIGHT_INTENSITY = 1.4                    // Intensidad principal que baña la habitación desde la ventana
+const WINDOW_LIGHT_INTENSITY = PALETTE.lightIntensity // Intensidad según la paleta activa
 const WINDOW_LIGHT_POSITION = [0.6, 2.8, 5.5]         // Posición exterior en altura apuntando hacia el interior de la sala
 
 // Constantes de configuración de sombras proyectadas por la luz del ventanal

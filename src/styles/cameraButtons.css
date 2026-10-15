@@ -1,0 +1,53 @@
+/* Botones de puntos de vista de la cámara (esquina superior izquierda, por encima del lienzo 3D) */
+:root {
+  --camera-buttons-bg: rgba(23, 20, 19, 0.72);
+  --camera-buttons-border: rgba(214, 190, 150, 0.35);
+  --camera-buttons-text: #eadfcb;
+  --camera-buttons-active-bg: rgba(214, 170, 100, 0.9);
+  --camera-buttons-active-text: #1c1612;
+  --camera-buttons-z-index: 900; /* Por debajo del panel de detalle (1000) */
+}
+
+.camera-buttons {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  z-index: var(--camera-buttons-z-index);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-width: calc(100vw - 32px);
+}
+
+.camera-buttons__button {
+  padding: 8px 14px;
+  border: 1px solid var(--camera-buttons-border);
+  border-radius: 999px;
+  background: var(--camera-buttons-bg);
+  color: var(--camera-buttons-text);
+  font: 500 14px/1.2 Georgia, 'Times New Roman', serif;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.camera-buttons__button:hover {
+  border-color: var(--camera-buttons-active-bg);
+}
+
+.camera-buttons__button:focus-visible {
+  outline: 2px solid var(--camera-buttons-active-bg);
+  outline-offset: 2px;
+}
+
+.camera-buttons__button--active {
+  background: var(--camera-buttons-active-bg);
+  color: var(--camera-buttons-active-text);
+}
+
+@media (max-width: 600px) {
+  .camera-buttons__button {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+}

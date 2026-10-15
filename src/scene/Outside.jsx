@@ -23,20 +23,6 @@ function Trees({ position = [1.8, -1.0, 7.5], scale = modelsManifest.treesGarden
   )
 }
 
-// Componente para renderizar arbustos de azaleas
-function Azaleas({ position = [-1.5, -1.0, 5.6], scale = modelsManifest.azalea.scale }) {
-  const { scene } = useGLTF(modelsManifest.azalea.url)
-  const clonedScene = useMemo(() => scene.clone(), [scene])
-  return (
-    <primitive
-      object={clonedScene}
-      position={position}
-      scale={scale}
-      rotation={[0, -0.3, 0]}
-    />
-  )
-}
-
 // Componente para renderizar lirios cerca del ventanal
 function Lilies({ position = [1.4, -1.0, 5.4], scale = modelsManifest.lilies1.scale }) {
   const { scene } = useGLTF(modelsManifest.lilies1.url)
@@ -92,7 +78,8 @@ function Outside() {
     // Grupo contenedor del entorno exterior posicionado detrás del ventanal (Z > 4.0 m)
     <group>
       {/* 1. Fondo de cielo con degradado atmosférico */}
-      <mesh position={[0, 3.5, 10.0]} rotation={[0, 0, 0]}>
+      {/* Girado 180° en Y: su cara visible mira hacia la habitación (-Z); sin giro solo se veía por detrás y no se dibujaba */}
+      <mesh position={[0, 3.5, 10.0]} rotation={[0, Math.PI, 0]}>
         <planeGeometry args={[20, 12]} />
         <meshBasicMaterial map={skyTexture} depthWrite={false} />
       </mesh>

@@ -23,7 +23,10 @@ import woodDiffUrl from '@/assets/textures/floor/wood_diff_1k.jpg'
 import woodNorUrl from '@/assets/textures/floor/wood_nor_1k.jpg'
 import woodRoughUrl from '@/assets/textures/floor/wood_rough_1k.jpg'
 // Importación del componente del ventanal para la pared c
-import WindowWall from '@/scene/WindowWall'
+import WindowWall, { WALL_COLOR, WALL_THICKNESS as FRONT_WALL_THICKNESS } from '@/scene/WindowWall'
+
+// Cara interior del muro del ventanal (c): ahí se apoyan moldura, enredaderas, polvo y maceta
+export const FRONT_WALL_INNER_Z = FRONT_WALL_Z - FRONT_WALL_THICKNESS / 2 // 4.0 - 0.06 = 3.94 m
 
 // Nivel del suelo coincidente con la base de la estantería (Y = -1.0)
 export const FLOOR_Y = -1.0
@@ -31,37 +34,40 @@ export const FLOOR_Y = -1.0
 // Posición Y central de las paredes verticales
 export const WALL_CENTER_Y = FLOOR_Y + ROOM_HEIGHT / 2 // -1.0 + 1.4 = 0.4
 
-// Color liso de las paredes
-const WALL_COLOR = '#ebe5dc' // Tono crema / beige apagado suave y cálido para las paredes
-
-// Constantes de repetición de tablones calculadas para ancho realista (~12 cm por tablón)
-// ROOM_WIDTH = 4.5 m (4.5 / 0.96 ≈ 4.5); ROOM_DEPTH = 6.0 m (6.0 / 0.96 ≈ 6.0)
-const FLOOR_REPEAT_X = 4.5
-const FLOOR_REPEAT_Y = 6.0
+// Tamaño en metros que cubre una repetición de la textura de madera: la imagen contiene ~9 tablones,
+// así que con 1 m por repetición cada tablón mide ~11 cm de ancho (objetivo del plan: ~12 cm)
+const FLOOR_TEXTURE_TILE_SIZE = 1.0
+// Repeticiones calculadas a partir de las dimensiones de la habitación para que el tablón no se estire
+const FLOOR_REPEAT_X = ROOM_WIDTH / FLOOR_TEXTURE_TILE_SIZE // 4.5 / 1.0 = 4.5 repeticiones a lo ancho
+const FLOOR_REPEAT_Y = ROOM_DEPTH / FLOOR_TEXTURE_TILE_SIZE // 6.0 / 1.0 = 6.0 repeticiones a lo largo
 
 function Room() {
-  // Carga asíncrona de mapas PBR de madera oscura para el suelo
-  const floorTextures = useTexture({
+  // Carga asíncrona de mapas PBR de madera oscura para el suelo (useTexture suspende hasta que están listos)
+  const loadedTextures = useTexture({
     map: woodDiffUrl,
     normalMap: woodNorUrl,
     roughnessMap: woodRoughUrl,
   })
 
-  // Configuración de repetición continua y espacio de color sRGB para evitar tonos lavados
-  useMemo(() => {
-    floorTextures.map.colorSpace = SRGBColorSpace
-
-    const setupTexture = (tex) => {
-      tex.wrapS = RepeatWrapping
-      tex.wrapT = RepeatWrapping
-      tex.repeat.set(FLOOR_REPEAT_X, FLOOR_REPEAT_Y)
-      tex.needsUpdate = true
+  // Copias configuradas de las texturas: repetición continua y sRGB solo en el mapa de color
+  // (se clonan para no modificar los objetos que devuelve el hook, que la caché de drei comparte)
+  const floorTextures = useMemo(() => {
+    const setupTexture = (tex, colorSpace) => {
+      const copy = tex.clone()
+      copy.wrapS = RepeatWrapping
+      copy.wrapT = RepeatWrapping
+      copy.repeat.set(FLOOR_REPEAT_X, FLOOR_REPEAT_Y)
+      if (colorSpace) copy.colorSpace = colorSpace // sRGB evita colores lavados en la textura de color
+      copy.needsUpdate = true
+      return copy
     }
 
-    setupTexture(floorTextures.map)
-    setupTexture(floorTextures.normalMap)
-    setupTexture(floorTextures.roughnessMap)
-  }, [floorTextures])
+    return {
+      map: setupTexture(loadedTextures.map, SRGBColorSpace),
+      normalMap: setupTexture(loadedTextures.normalMap),
+      roughnessMap: setupTexture(loadedTextures.roughnessMap),
+    }
+  }, [loadedTextures])
 
   return (
     // Grupo contenedor 3D que agrupa el suelo y las 3 paredes visibles

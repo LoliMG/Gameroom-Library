@@ -14,7 +14,7 @@ export const SHELF_COUNT = 8          // Número de niveles de baldas disponible
 export const BOOK_GAP = 0.015
 
 // Color madera para el material de todos los tablones
-const WOOD_COLOR = '#5c3a21'
+export const WOOD_COLOR = '#4a3320' // Roble oscuro (Fase 11); también lo usan el bloque de esquina y la moldura
 
 // Altura interior libre disponible entre la base inferior y la tapa superior
 export const INNER_HEIGHT = SHELF_HEIGHT - 2 * BOARD_THICKNESS
