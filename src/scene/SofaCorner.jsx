@@ -10,27 +10,29 @@ import { ROOM_WIDTH, FLOOR_Y, FRONT_WALL_INNER_Z } from '@/scene/Room'
 import PlantPot from '@/scene/PlantPot'
 // Importación de la alfombra estampada con borlas (Fase 6)
 import Rug, { RUG_TOP_HEIGHT } from '@/scene/Rug'
+// Recorte por alfa para materiales con transparencia mezclada (el sofá viene entero en modo BLEND)
+import { applyAlphaCutout } from '@/utils/alphaCutout'
 // Vela con llama titilante (Fase 7) y vapor de la taza (Fase 9c)
 import CandleLight from '@/scene/CandleLight'
 import MugSteam from '@/scene/MugSteam'
 
 // Constantes de dimensiones y separación del conjunto del rincón de lectura
-const WALL_B_X = ROOM_WIDTH / 2 // Cota X de la pared derecha b (+2.25 m)
+const WALL_B_X = ROOM_WIDTH / 2 // Cota X de la pared derecha b (+2.60 m)
 const SOFA_OFFSET_FROM_WALL = 0.45 // Distancia del centro del sofá respecto a la pared b (fondo sofá ~0.70 m)
-const SOFA_X = WALL_B_X - SOFA_OFFSET_FROM_WALL // Posición X del sofá (+1.80 m)
+const SOFA_X = WALL_B_X - SOFA_OFFSET_FROM_WALL // Posición X del sofá (+2.15 m)
 // Posición Z del sofá desplazada hacia el ventanal (+2.10 m) para dar paso al hueco de la puerta en la pared b
 const SOFA_Z = 2.10
 const SOFA_Y = FLOOR_Y + modelsManifest.sofa.groundOffset // Cota Y de apoyo sobre el suelo (-1.0 m)
 
 // Separación de la mesa de café respecto al sofá hacia el interior de la sala (-X)
 const TABLE_DISTANCE_FROM_SOFA = 0.95
-const TABLE_X = SOFA_X - TABLE_DISTANCE_FROM_SOFA // Posición X de la mesa de café (+0.85 m)
+const TABLE_X = SOFA_X - TABLE_DISTANCE_FROM_SOFA // Posición X de la mesa de café (+1.20 m)
 const TABLE_Z = SOFA_Z // Alineada con el centro del sofá en Z (+2.10 m)
 // Patas de la mesa apoyadas sobre la cara superior de la alfombra
 const TABLE_Y = FLOOR_Y + RUG_TOP_HEIGHT // -1.0 + 0.011 = -0.989 m
 
 // Alfombra estampada (Fase 6): centrada bajo la mesa de café, apoyada en el suelo
-const RUG_X = TABLE_X // +0.85 m; con 1.58 m de fondo llega de X = +0.06 m a +1.64 m (entra bajo el frente del sofá)
+const RUG_X = TABLE_X // +1.20 m; con 1.58 m de fondo llega de X = +0.41 m a +1.99 m (entra bajo el frente del sofá)
 const RUG_Z = TABLE_Z // +2.10 m; con 2.30 m de largo llega de Z = +0.95 m a +3.25 m
 // Altura superior del tablero de la mesa (suelo + grosor alfombra + altura de la mesa)
 const TABLE_TOP_Y = TABLE_Y + modelsManifest.coffeeTable.targetDimensions.height // -0.541 m
@@ -40,8 +42,10 @@ const TABLE_ITEM_CLEARANCE = 0.003
 const ITEMS_Y = TABLE_TOP_Y + TABLE_ITEM_CLEARANCE
 const MUG_POSITION = [TABLE_X - 0.12, ITEMS_Y, TABLE_Z + 0.14] // Taza hacia el frente izquierdo
 const CANDLESTICK_POSITION = [TABLE_X - 0.12, ITEMS_Y, TABLE_Z - 0.14] // Candelabro hacia el fondo izquierdo
-// La mecha de candle.glb está en su eje, a 0.1924 unidades de altura original (× escala del manifiesto)
-const CANDLESTICK_WICK_HEIGHT = 0.1924 * modelsManifest.candle.scale // ≈ 0.173 m
+// Punta de la mecha de candle.glb: 0.1766 unidades de altura original (× escala del manifiesto)
+const CANDLESTICK_WICK_HEIGHT = 0.1766 * modelsManifest.candle.scale // ≈ 0.159 m
+// Llama estática que trae el propio modelo: se oculta porque la sustituye la llama titilante de CandleLight
+const CANDLESTICK_MODEL_FLAME_NODE = 'Flame_4'
 const CANDLE_FLAME_POSITION = [CANDLESTICK_POSITION[0], ITEMS_Y + CANDLESTICK_WICK_HEIGHT, CANDLESTICK_POSITION[2]]
 // La taza de coffee.glb mide ~3.8 cm de alto: el vapor nace justo encima del borde
 const MUG_RIM_HEIGHT = 0.038 * (modelsManifest.coffee.scale / 0.001)
@@ -59,7 +63,7 @@ const POT_FOOTPRINT = FRONT_WALL_INNER_Z - SOFA_END_Z - 2 * POT_CLEARANCE // ≈
 const ROSE_ORIGINAL_SPREAD = 15.76
 // Escala para que la copa quepa sin atravesar sofá ni paredes (≈ 0.035 → ~0.72 m de alto)
 const POT_SCALE = POT_FOOTPRINT / ROSE_ORIGINAL_SPREAD
-const POT_X = WALL_B_X - POT_FOOTPRINT / 2 - POT_CLEARANCE // Pegada a la pared b (+1.95 m)
+const POT_X = WALL_B_X - POT_FOOTPRINT / 2 - POT_CLEARANCE // Pegada a la pared b (+2.30 m)
 const POT_Y = FLOOR_Y + modelsManifest.roseInAPot.groundOffset // -1.0 m
 const POT_CORNER_Z = (SOFA_END_Z + FRONT_WALL_INNER_Z) / 2 // Centrada entre el sofá y el ventanal (+3.63 m)
 
@@ -87,7 +91,7 @@ function enableShadows(scene) {
 function SofaCorner() {
   // 1. Carga del sofá desde modelsManifest
   const sofaGLTF = useGLTF(modelsManifest.sofa.url)
-  const sofaScene = useMemo(() => enableShadows(sofaGLTF.scene.clone()), [sofaGLTF.scene])
+  const sofaScene = useMemo(() => enableShadows(applyAlphaCutout(sofaGLTF.scene.clone())), [sofaGLTF.scene])
 
   // 2. Carga de la mesa de café de marquetería
   const tableGLTF = useGLTF(modelsManifest.coffeeTable.url)
@@ -99,7 +103,12 @@ function SofaCorner() {
 
   // 4. Carga del modelo 3D de candelabro con vela (candle.glb)
   const candleGLTF = useGLTF(modelsManifest.candle.url)
-  const candleScene = useMemo(() => enableShadows(candleGLTF.scene.clone()), [candleGLTF.scene])
+  const candleScene = useMemo(() => {
+    const scene = enableShadows(candleGLTF.scene.clone())
+    const modelFlame = scene.getObjectByName(CANDLESTICK_MODEL_FLAME_NODE)
+    if (modelFlame) modelFlame.visible = false
+    return scene
+  }, [candleGLTF.scene])
 
   // 5. Carga del modelo 3D de taza y plato de café (coffee.glb)
   const coffeeGLTF = useGLTF(modelsManifest.coffee.url)

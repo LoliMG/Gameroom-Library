@@ -8,7 +8,6 @@ export const CLOUDY = {
   skyBottom: '#adc2d1',     // Neblina clara difusa hacia el horizonte
   lightColor: '#b4cbde',    // Luz tenue y fría entrando por el ventanal
   lightIntensity: 1.4,      // Intensidad de la luz del ventanal (la que usaba Lights.jsx antes de leerla de la paleta)
-  foliageColor: '#1d3322',  // Verde bosque profundo para el follaje exterior
   envPreset: 'night',       // Preset ambiental nocturno suave de drei para reflejos
   envIntensity: 0.06,       // Intensidad mínima solo para matizar el cristal y metales
 }
@@ -20,7 +19,6 @@ export const DUSK = {
   skyBottom: '#5c325c',     // Violeta crepuscular en el horizonte
   lightColor: '#8a77b8',    // Luz violeta-azulada fría y mágica
   lightIntensity: 1.4,      // Intensidad de la luz del ventanal (la que usaba Lights.jsx antes de leerla de la paleta)
-  foliageColor: '#16281a',  // Verde oscuro nocturno para el jardín
   envPreset: 'night',       // Preset nocturno
   envIntensity: 0.08,       // Intensidad ambiental baja
 }
@@ -32,7 +30,6 @@ export const SUNSET = {
   skyBottom: '#f2a35e',     // Naranja dorado en el horizonte
   lightColor: '#ffc98f',    // Luz dorada de sol bajo
   lightIntensity: 2.4,      // Más intensa que las otras paletas para que la sala se vea luminosa
-  foliageColor: '#2c3b1f',  // Verde oliva cálido iluminado por el sol
   envPreset: 'sunset',      // Preset de atardecer de drei para reflejos cálidos
   envIntensity: 0.15,       // Algo más de reflejo que de noche
 }

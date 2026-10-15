@@ -173,13 +173,11 @@ export const modelsManifest = {
     },
   },
 
-  // Colección de árboles realistas para el jardín exterior (escala reducida para altura natural ~5.5 m)
+  // Colección de árboles realistas para el jardín exterior (7 árboles y arbustos separables por nodo)
   treesGarden: {
     url: treesGardenUrl,
     file: 'flowers/trees.glb',
-    targetDimensions: { width: 24.3, height: 5.5, depth: 5.6 },
-    scale: 0.000515,
-    groundOffset: 0.0,
+    // Sin targetDimensions/scale/groundOffset: el jardín (Outside.jsx) mide el modelo y lo escala a una altura objetivo
     credit: {
       title: 'Realistic Trees Collection',
       author: 'Jungle Jim',
@@ -192,9 +190,7 @@ export const modelsManifest = {
   asiaticLily: {
     url: asiaticLilyUrl,
     file: 'flowers/asiatic_lily.glb',
-    targetDimensions: { width: 0.84, height: 0.60, depth: 1.04 },
-    scale: 0.008,
-    groundOffset: 0.0,
+    // Sin targetDimensions/scale/groundOffset: el jardín (Outside.jsx) mide el modelo y lo escala a una altura objetivo
     credit: {
       title: 'Asiatic Lily',
       author: 'local.yany',
@@ -207,9 +203,7 @@ export const modelsManifest = {
   azalea: {
     url: azaleaUrl,
     file: 'flowers/azalea.glb',
-    targetDimensions: { width: 1.12, height: 1.20, depth: 0.95 },
-    scale: 0.0487,
-    groundOffset: 0.034,
+    // Sin targetDimensions/scale/groundOffset: el jardín (Outside.jsx) mide el modelo y lo escala a una altura objetivo
     credit: {
       title: 'Rhododendron - Azalea ( Free download )',
       author: 'Nestaeric',
@@ -218,13 +212,11 @@ export const modelsManifest = {
     },
   },
 
-  // Lirios blancos de jardín (escala corregida para contrarrestar la matriz interna de 1000x del nodo)
+  // Lirios blancos de jardín
   lilies1: {
     url: lilies1Url,
     file: 'flowers/lilies1.glb',
-    targetDimensions: { width: 0.70, height: 0.81, depth: 0.84 },
-    scale: 0.00011,
-    groundOffset: 0.0,
+    // Sin targetDimensions/scale/groundOffset: el jardín (Outside.jsx) mide el modelo y lo escala a una altura objetivo
     credit: {
       title: 'Lilies',
       author: 'sligocreatures',
@@ -237,9 +229,7 @@ export const modelsManifest = {
   purpleLilies: {
     url: purpleLiliesUrl,
     file: 'flowers/purple_lilies.glb',
-    targetDimensions: { width: 1.20, height: 1.20, depth: 1.04 },
-    scale: 0.0926,
-    groundOffset: 0.77,
+    // Sin targetDimensions/scale/groundOffset: el jardín (Outside.jsx) mide el modelo y lo escala a una altura objetivo
     credit: {
       title: 'Purple lilies',
       author: 'Chenchanchong',
@@ -267,9 +257,7 @@ export const modelsManifest = {
   spiderLily: {
     url: spiderLilyUrl,
     file: 'flowers/spider_lily.glb',
-    targetDimensions: { width: 0.74, height: 0.50, depth: 0.45 },
-    scale: 0.0042,
-    groundOffset: 0.004,
+    // Sin targetDimensions/scale/groundOffset: el jardín (Outside.jsx) mide el modelo y lo escala a una altura objetivo
     credit: {
       title: 'Spider Lily (Lycoris Radiata)',
       author: 'Osian CG',

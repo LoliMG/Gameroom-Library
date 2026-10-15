@@ -4,8 +4,9 @@ import { useMemo, useLayoutEffect, useRef } from 'react'
 import { Object3D } from 'three'
 // Importación de las dimensiones de la habitación
 import { ROOM_HEIGHT, FRONT_WALL_INNER_Z, FLOOR_Y } from '@/scene/Room'
+// Generador pseudoaleatorio con semilla para que las hojas salgan siempre igual
+import { createRandom } from '@/utils/random'
 
-// Cara interior del muro del ventanal (WindowWall tiene 0.12 m de grosor, centrado en FRONT_WALL_Z)
 // Separación de las enredaderas respecto a la cara interior del muro
 const WALL_GAP = 0.04
 // Plano Z donde cuelgan las enredaderas
@@ -36,18 +37,6 @@ const LEAF_COLORS = ['#2f4a2a', '#3d5c32', '#264022'] // Verdes variados
 const STEM_RADIUS = 0.004
 const STEM_COLOR = '#3a3222'
 const RANDOM_SEED = 7                 // Semilla fija: las hojas salen siempre igual
-
-// Generador pseudoaleatorio determinista (mulberry32) para colocar las hojas de forma reproducible
-function createRandom(seed) {
-  let a = seed
-  return () => {
-    a |= 0
-    a = (a + 0x6d2b79f5) | 0
-    let t = Math.imul(a ^ (a >>> 15), 1 | a)
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
-  }
-}
 
 // Calcula posición, giro y tamaño de todas las hojas, agrupadas por color
 function buildLeaves() {

@@ -21,8 +21,12 @@ export const WALL_THICKNESS = 0.12 // Algo más gruesa que el marco (~0.056 m) p
 const WINDOW_SCALE = modelsManifest.window.scale // 0.5536
 const ORIGINAL_CENTER_X = 2.16879
 const ORIGINAL_MIN_Y = -2.22237
+const ORIGINAL_WIDTH = 8.1288
 
-// Desplazamiento X para centrar el ventanal en X = 0 (cubre exactamente de -2.25 m a +2.25 m)
+// Ancho del ventanal ya escalado (8.1288 × 0.5536 ≈ 4.50 m): la habitación se dimensiona a partir de él
+export const WINDOW_WIDTH = ORIGINAL_WIDTH * WINDOW_SCALE
+
+// Desplazamiento X para centrar el ventanal en X = 0 (cubre de -2.25 m a +2.25 m)
 const LOCAL_OFFSET_X = -ORIGINAL_CENTER_X * WINDOW_SCALE // ~ -1.2006 m
 
 // El modelo contiene dos arcos idénticos; centros X en unidades originales (el primero en 0, el segundo simétrico respecto al centro)

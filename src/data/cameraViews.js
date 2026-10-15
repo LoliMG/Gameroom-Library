@@ -1,6 +1,6 @@
 // Puntos de vista fijos de la cámara (Fase 10): posición de la cámara y objetivo al que mira, en metros.
 // Referencias de la habitación: suelo Y = -1.0, techo Y = +1.8, pared d en Z = -2.0, ventanal (c) en Z = +4.0,
-// pared a en X = -2.25 y pared b (sofá) en X = +2.25.
+// pared a en X = -2.6 (frente de sus estanterías en -2.25) y pared b (sofá) en X = +2.6.
 export const CAMERA_VIEWS = [
   {
     id: 'overview',
@@ -18,14 +18,14 @@ export const CAMERA_VIEWS = [
   {
     id: 'shelvesA',
     label: 'Estanterías a',
-    position: [1.3, 0.25, 1.2],
-    target: [-2.0, 0.15, 1.2],
+    position: [0.95, 0.25, 1.2],
+    target: [-2.35, 0.15, 1.2],
   },
   {
     id: 'sofa',
     label: 'Rincón del sofá',
-    position: [-0.9, 0.35, 2.3],
-    target: [1.6, -0.55, 2.1],
+    position: [-0.55, 0.35, 2.3],
+    target: [1.95, -0.55, 2.1],
   },
   {
     id: 'window',

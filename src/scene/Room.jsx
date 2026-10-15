@@ -1,5 +1,7 @@
 // Constantes de dimensiones de la habitación en metros (1 unidad = 1 metro)
-export const ROOM_WIDTH = 4.5   // Ancho de la habitación (paredes c y d, medio metro más ancha)
+// Ancho: el ventanal más el fondo de una estantería a cada lado, para que las estanterías de la pared a
+// terminen justo en el borde del arco en vez de taparlo (4.50 + 2 × 0.35 = 5.20 m)
+export const ROOM_WIDTH = WINDOW_WIDTH + 2 * BOOKSHELF_DEPTH
 export const ROOM_DEPTH = 6.0   // Profundidad de la habitación alargada hacia la cámara (paredes laterales a y b)
 export const ROOM_HEIGHT = 2.8  // Altura libre del suelo al techo
 
@@ -23,7 +25,9 @@ import woodDiffUrl from '@/assets/textures/floor/wood_diff_1k.jpg'
 import woodNorUrl from '@/assets/textures/floor/wood_nor_1k.jpg'
 import woodRoughUrl from '@/assets/textures/floor/wood_rough_1k.jpg'
 // Importación del componente del ventanal para la pared c
-import WindowWall, { WALL_COLOR, WALL_THICKNESS as FRONT_WALL_THICKNESS } from '@/scene/WindowWall'
+import WindowWall, { WALL_COLOR, WALL_THICKNESS as FRONT_WALL_THICKNESS, WINDOW_WIDTH } from '@/scene/WindowWall'
+// Fondo de las estanterías (para dejar muro a los lados del ventanal)
+import { BOOKSHELF_DEPTH } from '@/scene/Bookshelf'
 
 // Cara interior del muro del ventanal (c): ahí se apoyan moldura, enredaderas, polvo y maceta
 export const FRONT_WALL_INNER_Z = FRONT_WALL_Z - FRONT_WALL_THICKNESS / 2 // 4.0 - 0.06 = 3.94 m
@@ -81,7 +85,7 @@ function Room() {
         // receiveShadow: permite que la superficie del suelo reciba y muestre las sombras proyectadas por otros objetos
         receiveShadow
       >
-        {/* Geometría plana con ancho (ROOM_WIDTH = 4.5) y profundidad alargada (ROOM_DEPTH = 6.0) */}
+        {/* Geometría plana con ancho (ROOM_WIDTH = 5.2) y profundidad alargada (ROOM_DEPTH = 6.0) */}
         <planeGeometry args={[ROOM_WIDTH, ROOM_DEPTH]} />
         {/* Material PBR estándar con mapas de madera oscura, vetas y rugosidad */}
         <meshStandardMaterial
@@ -109,7 +113,7 @@ function Room() {
 
       {/* 3. PARED IZQUIERDA (a): Plano vertical en el lateral izquierdo alargado a 6 metros */}
       {/* Rotación: +90 grados (+PI / 2) sobre el eje Y para que la normal apunte hacia la DERECHA (+X, interior) */}
-      {/* Posición: En el límite izquierdo X = -ROOM_WIDTH / 2 (-2.0), centrada en Z=ROOM_CENTER_Z (+1.0) */}
+      {/* Posición: En el límite izquierdo X = -ROOM_WIDTH / 2 (-2.6), centrada en Z=ROOM_CENTER_Z (+1.0) */}
       <mesh
         position={[-ROOM_WIDTH / 2, WALL_CENTER_Y, ROOM_CENTER_Z]}
         rotation={[0, Math.PI / 2, 0]}
@@ -124,7 +128,7 @@ function Room() {
 
       {/* 4. PARED DERECHA (b): Plano vertical en el lateral derecho alargado a 6 metros */}
       {/* Rotación: -90 grados (-PI / 2) sobre el eje Y para que la normal apunte hacia la IZQUIERDA (-X, interior) */}
-      {/* Posición: En el límite derecho X = +ROOM_WIDTH / 2 (+2.0), centrada en Z=ROOM_CENTER_Z (+1.0) */}
+      {/* Posición: En el límite derecho X = +ROOM_WIDTH / 2 (+2.6), centrada en Z=ROOM_CENTER_Z (+1.0) */}
       <mesh
         position={[ROOM_WIDTH / 2, WALL_CENTER_Y, ROOM_CENTER_Z]}
         rotation={[0, -Math.PI / 2, 0]}

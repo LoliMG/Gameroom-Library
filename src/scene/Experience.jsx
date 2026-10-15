@@ -47,7 +47,7 @@ import CameraRig from '@/scene/CameraRig'
 
 // Posición y orientación de la puerta de entrada (door.glb) en la pared b (+X):
 // Situada en el vano entre las estanterías del fondo d (Z = -1.65 m) y el sofá (Z = +1.06 m)
-const DOOR_X = ROOM_WIDTH / 2 - 0.08 // +2.17 m (empotrada en la pared b, con marco visible)
+const DOOR_X = ROOM_WIDTH / 2 - 0.08 // +2.52 m (empotrada en la pared b, con marco visible)
 const DOOR_Y = FLOOR_Y // -1.0 m (apoyada a ras de suelo)
 const DOOR_Z = -0.30 // Centrada en el hueco de la pared
 const DOOR_ROTATION = [0, -Math.PI / 2, 0] // Su hoja mira hacia el interior (-X)
@@ -58,7 +58,7 @@ const SHELF_WALL_A_ROTATION = [0, SHELF_WALL_A_ROTATION_Y, 0]
 
 // BLOQUE DE ESQUINA RECTA (evita esquinas en pico o solapes):
 // Rellena exactamente el espacio de 35x35 cm entre la pared a y la pared d en la esquina trasera izquierda
-const CORNER_BLOCK_X = -ROOM_WIDTH / 2 + BOOKSHELF_DEPTH / 2 // -2.075m
+const CORNER_BLOCK_X = -ROOM_WIDTH / 2 + BOOKSHELF_DEPTH / 2 // -2.425m
 const CORNER_BLOCK_Z = BACK_WALL_Z + BOOKSHELF_DEPTH / 2     // -1.825m
 
 function Experience({ onSelectBook, viewId, viewRequest }) {
