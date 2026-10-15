@@ -12,6 +12,9 @@ const CAMERA_POSITION = [0, 0.45, 2.7]
 // Punto de mira inicial de OrbitControls centrado en la estantería apoyada contra la pared del fondo
 const ORBIT_TARGET = [0, 0.15, -1.825]
 
+// Color de fondo oscuro y cálido para envolver la habitación y crear atmósfera nocturna/acogedora
+const BACKGROUND_COLOR = '#171413'
+
 function App() {
   // useState define el estado selectedBook que guarda el libro pulsado o null si no hay ninguno activo
   const [selectedBook, setSelectedBook] = useState(null)
@@ -28,6 +31,9 @@ function App() {
         // Perspectiva de cámara ajustada para visualizar la estantería con el suelo y las paredes circundantes
         camera={{ position: CAMERA_POSITION, fov: 52 }}
       >
+        {/* Color de fondo oscuro y cálido acoplado directamente al fondo de la escena WebGL */}
+        <color attach="background" args={[BACKGROUND_COLOR]} />
+
         {/* Renderizado de la escena principal pasando el manejador de selección y el objetivo de la cámara */}
         <Experience onSelectBook={setSelectedBook} orbitTarget={ORBIT_TARGET} />
       </Canvas>

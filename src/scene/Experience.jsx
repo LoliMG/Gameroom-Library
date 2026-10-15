@@ -2,6 +2,8 @@
 import { Suspense } from 'react'
 // Control orbital interactivo de drei para rotar y revisar la escena
 import { OrbitControls } from '@react-three/drei'
+// Importación del componente de iluminación personalizada
+import Lights from '@/scene/Lights'
 // Importación de la estructura de la habitación (suelo y paredes)
 import Room from '@/scene/Room'
 // Importación del componente de la estantería mediante el alias "@"
@@ -17,11 +19,8 @@ function Experience({ onSelectBook, orbitTarget = [0, 0.2, -1.825] }) {
       {/* Control orbital de cámara con el objetivo (target) centrado en la estantería apoyada en la pared */}
       <OrbitControls makeDefault target={orbitTarget} />
 
-      {/* Luz ambiental que aporta iluminación general homogénea a toda la estancia */}
-      <ambientLight intensity={0.7} />
-
-      {/* Luz direccional con ángulo que aporta profundidad y sombreado a la habitación y la estantería */}
-      <directionalLight position={[4, 5, 4]} intensity={1.5} />
+      {/* Iluminación cálida de rincón de lectura (luz ambiental, direccional suave y punto de luz puntual ámbar) */}
+      <Lights />
 
       {/* Renderizado de la carcasa de la habitación (suelo y 3 paredes) */}
       <Room />
