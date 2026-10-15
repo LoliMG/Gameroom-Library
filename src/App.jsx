@@ -30,6 +30,8 @@ function App() {
         }}
         // Perspectiva de cámara ajustada para visualizar la estantería con el suelo y las paredes circundantes
         camera={{ position: CAMERA_POSITION, fov: 52 }}
+        // shadows: habilita el cálculo y renderizado de mapas de sombras en el motor WebGL de Three.js
+        shadows
       >
         {/* Color de fondo oscuro y cálido acoplado directamente al fondo de la escena WebGL */}
         <color attach="background" args={[BACKGROUND_COLOR]} />

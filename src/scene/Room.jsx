@@ -23,6 +23,8 @@ function Room() {
       <mesh
         position={[0, FLOOR_Y, 0]}
         rotation={[-Math.PI / 2, 0, 0]}
+        // receiveShadow: permite que la superficie del suelo reciba y muestre las sombras proyectadas por otros objetos
+        receiveShadow
       >
         {/* Geometría plana con ancho (ROOM_WIDTH) y profundidad (ROOM_DEPTH) */}
         <planeGeometry args={[ROOM_WIDTH, ROOM_DEPTH]} />
@@ -36,6 +38,8 @@ function Room() {
       <mesh
         position={[0, WALL_CENTER_Y, -ROOM_DEPTH / 2]}
         rotation={[0, 0, 0]}
+        // receiveShadow: permite proyectar sombras sobre la pared trasera
+        receiveShadow
       >
         {/* Geometría plana con ancho de la estancia y altura vertical */}
         <planeGeometry args={[ROOM_WIDTH, ROOM_HEIGHT]} />
@@ -49,6 +53,8 @@ function Room() {
       <mesh
         position={[-ROOM_WIDTH / 2, WALL_CENTER_Y, 0]}
         rotation={[0, Math.PI / 2, 0]}
+        // receiveShadow: permite proyectar sombras sobre la pared lateral izquierda
+        receiveShadow
       >
         {/* Geometría plana con profundidad de la estancia y altura vertical */}
         <planeGeometry args={[ROOM_DEPTH, ROOM_HEIGHT]} />
@@ -62,6 +68,8 @@ function Room() {
       <mesh
         position={[ROOM_WIDTH / 2, WALL_CENTER_Y, 0]}
         rotation={[0, -Math.PI / 2, 0]}
+        // receiveShadow: permite proyectar sombras sobre la pared lateral derecha
+        receiveShadow
       >
         {/* Geometría plana con profundidad de la estancia y altura vertical */}
         <planeGeometry args={[ROOM_DEPTH, ROOM_HEIGHT]} />

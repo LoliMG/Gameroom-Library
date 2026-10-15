@@ -38,8 +38,15 @@ function Book({ position, width, height, depth, onSelect, book }) {
   }
 
   return (
-    // Malla 3D del libro de canto con posición calculada y detector de clics
-    <mesh position={position} onClick={handleClick}>
+    // Malla 3D del libro de canto con posición calculada, detector de clics y cálculo de sombras
+    <mesh
+      position={position}
+      onClick={handleClick}
+      // castShadow: permite que el libro proyecte sombras sobre la balda y los libros contiguos
+      castShadow
+      // receiveShadow: permite que la superficie del libro reciba sombras proyectadas por otros elementos
+      receiveShadow
+    >
       {/* Geometría de caja que define ancho (grosor lomo), alto y fondo del libro */}
       <boxGeometry args={[width, height, depth]} />
 

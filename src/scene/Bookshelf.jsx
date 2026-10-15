@@ -59,7 +59,13 @@ function Bookshelf({ onSelectBook }) {
     // Grupo contenedor 3D que agrupa todos los elementos que forman la estantería y los libros
     <group>
       {/* Lateral izquierdo de la estantería */}
-      <mesh position={[-BOOKSHELF_WIDTH / 2 + BOARD_THICKNESS / 2, 0, 0]}>
+      <mesh
+        position={[-BOOKSHELF_WIDTH / 2 + BOARD_THICKNESS / 2, 0, 0]}
+        // castShadow: proyecta sombras sobre el suelo, las paredes y baldas vecinas
+        castShadow
+        // receiveShadow: recibe sombras proyectadas por la lámpara y otros elementos
+        receiveShadow
+      >
         {/* Geometría que define las dimensiones del tablón vertical izquierdo */}
         <boxGeometry args={[BOARD_THICKNESS, BOOKSHELF_HEIGHT, BOOKSHELF_DEPTH]} />
         {/* Material de madera para el lateral izquierdo */}
@@ -67,7 +73,13 @@ function Bookshelf({ onSelectBook }) {
       </mesh>
 
       {/* Lateral derecho de la estantería */}
-      <mesh position={[BOOKSHELF_WIDTH / 2 - BOARD_THICKNESS / 2, 0, 0]}>
+      <mesh
+        position={[BOOKSHELF_WIDTH / 2 - BOARD_THICKNESS / 2, 0, 0]}
+        // castShadow: proyecta sombras hacia la derecha y la pared
+        castShadow
+        // receiveShadow: recibe sombras proyectadas sobre su superficie
+        receiveShadow
+      >
         {/* Geometría que define las dimensiones del tablón vertical derecho */}
         <boxGeometry args={[BOARD_THICKNESS, BOOKSHELF_HEIGHT, BOOKSHELF_DEPTH]} />
         {/* Material de madera para el lateral derecho */}
@@ -75,7 +87,13 @@ function Bookshelf({ onSelectBook }) {
       </mesh>
 
       {/* Tablón horizontal de la base */}
-      <mesh position={[0, BASE_Y, 0]}>
+      <mesh
+        position={[0, BASE_Y, 0]}
+        // castShadow: proyecta sombras sobre el suelo
+        castShadow
+        // receiveShadow: recibe sombras de los laterales y baldas
+        receiveShadow
+      >
         {/* Geometría para el tablón horizontal de la base */}
         <boxGeometry args={[INNER_WIDTH, BOARD_THICKNESS, BOOKSHELF_DEPTH]} />
         {/* Material de madera para la base */}
@@ -83,7 +101,13 @@ function Bookshelf({ onSelectBook }) {
       </mesh>
 
       {/* Balda intermedia inferior (soporte del hueco central donde van los libros) */}
-      <mesh position={[0, LOWER_SHELF_Y, 0]}>
+      <mesh
+        position={[0, LOWER_SHELF_Y, 0]}
+        // castShadow: proyecta sombras hacia el hueco inferior
+        castShadow
+        // receiveShadow: recibe sombras arrojadas por los libros colocados encima
+        receiveShadow
+      >
         {/* Geometría para el tablón de la balda intermedia inferior */}
         <boxGeometry args={[INNER_WIDTH, BOARD_THICKNESS, BOOKSHELF_DEPTH]} />
         {/* Material de madera para la balda intermedia inferior */}
@@ -91,7 +115,13 @@ function Bookshelf({ onSelectBook }) {
       </mesh>
 
       {/* Balda intermedia superior (separador entre el hueco central y el superior) */}
-      <mesh position={[0, UPPER_SHELF_Y, 0]}>
+      <mesh
+        position={[0, UPPER_SHELF_Y, 0]}
+        // castShadow: proyecta sombras sobre los libros del hueco central
+        castShadow
+        // receiveShadow: recibe sombras sobre su cara superior
+        receiveShadow
+      >
         {/* Geometría para el tablón de la balda intermedia superior */}
         <boxGeometry args={[INNER_WIDTH, BOARD_THICKNESS, BOOKSHELF_DEPTH]} />
         {/* Material de madera para la balda intermedia superior */}
@@ -99,7 +129,13 @@ function Bookshelf({ onSelectBook }) {
       </mesh>
 
       {/* Tablón horizontal de la tapa superior */}
-      <mesh position={[0, TOP_Y, 0]}>
+      <mesh
+        position={[0, TOP_Y, 0]}
+        // castShadow: proyecta sombras sobre el hueco superior y la pared
+        castShadow
+        // receiveShadow: recibe sombras sobre su superficie
+        receiveShadow
+      >
         {/* Geometría para el tablón horizontal de la tapa */}
         <boxGeometry args={[INNER_WIDTH, BOARD_THICKNESS, BOOKSHELF_DEPTH]} />
         {/* Material de madera para la tapa superior */}

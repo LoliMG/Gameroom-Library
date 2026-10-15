@@ -15,6 +15,10 @@ const POINT_LIGHT_DECAY = 2                  // Atenuación cuadrática física 
 const POINT_LIGHT_POSITION = [0.9, 0.6, -1.4] // Cerca de la estantería (a su derecha) y a 1.6m sobre el suelo (Y=-1.0 + 1.6 = 0.6)
 const BULB_RADIUS = 0.05                     // Radio de 5 cm para la bombilla esférica visible
 
+// Constantes de configuración de sombras para la luz puntual
+const SHADOW_MAP_SIZE = 1024 // shadow-mapSize: resolución en píxeles del mapa de sombras (1024x1024 para bordes definidos y nítidos)
+const SHADOW_BIAS = -0.0005  // shadow-bias: desplazamiento numérico negativo para prevenir el acné de sombra (rayas o artefactos en superficies)
+
 function Lights() {
   return (
     // Grupo contenedor para todas las fuentes de luz de la escena
@@ -36,12 +40,19 @@ function Lights() {
       {/* - intensity: define la potencia lumínica o brillo de la fuente de luz puntual. */}
       {/* - distance: determina el radio límite en metros a partir del cual la luz ya no tiene efecto. */}
       {/* - decay: indica la velocidad de atenuación según la distancia (2 simula la ley física cuadrática inversa). */}
+      {/* - castShadow: habilita que esta fuente de luz proyecte sombras dinámicas sobre los objetos de la escena. */}
+      {/* - shadow-mapSize-width / height: resolución del búfer de profundidad para calcular las siluetas de las sombras. */}
+      {/* - shadow-bias: desfase leve para evitar que una superficie se proyecte sombra a sí misma indebidamente (shadow acne). */}
       <pointLight
         color={POINT_LIGHT_COLOR}
         intensity={POINT_LIGHT_INTENSITY}
         distance={POINT_LIGHT_DISTANCE}
         decay={POINT_LIGHT_DECAY}
         position={POINT_LIGHT_POSITION}
+        castShadow
+        shadow-mapSize-width={SHADOW_MAP_SIZE}
+        shadow-mapSize-height={SHADOW_MAP_SIZE}
+        shadow-bias={SHADOW_BIAS}
       />
 
       {/* 4. Malla esférica visible que representa físicamente la bombilla encendida */}
