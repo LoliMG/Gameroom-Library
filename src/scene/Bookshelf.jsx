@@ -1,13 +1,16 @@
 // Importación del componente Book usando el alias "@"
 import Book from '@/scene/Book'
-// Importación del listado de libros de prueba usando el alias "@"
-import placeholderBooks from '@/data/placeholderBooks'
+// Importación del listado de libros reales usando el alias "@"
+import books from '@/data/books'
 
 // Constantes de dimensiones de la estantería en metros (1 unidad = 1 metro)
 const BOOKSHELF_WIDTH = 1.2
 const BOOKSHELF_HEIGHT = 2.0
 const BOOKSHELF_DEPTH = 0.35
 const BOARD_THICKNESS = 0.04
+
+// Separación horizontal uniforme entre libros contiguos sobre la balda (1.5 cm)
+const BOOK_GAP = 0.015
 
 // Color marrón para el material de madera de todos los tablones
 const WOOD_COLOR = '#5c3a21'
@@ -24,7 +27,7 @@ const COMPARTMENT_HEIGHT = (INNER_HEIGHT - 2 * BOARD_THICKNESS) / 3
 // Coordenada Y de la base (tablón horizontal inferior)
 const BASE_Y = -BOOKSHELF_HEIGHT / 2 + BOARD_THICKNESS / 2
 
-// Coordenada Y de la primera balda intermedia (suelo del hueco central)
+// Coordenada Y de la primera balda intermedia (suelo del hueco central donde descansan los libros)
 const LOWER_SHELF_Y = BASE_Y + BOARD_THICKNESS + COMPARTMENT_HEIGHT
 
 // Coordenada Y de la segunda balda intermedia (techo del hueco central)
@@ -36,22 +39,26 @@ const TOP_Y = BOOKSHELF_HEIGHT / 2 - BOARD_THICKNESS / 2
 // Coordenada Y de la superficie de apoyo de la balda intermedia donde descansan los libros
 const SHELF_TOP_SURFACE_Y = LOWER_SHELF_Y + BOARD_THICKNESS / 2
 
-// Margen desde el borde frontal de la estantería para alinear el lomo de los libros
-const SPINE_FRONT_OFFSET = 0.03
+// Margen desde el borde delantero de la balda para alinear los lomos hacia el frente
+const FRONT_MARGIN = 0.04
 
-// Posición Z donde queda situado el lomo mirando hacia el frente (+Z)
-const SPINE_Z = BOOKSHELF_DEPTH / 2 - SPINE_FRONT_OFFSET
+// Posición Z frontal donde quedan alineados los lomos mirando hacia la cámara (+Z)
+const FRONT_SPINE_Z = BOOKSHELF_DEPTH / 2 - FRONT_MARGIN
 
 function Bookshelf() {
-  // Manejador que recibe el libro seleccionado al hacer clic y muestra su título y autor por consola
+  // Manejador que recibe el libro seleccionado al hacer clic y muestra su información por consola
   const handleSelectBook = (selectedBook) => {
-    console.log(`Libro seleccionado: "${selectedBook.title}" - Autor: ${selectedBook.author}`)
+    console.log(
+      `Libro seleccionado: "${selectedBook.title}" - Autor: ${selectedBook.author} - Editorial: ${selectedBook.publisher} - Páginas: ${selectedBook.pages}`
+    )
   }
 
-  // Calculamos el grosor total de los libros para colocarlos centrados de lado a lado
-  const totalBooksWidth = placeholderBooks.reduce((acc, b) => acc + b.width, 0)
+  // Ancho total ocupado por los libros de canto sumando sus grosores y los pequeños espacios entre ellos
+  const totalBooksWidth =
+    books.reduce((acc, b) => acc + b.width, 0) +
+    (books.length - 1) * BOOK_GAP
 
-  // Posición inicial en el eje X para el primer libro (centrado en la estantería)
+  // Posición inicial en el eje X para colocar el conjunto de libros centrado en la estantería
   const startX = -totalBooksWidth / 2
 
   return (
@@ -105,24 +112,27 @@ function Bookshelf() {
         <meshStandardMaterial color={WOOD_COLOR} />
       </mesh>
 
-      {/* Renderizado de los 5 libros apoyados de pie sobre la balda intermedia */}
-      {placeholderBooks.map((book, index) => {
-        // Cálculo del desplazamiento acumulado sumando el grosor de todos los libros anteriores
-        const previousWidth = placeholderBooks
+      {/* Renderizado de los 4 libros colocados de canto con lomo visible hacia la cámara */}
+      {books.map((book, index) => {
+        // Cálculo del grosor acumulado de los libros anteriores
+        const previousWidth = books
           .slice(0, index)
           .reduce((sum, prev) => sum + prev.width, 0)
 
-        // Cálculo de posición X: posición inicial + grosores anteriores + mitad del grosor actual
-        const posX = startX + previousWidth + book.width / 2
+        // Espacio acumulado por las pequeñas separaciones entre libros
+        const previousGaps = index * BOOK_GAP
 
-        // Cálculo de posición Y: superficie superior de la balda + mitad de la altura del libro para que descanse sobre ella
+        // Posición X: inicio + grosores previos + separaciones previas + mitad del grosor propio
+        const posX = startX + previousWidth + previousGaps + book.width / 2
+
+        // Posición Y: superficie superior de la balda + mitad de la altura para descansar sobre ella
         const posY = SHELF_TOP_SURFACE_Y + book.height / 2
 
-        // Cálculo de posición Z: lomo mirando al frente y alineado con el borde frontal de la balda
-        const posZ = SPINE_Z - book.depth / 2
+        // Posición Z: lomo alineado al frente (+Z) y profundidad del libro extendiéndose hacia el fondo de la balda
+        const posZ = FRONT_SPINE_Z - book.depth / 2
 
         return (
-          // Instancia del componente Book con sus dimensiones, color, posición calculada y manejador de selección
+          // Instancia del componente Book con dimensiones de lomo, texturas y posición calculada
           <Book
             key={book.id}
             book={book}
@@ -131,7 +141,6 @@ function Bookshelf() {
             width={book.width}
             height={book.height}
             depth={book.depth}
-            color={book.color}
           />
         )
       })}

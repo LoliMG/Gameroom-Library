@@ -1,0 +1,58 @@
+[
+  {
+    "isbn": "9788410140462",
+    "title": "Un Edén de Huesos en Flor",
+    "author": "Libertad Delgado",
+    "publisher": "NdeNovela",
+    "pages": 712,
+    "source": {
+      "title": "Manual / NdeNovela",
+      "author": "Manual",
+      "pages": "Manual",
+      "cover": "Usuario"
+    },
+    "complete": true
+  },
+  {
+    "isbn": "9788408279990",
+    "title": "Alas de sangre (Empíreo 1)",
+    "author": "Rebecca Yarros",
+    "publisher": "Planeta",
+    "pages": 736,
+    "source": {
+      "title": "Open Library",
+      "author": "Open Library",
+      "pages": "Usuario",
+      "cover": "Open Library"
+    },
+    "complete": true
+  },
+  {
+    "isbn": "9788408284550",
+    "title": "Alas de hierro (Empíreo 2)",
+    "author": "Rebecca Yarros",
+    "publisher": "Planeta",
+    "pages": 896,
+    "source": {
+      "title": "Open Library",
+      "author": "Open Library",
+      "pages": "Usuario",
+      "cover": "Open Library"
+    },
+    "complete": true
+  },
+  {
+    "isbn": "9788408297079",
+    "title": "Alas de ónix (Empíreo 3)",
+    "author": "Rebecca Yarros",
+    "publisher": "Planeta",
+    "pages": 896,
+    "source": {
+      "title": "Open Library",
+      "author": "Open Library",
+      "pages": "Usuario",
+      "cover": "Open Library"
+    },
+    "complete": true
+  }
+]

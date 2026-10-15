@@ -1,3 +1,5 @@
+// Importación de Suspense de React para pausar el render hasta que las texturas estén cargadas
+import { Suspense } from 'react'
 // Control orbital interactivo de drei para rotar y revisar la estantería de forma temporal
 import { OrbitControls } from '@react-three/drei'
 // Importación del componente de la estantería mediante el alias "@"
@@ -15,8 +17,11 @@ function Experience() {
       {/* Luz direccional con ángulo que aporta profundidad y sombreado a la estantería y los libros */}
       <directionalLight position={[4, 5, 4]} intensity={1.5} />
 
-      {/* Renderizado de la estantería completa con sus libros integrados */}
-      <Bookshelf />
+      {/* Suspense requerido por useTexture para gestionar la carga asíncrona de las portadas sin bloquear */}
+      <Suspense fallback={null}>
+        {/* Renderizado de la estantería completa con sus libros integrados */}
+        <Bookshelf />
+      </Suspense>
     </>
   )
 }
