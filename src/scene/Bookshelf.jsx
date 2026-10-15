@@ -45,13 +45,7 @@ const FRONT_MARGIN = 0.04
 // Posición Z frontal donde quedan alineados los lomos mirando hacia la cámara (+Z)
 const FRONT_SPINE_Z = BOOKSHELF_DEPTH / 2 - FRONT_MARGIN
 
-function Bookshelf() {
-  // Manejador que recibe el libro seleccionado al hacer clic y muestra su información por consola
-  const handleSelectBook = (selectedBook) => {
-    console.log(
-      `Libro seleccionado: "${selectedBook.title}" - Autor: ${selectedBook.author} - Editorial: ${selectedBook.publisher} - Páginas: ${selectedBook.pages}`
-    )
-  }
+function Bookshelf({ onSelectBook }) {
 
   // Ancho total ocupado por los libros de canto sumando sus grosores y los pequeños espacios entre ellos
   const totalBooksWidth =
@@ -136,7 +130,7 @@ function Bookshelf() {
           <Book
             key={book.id}
             book={book}
-            onSelect={handleSelectBook}
+            onSelect={onSelectBook}
             position={[posX, posY, posZ]}
             width={book.width}
             height={book.height}

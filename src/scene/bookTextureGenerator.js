@@ -2,9 +2,9 @@ import { CanvasTexture, SRGBColorSpace } from 'three'
 
 /**
  * Genera la textura del lomo del libro (Spine) con Canvas 2D
- * Calibrada con los colores, degradados y tipografías exactos de cada portada oficial:
+ * Título con tamaño maximizado para lectura clara a distancia, calibrado con la portada oficial:
  * - Autor arriba
- * - Título grande en vertical en el centro (rotado 90º)
+ * - Título grande en vertical en el centro (rotado 90º, solo título del libro sin la saga)
  * - Editorial abajo con marco decorativo
  */
 export function generateSpineTexture(book) {
@@ -82,18 +82,20 @@ export function generateSpineTexture(book) {
   ctx.lineTo(canvas.width - 55, 115)
   ctx.stroke()
 
-  // 5. Título del libro (centrado en vertical con rotación 90º y tamaño maximizado)
+  // 5. Título del libro (solo el título del libro, omitiendo la saga)
   ctx.save()
   ctx.translate(canvas.width / 2, canvas.height / 2)
   ctx.rotate(Math.PI / 2)
   ctx.fillStyle = titleColor
 
+  // Limpieza del título: elimina cualquier texto entre paréntesis como (Empíreo 1)
+  const cleanTitle = book.title.replace(/\s*\(.*?\)\s*/g, '').trim().toUpperCase()
+
   // Cálculo dinámico para hacer el título lo más grande posible dentro del lomo
   const maxTitleLength = 690
   let fontSize = 66
   ctx.font = `900 ${fontSize}px "Times New Roman", Georgia, serif`
-  const upperTitle = book.title.toUpperCase()
-  while (ctx.measureText(upperTitle).width > maxTitleLength && fontSize > 40) {
+  while (ctx.measureText(cleanTitle).width > maxTitleLength && fontSize > 40) {
     fontSize -= 2
     ctx.font = `900 ${fontSize}px "Times New Roman", Georgia, serif`
   }
@@ -111,7 +113,7 @@ export function generateSpineTexture(book) {
     ctx.shadowOffsetY = 2
   }
 
-  ctx.fillText(upperTitle, 0, 0)
+  ctx.fillText(cleanTitle, 0, 0)
   ctx.restore()
 
   // 6. Editorial (parte inferior del lomo con marco)

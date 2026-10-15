@@ -5,7 +5,7 @@ import { OrbitControls } from '@react-three/drei'
 // Importación del componente de la estantería mediante el alias "@"
 import Bookshelf from '@/scene/Bookshelf'
 
-function Experience() {
+function Experience({ onSelectBook }) {
   return (
     <>
       {/* Control orbital de cámara que permite rotar e inspeccionar el modelo 3D */}
@@ -19,8 +19,8 @@ function Experience() {
 
       {/* Suspense requerido por useTexture para gestionar la carga asíncrona de las portadas sin bloquear */}
       <Suspense fallback={null}>
-        {/* Renderizado de la estantería completa con sus libros integrados */}
-        <Bookshelf />
+        {/* Renderizado de la estantería pasando la función manejadora de selección de libro */}
+        <Bookshelf onSelectBook={onSelectBook} />
       </Suspense>
     </>
   )
