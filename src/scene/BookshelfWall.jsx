@@ -1,8 +1,8 @@
-// Importación del componente de estantería individual
+// Importación del componente de estantería individual y sus constantes de geometría
 import Bookshelf, {
-  BOOKSHELF_WIDTH,
+  BASE_SHELF_WIDTH,
   SHELF_COUNT,
-  INNER_WIDTH,
+  BOARD_THICKNESS,
   BOOK_GAP,
 } from '@/scene/Bookshelf'
 // Importación de la función pura de reparto por baldas
@@ -10,9 +10,9 @@ import { layoutBooksOnShelves } from '@/utils/shelfLayout'
 
 /**
  * Componente que cubre una pared con múltiples estanterías contiguas
- * y distribuye un conjunto de libros secuencialmente entre ellas.
+ * dimensionadas para encajar de esquina a esquina sin huecos ni solapes.
  *
- * @param {Array<Object>} books - Colección completa de libros
+ * @param {Array<Object>} books - Colección de libros a distribuir en esta pared
  * @param {number} wallLength - Longitud de la pared en metros (por defecto 4.0 m)
  * @param {Array<number>} position - Posición [x, y, z] del conjunto en la escena
  * @param {Array<number>} rotation - Rotación [x, y, z] del conjunto
@@ -25,40 +25,37 @@ function BookshelfWall({
   rotation = [0, 0, 0],
   onSelectBook,
 }) {
-  // Cálculo automático del número de estanterías que caben en la pared sin números fijos
-  const shelfCount = Math.floor(wallLength / BOOKSHELF_WIDTH)
+  // Número de módulos calculados para una distribución uniforme
+  const moduleCount = Math.max(1, Math.round(wallLength / BASE_SHELF_WIDTH))
+  // Ancho de cada módulo para cubrir con total precisión la pared
+  const moduleWidth = wallLength / moduleCount
+  // Ancho útil interior de cada estantería
+  const moduleInnerWidth = moduleWidth - 2 * BOARD_THICKNESS
 
-  // Ancho total que ocupan las estanterías colocadas una al lado de la otra
-  const totalShelvesWidth = shelfCount * BOOKSHELF_WIDTH
+  // Coordenada X inicial del primer módulo para centrar el bloque en la pared
+  const startX = -wallLength / 2 + moduleWidth / 2
 
-  // Coordenada X inicial para centrar el bloque de estanterías a lo largo de la pared
-  const startX = -totalShelvesWidth / 2 + BOOKSHELF_WIDTH / 2
-
-  // Reparto secuencial de libros: llenamos la primera estantería, los sobrantes pasan a la siguiente, etc.
+  // Reparto secuencial de libros módulo a módulo
   let unassignedBooks = [...books]
   const shelvesData = []
 
-  for (let i = 0; i < shelfCount; i++) {
-    // Averiguamos cuántos libros caben en las baldas de esta estantería mediante layoutBooksOnShelves
+  for (let i = 0; i < moduleCount; i++) {
+    // Calculamos cuántos libros caben en las baldas de este módulo
     const { usedCount } = layoutBooksOnShelves(unassignedBooks, {
-      innerWidth: INNER_WIDTH,
+      innerWidth: moduleInnerWidth,
       shelfCount: SHELF_COUNT,
       bookGap: BOOK_GAP,
     })
 
-    // Extraemos la porción de libros asignados a esta estantería
     const shelfBooks = unassignedBooks.slice(0, usedCount)
-
-    // Posición X individual de la estantería actual dentro del conjunto
-    const shelfX = startX + i * BOOKSHELF_WIDTH
+    const moduleX = startX + i * moduleWidth
 
     shelvesData.push({
       id: i,
-      x: shelfX,
+      x: moduleX,
       books: shelfBooks,
     })
 
-    // Los libros que no cupieron continúan hacia la siguiente estantería
     unassignedBooks = unassignedBooks.slice(usedCount)
   }
 
@@ -68,7 +65,11 @@ function BookshelfWall({
       {shelvesData.map(({ id, x, books: shelfBooks }) => (
         // Cada estantería individual se ubica contigua a la anterior a lo largo del eje X
         <group key={id} position={[x, 0, 0]}>
-          <Bookshelf books={shelfBooks} onSelectBook={onSelectBook} />
+          <Bookshelf
+            books={shelfBooks}
+            width={moduleWidth}
+            onSelectBook={onSelectBook}
+          />
         </group>
       ))}
     </group>

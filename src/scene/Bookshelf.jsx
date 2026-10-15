@@ -4,11 +4,11 @@ import Book from '@/scene/Book'
 import { layoutBooksOnShelves } from '@/utils/shelfLayout'
 
 // Constantes de dimensiones de la estantería en metros
-export const BOOKSHELF_WIDTH = 1.2    // Ancho total exterior de una estantería
+export const BASE_SHELF_WIDTH = 1.2   // Ancho base de referencia para un módulo de estantería
 export const SHELF_HEIGHT = 2.7       // Altura total de la estantería (de suelo a techo)
 export const BOOKSHELF_DEPTH = 0.35   // Profundidad de la estantería
 export const BOARD_THICKNESS = 0.04   // Grosor de todos los tablones de madera (4 cm)
-export const SHELF_COUNT = 6          // Número de niveles de baldas disponibles para libros
+export const SHELF_COUNT = 8          // Número de niveles de baldas disponibles para libros (8 baldas)
 
 // Separación uniforme entre libros contiguos sobre la misma balda (1.5 cm)
 export const BOOK_GAP = 0.015
@@ -16,13 +16,10 @@ export const BOOK_GAP = 0.015
 // Color madera para el material de todos los tablones
 const WOOD_COLOR = '#5c3a21'
 
-// Ancho interior libre para las baldas entre los paneles laterales
-export const INNER_WIDTH = BOOKSHELF_WIDTH - 2 * BOARD_THICKNESS
-
 // Altura interior libre disponible entre la base inferior y la tapa superior
 export const INNER_HEIGHT = SHELF_HEIGHT - 2 * BOARD_THICKNESS
 
-// Espacio vertical libre de cada hueco entre baldas calculado dinámicamente sin números fijos
+// Espacio vertical libre de cada hueco entre baldas para 8 niveles de libros y 7 tablones intermedios
 export const COMPARTMENT_HEIGHT =
   (INNER_HEIGHT - (SHELF_COUNT - 1) * BOARD_THICKNESS) / SHELF_COUNT
 
@@ -55,7 +52,17 @@ function getIntermediateBoardY(shelfIndex) {
   return getShelfSurfaceY(shelfIndex) - BOARD_THICKNESS / 2
 }
 
-function Bookshelf({ books = [], onSelectBook }) {
+/**
+ * Componente de estantería individual paramétrica en ancho
+ *
+ * @param {Array<Object>} books - Libros a colocar en este módulo
+ * @param {number} width - Ancho exterior del módulo en metros (por defecto BASE_SHELF_WIDTH = 1.2 m)
+ * @param {Function} onSelectBook - Callback al pulsar un libro
+ */
+function Bookshelf({ books = [], width = BASE_SHELF_WIDTH, onSelectBook }) {
+  // Ancho interior útil entre los paneles laterales para este ancho concreto
+  const innerWidth = width - 2 * BOARD_THICKNESS
+
   // Comprobación de seguridad: advertir en español si el libro más alto excede el hueco vertical
   if (books && books.length > 0) {
     const maxHeight = Math.max(...books.map((b) => b.height || 0))
@@ -66,14 +73,14 @@ function Bookshelf({ books = [], onSelectBook }) {
     }
   }
 
-  // Reparto algorítmico de los libros recibidos a lo largo de las 6 baldas
+  // Reparto algorítmico de los libros recibidos a lo largo de las 8 baldas
   const { placed } = layoutBooksOnShelves(books, {
-    innerWidth: INNER_WIDTH,
+    innerWidth,
     shelfCount: SHELF_COUNT,
     bookGap: BOOK_GAP,
   })
 
-  // Array de índices para generar los tablones intermedios (de balda 1 a SHELF_COUNT - 1)
+  // Array de índices para generar los 7 tablones intermedios (de balda 1 a SHELF_COUNT - 1)
   const intermediateBoardIndices = Array.from(
     { length: SHELF_COUNT - 1 },
     (_, i) => i + 1
@@ -84,7 +91,7 @@ function Bookshelf({ books = [], onSelectBook }) {
     <group>
       {/* 1. Lateral izquierdo vertical */}
       <mesh
-        position={[-BOOKSHELF_WIDTH / 2 + BOARD_THICKNESS / 2, 0, 0]}
+        position={[-width / 2 + BOARD_THICKNESS / 2, 0, 0]}
         castShadow
         receiveShadow
       >
@@ -94,7 +101,7 @@ function Bookshelf({ books = [], onSelectBook }) {
 
       {/* 2. Lateral derecho vertical */}
       <mesh
-        position={[BOOKSHELF_WIDTH / 2 - BOARD_THICKNESS / 2, 0, 0]}
+        position={[width / 2 - BOARD_THICKNESS / 2, 0, 0]}
         castShadow
         receiveShadow
       >
@@ -104,7 +111,7 @@ function Bookshelf({ books = [], onSelectBook }) {
 
       {/* 3. Tablón horizontal de la base */}
       <mesh position={[0, BASE_BOARD_Y, 0]} castShadow receiveShadow>
-        <boxGeometry args={[INNER_WIDTH, BOARD_THICKNESS, BOOKSHELF_DEPTH]} />
+        <boxGeometry args={[innerWidth, BOARD_THICKNESS, BOOKSHELF_DEPTH]} />
         <meshStandardMaterial color={WOOD_COLOR} />
       </mesh>
 
@@ -116,14 +123,14 @@ function Bookshelf({ books = [], onSelectBook }) {
           castShadow
           receiveShadow
         >
-          <boxGeometry args={[INNER_WIDTH, BOARD_THICKNESS, BOOKSHELF_DEPTH]} />
+          <boxGeometry args={[innerWidth, BOARD_THICKNESS, BOOKSHELF_DEPTH]} />
           <meshStandardMaterial color={WOOD_COLOR} />
         </mesh>
       ))}
 
       {/* 5. Tablón horizontal de la tapa superior */}
       <mesh position={[0, TOP_BOARD_Y, 0]} castShadow receiveShadow>
-        <boxGeometry args={[INNER_WIDTH, BOARD_THICKNESS, BOOKSHELF_DEPTH]} />
+        <boxGeometry args={[innerWidth, BOARD_THICKNESS, BOOKSHELF_DEPTH]} />
         <meshStandardMaterial color={WOOD_COLOR} />
       </mesh>
 

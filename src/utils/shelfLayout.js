@@ -80,4 +80,42 @@ export function layoutBooksOnShelves(books = [], config = {}) {
   return { placed, usedCount }
 }
 
+/**
+ * Calcula la colocación y reparto de libros para una pared completa de estanterías.
+ *
+ * @param {Array<Object>} books - Libros disponibles para colocar
+ * @param {number} wallLength - Longitud total de la pared a cubrir en metros
+ * @param {Object} [options] - Parámetros de geometría de los módulos
+ * @returns {{ placedBooks: Array<Object>, remainingBooks: Array<Object>, usedCount: number }}
+ */
+export function getWallPlacement(books = [], wallLength = 4.0, options = {}) {
+  const baseShelfWidth = options.baseShelfWidth ?? 1.2
+  const shelfCount = options.shelfCount ?? 8
+  const boardThickness = options.boardThickness ?? 0.04
+  const bookGap = options.bookGap ?? 0.015
+
+  const moduleCount = Math.max(1, Math.round(wallLength / baseShelfWidth))
+  const moduleWidth = wallLength / moduleCount
+  const moduleInnerWidth = moduleWidth - 2 * boardThickness
+
+  let remaining = [...books]
+  let totalUsed = 0
+
+  for (let i = 0; i < moduleCount; i++) {
+    const { usedCount } = layoutBooksOnShelves(remaining, {
+      innerWidth: moduleInnerWidth,
+      shelfCount,
+      bookGap,
+    })
+    totalUsed += usedCount
+    remaining = remaining.slice(usedCount)
+  }
+
+  return {
+    placedBooks: books.slice(0, totalUsed),
+    remainingBooks: books.slice(totalUsed),
+    usedCount: totalUsed,
+  }
+}
+
 export default layoutBooksOnShelves
