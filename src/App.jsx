@@ -6,6 +6,12 @@ import Experience from '@/scene/Experience'
 // Importación del panel de detalle HTML mediante el alias "@"
 import BookDetailPanel from '@/components/BookDetailPanel'
 
+// Coordenadas iniciales de la cámara para encuadrar la estantería de frente con la habitación alrededor
+const CAMERA_POSITION = [0, 0.45, 2.7]
+
+// Punto de mira inicial de OrbitControls centrado en la estantería apoyada contra la pared del fondo
+const ORBIT_TARGET = [0, 0.15, -1.825]
+
 function App() {
   // useState define el estado selectedBook que guarda el libro pulsado o null si no hay ninguno activo
   const [selectedBook, setSelectedBook] = useState(null)
@@ -19,11 +25,11 @@ function App() {
           height: '100vh',
           display: 'block',
         }}
-        // Configuración de la perspectiva de la cámara para encuadrar la estantería completa al cargar
-        camera={{ position: [0, 0, 3.8], fov: 45 }}
+        // Perspectiva de cámara ajustada para visualizar la estantería con el suelo y las paredes circundantes
+        camera={{ position: CAMERA_POSITION, fov: 52 }}
       >
-        {/* Renderizado de la escena principal pasando la función para actualizar el libro seleccionado */}
-        <Experience onSelectBook={setSelectedBook} />
+        {/* Renderizado de la escena principal pasando el manejador de selección y el objetivo de la cámara */}
+        <Experience onSelectBook={setSelectedBook} orbitTarget={ORBIT_TARGET} />
       </Canvas>
 
       {/* BookDetailPanel se coloca fuera del <Canvas> como hermano suyo porque es un componente HTML tradicional; */}
