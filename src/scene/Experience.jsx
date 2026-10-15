@@ -1,17 +1,22 @@
-// Importación del componente del cubo animado usando el alias "@"
-import SpinningBox from '@/scene/SpinningBox'
+// Control orbital interactivo de drei para rotar y revisar la estantería de forma temporal
+import { OrbitControls } from '@react-three/drei'
+// Importación del componente de la estantería mediante el alias "@"
+import Bookshelf from '@/scene/Bookshelf'
 
 function Experience() {
   return (
     <>
-      {/* Luz ambiental que ilumina todos los objetos de la escena uniformemente en todas direcciones */}
-      <ambientLight intensity={0.6} />
+      {/* Control orbital de cámara que permite rotar e inspeccionar el modelo 3D */}
+      <OrbitControls makeDefault />
 
-      {/* Luz direccional con rayos paralelos para crear sombreado y volumen en los objetos */}
-      <directionalLight position={[5, 5, 5]} intensity={1.2} />
+      {/* Luz ambiental que aporta iluminación general homogénea a toda la escena */}
+      <ambientLight intensity={0.7} />
 
-      {/* Componente 3D que renderiza el cubo rotatorio */}
-      <SpinningBox />
+      {/* Luz direccional con ángulo que aporta profundidad y sombreado a la estantería y los libros */}
+      <directionalLight position={[4, 5, 4]} intensity={1.5} />
+
+      {/* Renderizado de la estantería completa con sus libros integrados */}
+      <Bookshelf />
     </>
   )
 }
