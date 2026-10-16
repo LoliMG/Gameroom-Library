@@ -14,14 +14,11 @@ import doorUrl from '@/assets/models/furniture/door.glb?url'
 
 // Modelos varios (libros y accesorios de mesa)
 import bookTableUrl from '@/assets/models/other/book_open.glb?url'
-import bookMagicUrl from '@/assets/models/other/viking_book.glb?url'
 import candleUrl from '@/assets/models/other/candle.glb?url'
 import coffeeUrl from '@/assets/models/other/coffee.glb?url'
 
 // Modelos de vegetación y jardín
 import treesGardenUrl from '@/assets/models/flowers/trees.glb?url'
-import asiaticLilyUrl from '@/assets/models/flowers/asiatic_lily.glb?url'
-import azaleaUrl from '@/assets/models/flowers/azalea.glb?url'
 import lilies1Url from '@/assets/models/flowers/lilies1.glb?url'
 import purpleLiliesUrl from '@/assets/models/flowers/purple_lilies.glb?url'
 import roseInAPotUrl from '@/assets/models/flowers/rose_in_a_pot.glb?url'
@@ -32,13 +29,12 @@ export const TARGET_HEIGHT_SOFA = 0.85 // metros de alto (ancho ~2.0 m)
 export const TARGET_HEIGHT_COFFEE_TABLE = 0.45 // metros de alto (diámetro ~0.65-0.8 m)
 export const TARGET_SIZE_RUG = { width: 2.4, depth: 1.8 } // metros
 export const TARGET_HEIGHT_BOOK_TABLE = 0.21 // metros
-export const TARGET_HEIGHT_BOOK_MAGIC = 0.25 // metros
 export const TARGET_HEIGHT_GARDEN_TREE = 5.5 // metros (rango 4-8 m)
 export const TARGET_HEIGHT_INDOOR_TALL_PLANT = 1.5 // metros (rango 1.2-1.8 m)
 export const TARGET_HEIGHT_SMALL_FLOWER = 0.5 // metros
 
 export const modelsManifest = {
-  // Sofá para el rincón de lectura (pared a)
+  // Sofá para el rincón de lectura (pared b)
   sofa: {
     url: sofaUrl,
     file: 'furniture/sofa.glb',
@@ -128,21 +124,6 @@ export const modelsManifest = {
     },
   },
 
-  // Libro mágico que levita en el rincón
-  bookMagic: {
-    url: bookMagicUrl,
-    file: 'other/viking_book.glb',
-    targetDimensions: { width: 0.43, height: 0.25, depth: 0.27 },
-    scale: 0.00094,
-    groundOffset: 0.125,
-    credit: {
-      title: 'Viking book',
-      author: 'katrin.kor',
-      license: 'CC-BY-4.0',
-      url: 'https://skfb.ly/6TqoO',
-    },
-  },
-
   // Candelabro con vela de cobre para la mesa de café
   candle: {
     url: candleUrl,
@@ -166,10 +147,10 @@ export const modelsManifest = {
     scale: 0.001,
     groundOffset: 0.0,
     credit: {
-      title: 'Coffee cup',
-      author: 'Pendiente en credits.md',
-      license: 'N/A',
-      url: '',
+      title: 'Coffee',
+      author: 'Rosnandie Yikie',
+      license: 'CC-BY-4.0',
+      url: 'https://sketchfab.com/3d-models/coffee-963a9e5d288c42509886c5efd4fedd3c',
     },
   },
 
@@ -183,32 +164,6 @@ export const modelsManifest = {
       author: 'Jungle Jim',
       license: 'CC-BY-4.0',
       url: 'https://skfb.ly/pDzJR',
-    },
-  },
-
-  // Lirio asiático ornamental
-  asiaticLily: {
-    url: asiaticLilyUrl,
-    file: 'flowers/asiatic_lily.glb',
-    // Sin targetDimensions/scale/groundOffset: el jardín (Outside.jsx) mide el modelo y lo escala a una altura objetivo
-    credit: {
-      title: 'Asiatic Lily',
-      author: 'local.yany',
-      license: 'CC-BY-4.0',
-      url: 'https://skfb.ly/oYLWL',
-    },
-  },
-
-  // Arbusto de azalea
-  azalea: {
-    url: azaleaUrl,
-    file: 'flowers/azalea.glb',
-    // Sin targetDimensions/scale/groundOffset: el jardín (Outside.jsx) mide el modelo y lo escala a una altura objetivo
-    credit: {
-      title: 'Rhododendron - Azalea ( Free download )',
-      author: 'Nestaeric',
-      license: 'CC-BY-4.0',
-      url: 'https://skfb.ly/pzprt',
     },
   },
 

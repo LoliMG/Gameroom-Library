@@ -7,8 +7,7 @@ import { Shape, ExtrudeGeometry } from 'three'
 // Importación del manifiesto centralizado de modelos 3D
 import { modelsManifest } from '@/data/modelsManifest'
 
-// Constantes de dimensiones base de la habitación en metros
-export const DEFAULT_WALL_WIDTH = 4.5     // Ancho de la pared frontal c
+// Valores por defecto de la pared en metros (el ancho no tiene: lo marca la habitación, ROOM_WIDTH en Room.jsx)
 export const DEFAULT_WALL_HEIGHT = 2.8    // Altura de suelo a techo (Y = -1.0 a +1.8)
 export const DEFAULT_FLOOR_Y = -1.0       // Cota del suelo
 
@@ -145,7 +144,7 @@ function setupWindowMeshes(scene) {
  * de modo que solo el cristal de los arcos es translúcido.
  */
 function WindowWall({
-  width = DEFAULT_WALL_WIDTH,
+  width, // Obligatorio: ancho de la habitación (ventanal + fondo de estantería a cada lado)
   height = DEFAULT_WALL_HEIGHT,
   floorY = DEFAULT_FLOOR_Y,
   position = [0, 0, 0],

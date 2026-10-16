@@ -71,7 +71,7 @@ Los siguientes modelos 3D en formato `.glb` se encuentran en `src/assets/models/
 - **Libro abierto (`other/book_open.glb`)**: ["Book Open"](https://skfb.ly/6pMGN) por *FlukierJupiter*, licenciado bajo [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/).
 - **Libro vikingo / mágico (`other/viking_book.glb`)**: ["Viking book"](https://skfb.ly/6TqoO) por *katrin.kor*, licenciado bajo [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/).
 - **Candelabro con vela (`other/candle.glb`)**: ["Copper candlestick"](https://skfb.ly/oMYp6) por *shuvalov.di*, licenciado bajo [CC BY-SA 4.0](http://creativecommons.org/licenses/by-sa/4.0/).
-- **Taza de café (`other/coffee.glb`)**: [Modelo de taza y plato de café] aportado por el usuario.
+- **Taza de café (`other/coffee.glb`)**: ["Coffee"](https://sketchfab.com/3d-models/coffee-963a9e5d288c42509886c5efd4fedd3c) por *Rosnandie Yikie*, licenciado bajo [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/).
 
 ## Créditos de texturas
 
