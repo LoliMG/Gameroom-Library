@@ -11,7 +11,7 @@ import {
   paletteFromCover,
 } from '@/scene/bookTextureGenerator'
 
-function Book({ position, width, height, depth, onSelect, onGrab, book }) {
+function Book({ position, rotationY = 0, width, height, depth, onSelect, onGrab, book }) {
   // Carga reactiva de la textura de la portada con useTexture y espacio de color sRGB
   const coverTexture = useTexture(book.cover, (loadedTexture) => {
     loadedTexture.colorSpace = SRGBColorSpace
@@ -48,12 +48,16 @@ function Book({ position, width, height, depth, onSelect, onGrab, book }) {
     // Malla 3D del libro de canto con posición calculada, detector de clics y cálculo de sombras
     <mesh
       position={position}
+      rotation={[0, rotationY, 0]}
       onClick={handleClick}
       // Arrastre: se agarra con el botón izquierdo; lo suelta la zona de la balda que hay detrás (Bookshelf)
       onPointerDown={(event) => {
         if (event.button !== 0) return
         event.stopPropagation()
-        onGrab(book)
+        // Punto agarrado respecto al centro del libro, a lo largo de la balda (contando el giro si está volteado):
+        // así no salta a centrarse en el puntero
+        const local = event.object.worldToLocal(event.point.clone())
+        onGrab(book, local.x * Math.cos(rotationY) + local.z * Math.sin(rotationY))
       }}
       // castShadow: permite que el libro proyecte sombras sobre la balda y los libros contiguos
       castShadow

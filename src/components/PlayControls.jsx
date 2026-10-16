@@ -41,8 +41,8 @@ function PlayControls({ onLock }) {
         )}
         <p className="play-controls__hint">
           {locked
-            ? 'WASD para moverte · ratón para mirar · apunta y haz clic en un libro · mantén pulsado sobre un libro y suéltalo donde quieras de las estanterías · C o Esc para soltar'
-            : 'WASD para moverte · arrastra para mirar · clic en un libro para ver sus datos · arrastra un libro a cualquier sitio de las estanterías'}
+            ? 'WASD para moverte · Z para agacharte · ratón para mirar · apunta y haz clic en un libro · mantén pulsado sobre un libro y suéltalo donde quieras de las estanterías · C o Esc para soltar'
+            : 'WASD para moverte · Z para agacharte · arrastra para mirar · clic en un libro para ver sus datos · arrastra un libro a cualquier sitio de las estanterías'}
         </p>
       </div>
       {/* Mirilla: solo con el ratón capturado, marca el punto que se selecciona al hacer clic */}

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 // Contenedor Canvas de React Three Fiber y su gestor de eventos de puntero por defecto
 import { Canvas, events as createPointerEvents } from '@react-three/fiber'
 // Importación de la experiencia principal utilizando el alias "@"
@@ -13,6 +13,19 @@ const CAMERA_FOV = 60
 
 // Color de fondo oscuro y cálido para envolver la habitación y crear atmósfera nocturna/acogedora
 const BACKGROUND_COLOR = '#171413'
+
+// Libros volteados (con la portada hacia la sala en vez del lomo), por ISBN, guardados entre visitas
+const FLIPPED_STORAGE_KEY = 'fantasy-bookroom:flipped-books'
+
+// Lista guardada de ISBN volteados; si localStorage no responde o el dato no es válido, ninguno
+function loadFlippedIsbns() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(FLIPPED_STORAGE_KEY))
+    return Array.isArray(saved) ? saved.filter((isbn) => typeof isbn === 'string') : []
+  } catch {
+    return []
+  }
+}
 
 // Eventos de puntero de R3F con un cambio: con el ratón capturado, el clic apunta al centro (la mirilla)
 // en vez de a la última posición del cursor, que deja de moverse mientras está capturado
@@ -30,6 +43,19 @@ function centerPointerWhenLocked(store) {
 function App() {
   // useState define el estado selectedBook que guarda el libro pulsado o null si no hay ninguno activo
   const [selectedBook, setSelectedBook] = useState(null)
+  // ISBN de los libros puestos de frente (botón de volteo del panel)
+  const [flippedIsbns, setFlippedIsbns] = useState(loadFlippedIsbns)
+  const flippedSet = useMemo(() => new Set(flippedIsbns), [flippedIsbns])
+  useEffect(() => {
+    try {
+      localStorage.setItem(FLIPPED_STORAGE_KEY, JSON.stringify(flippedIsbns))
+    } catch {
+      // Sin almacenamiento (modo privado, cuota llena): siguen volteados hasta recargar
+    }
+  }, [flippedIsbns])
+  const toggleFlip = (isbn) =>
+    setFlippedIsbns((list) => (list.includes(isbn) ? list.filter((item) => item !== isbn) : [...list, isbn]))
+
   // Lienzo WebGL, necesario para capturar el ratón desde el botón HTML
   const canvasRef = useRef(null)
 
@@ -60,7 +86,7 @@ function App() {
         <color attach="background" args={[BACKGROUND_COLOR]} />
 
         {/* Renderizado de la escena principal pasando el manejador de selección de libros */}
-        <Experience onSelectBook={handleSelectBook} />
+        <Experience onSelectBook={handleSelectBook} flippedIsbns={flippedSet} />
       </Canvas>
 
       {/* Controles de juego: HTML fuera del Canvas, por encima del lienzo */}
@@ -79,6 +105,8 @@ function App() {
       <BookDetailPanel
         book={selectedBook}
         onClose={() => setSelectedBook(null)}
+        flipped={selectedBook ? flippedSet.has(selectedBook.isbn) : false}
+        onToggleFlip={() => toggleFlip(selectedBook.isbn)}
       />
     </>
   )

@@ -1,7 +1,14 @@
 import { useEffect } from 'react'
 import '@/styles/bookDetailPanel.css'
 
-function BookDetailPanel({ book, onClose }) {
+/**
+ * Panel con los datos del libro pulsado. El botón de volteo (abajo a la derecha) lo pone en la estantería
+ * con la portada hacia la sala, o lo devuelve de canto con el lomo.
+ *
+ * @param {boolean} flipped - Si el libro está ahora de frente
+ * @param {Function} onToggleFlip - Cambia entre de frente y de canto
+ */
+function BookDetailPanel({ book, onClose, flipped, onToggleFlip }) {
   // useEffect para escuchar la pulsación de la tecla Escape y cerrar el panel
   useEffect(() => {
     // Función que evalúa si la tecla pulsada es "Escape" para invocar onClose
@@ -56,6 +63,12 @@ function BookDetailPanel({ book, onClose }) {
             <strong>Páginas:</strong> {book.pages}
           </p>
         </div>
+      </div>
+
+      <div className="book-detail-footer">
+        <button type="button" className="book-detail-flip-btn" aria-pressed={flipped} onClick={onToggleFlip}>
+          {flipped ? 'Voltear: mostrar el lomo' : 'Voltear: mostrar la portada'}
+        </button>
       </div>
     </aside>
   )

@@ -124,8 +124,8 @@ export default layoutBooksOnShelves
  * Centro X más cercano a `x` donde cabe un libro de ancho `width` en una balda sin pisar a los demás.
  * Así se puede soltar un libro en cualquier punto: si cae encima de otro, se arrima al hueco libre más próximo.
  *
- * @param {Array<{ book: Object, x: number }>} others - Libros que ya están en esa balda
- * @param {number} width - Grosor del libro que se coloca
+ * @param {Array<{ x: number, width: number }>} others - Libros que ya están en esa balda (centro y hueco que ocupan)
+ * @param {number} width - Hueco que ocupa el libro que se coloca (su grosor, o su fondo si está de frente)
  * @param {number} x - Centro donde se ha soltado (coordenadas de la estantería, 0 = centro)
  * @param {number} innerWidth - Ancho útil de la balda
  * @param {number} [gap] - Separación mínima con los libros vecinos
@@ -135,7 +135,7 @@ export function fitOnShelf(others, width, x, innerWidth, gap = 0) {
   const half = width / 2
   // Tramos ocupados (con su separación), de izquierda a derecha; el último marca el panel derecho
   const occupied = others
-    .map((other) => [other.x - other.book.width / 2 - gap, other.x + other.book.width / 2 + gap])
+    .map((other) => [other.x - other.width / 2 - gap, other.x + other.width / 2 + gap])
     .sort((a, b) => a[0] - b[0])
   occupied.push([innerWidth / 2, innerWidth / 2])
 
@@ -150,4 +150,32 @@ export function fitOnShelf(others, width, x, innerWidth, gap = 0) {
     freeStart = Math.max(freeStart, end)
   }
   return best
+}
+
+/**
+ * Separa los libros de una balda que se pisan (por ejemplo al voltear uno, que pasa a ocupar su fondo en vez de su
+ * grosor): de izquierda a derecha cada libro se aparta lo justo del anterior y, si el último se sale por la derecha,
+ * se recorre al revés empujándolos hacia la izquierda. Los que no se pisan no se mueven.
+ *
+ * @param {Array<{ x: number, width: number }>} items - Centro y hueco de cada libro de la balda
+ * @param {number} innerWidth - Ancho útil de la balda
+ * @param {number} [gap] - Separación mínima entre libros
+ * @returns {number[]} Centro de cada libro, en el mismo orden que items
+ */
+export function separateOnShelf(items, innerWidth, gap = 0) {
+  const xs = items.map((item) => item.x)
+  const order = items.map((_, i) => i).sort((a, b) => xs[a] - xs[b])
+  // Hacia la derecha: cada borde izquierdo, como mínimo tras el anterior (el primero, tras el panel izquierdo)
+  let edge = -innerWidth / 2 - gap
+  for (const i of order) {
+    xs[i] = Math.max(xs[i], edge + gap + items[i].width / 2)
+    edge = xs[i] + items[i].width / 2
+  }
+  // Hacia la izquierda: ninguno pasa del panel derecho ni pisa al siguiente
+  edge = innerWidth / 2 + gap
+  for (const i of [...order].reverse()) {
+    xs[i] = Math.min(xs[i], edge - gap - items[i].width / 2)
+    edge = xs[i] - items[i].width / 2
+  }
+  return xs
 }

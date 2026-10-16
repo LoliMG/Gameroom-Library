@@ -1,5 +1,5 @@
-// Suspense pausa el render hasta que las texturas estén cargadas; el resto guarda el orden y el arrastre de los libros
-import { Suspense, useEffect, useRef, useState } from 'react'
+// Suspense pausa el render hasta que las texturas estén cargadas; el resto guarda el sitio y el arrastre de los libros
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react'
 // Environment de drei para reflejos sutiles
 import { Environment } from '@react-three/drei'
 // Importación de la paleta ambiental activa
@@ -19,8 +19,8 @@ import SofaCorner from '@/scene/SofaCorner'
 // Importación de la puerta de entrada de madera antigua (door.glb)
 import Door from '@/scene/Door'
 // Importación de la función pura de colocación en pared desde utils
-import { getWallPlacement, fitOnShelf } from '@/utils/shelfLayout'
-import { BOOKSHELF_DEPTH, SHELF_COUNT, SHELF_PITCH, BOOK_GAP, BASE_SHELF_WIDTH, BOARD_THICKNESS } from '@/scene/Bookshelf'
+import { getWallPlacement, fitOnShelf, separateOnShelf } from '@/utils/shelfLayout'
+import { BOOKSHELF_DEPTH, SHELF_COUNT, SHELF_PITCH, BASE_SHELF_WIDTH, BOARD_THICKNESS } from '@/scene/Bookshelf'
 // Mueble bajo integrado en las estanterías de la pared a
 import StorageCabinet, { CABINET_LENGTH_PER_HEIGHT } from '@/scene/StorageCabinet'
 // Rodapiés de madera y medidas del ventanal para saber dónde hay muro
@@ -121,15 +121,26 @@ function layoutAllBooks() {
   return placements
 }
 
+// Separación mínima al soltar un libro junto a otros: casi pegados (el reparto inicial usa BOOK_GAP de Bookshelf, más holgado)
+const DRAG_BOOK_GAP = 0.002
+
 // Clave de localStorage con el sitio de los libros que se han movido, por ISBN (el id cambia si se añaden libros)
 const PLACEMENTS_STORAGE_KEY = 'fantasy-bookroom:book-placements'
+
+// Módulos de una pared de estanterías y ancho útil de sus baldas (el mismo reparto que BookshelfWall)
+function moduleGeometry(wall) {
+  const moduleCount = Math.max(1, Math.round(wall.length / BASE_SHELF_WIDTH))
+  return { moduleCount, innerWidth: wall.length / moduleCount - 2 * BOARD_THICKNESS }
+}
+
+// Hueco que ocupa un libro a lo largo de la balda: su grosor de lomo o, volteado (portada al frente), su fondo
+const bookFootprint = (book, flippedIsbns) => (flippedIsbns.has(book.isbn) ? book.depth : book.width)
 
 // ¿El sitio guardado existe en las estanterías actuales? (lo que llega de localStorage puede estar viejo o roto)
 function isValidSlot(slot) {
   const wall = SHELF_WALLS.find((w) => w.key === slot?.wall)
   if (!wall) return false
-  const moduleCount = Math.max(1, Math.round(wall.length / BASE_SHELF_WIDTH))
-  const innerWidth = wall.length / moduleCount - 2 * BOARD_THICKNESS
+  const { moduleCount, innerWidth } = moduleGeometry(wall)
   return (
     Number.isInteger(slot.module) && slot.module >= 0 && slot.module < moduleCount &&
     Number.isInteger(slot.shelf) && slot.shelf >= 0 && slot.shelf < SHELF_COUNT - wall.startShelf &&
@@ -152,7 +163,7 @@ function loadPlacements() {
   })
 }
 
-function Experience({ onSelectBook }) {
+function Experience({ onSelectBook, flippedIsbns }) {
   // Sitio de cada libro: { book, wall, module, shelf, x }; cambia al arrastrarlo y se guarda en localStorage
   const [placements, setPlacements] = useState(loadPlacements)
   // Libro agarrado: el estado lo pinta sacado de la balda; la ref la leen la cámara y las baldas en el mismo evento
@@ -160,6 +171,8 @@ function Experience({ onSelectBook }) {
   const draggedRef = useRef(null)
   // Sitio del libro al agarrarlo (vuelve ahí si se suelta fuera de las baldas) y si se ha soltado sobre una balda
   const originRef = useRef(null)
+  // Distancia entre el punto agarrado y el centro del libro: el libro se mueve con la mano sin centrarse de golpe
+  const grabOffsetRef = useRef(0)
   const droppedRef = useRef(false)
 
   // Guarda los sitios al terminar cada arrastre (mientras se arrastra cambian en cada movimiento del puntero)
@@ -191,6 +204,27 @@ function Experience({ onSelectBook }) {
     return () => window.removeEventListener('pointerup', release)
   }, [])
 
+  // Lo que se pinta: cada libro con su volteo y, si al voltear alguno se pisan, apartados lo justo en su balda
+  const shownPlacements = useMemo(() => {
+    const shelves = new Map()
+    placements.forEach((p) => {
+      const key = `${p.wall}/${p.module}/${p.shelf}`
+      if (!shelves.has(key)) shelves.set(key, [])
+      shelves.get(key).push(p)
+    })
+    const shown = []
+    shelves.forEach((list) => {
+      const { innerWidth } = moduleGeometry(SHELF_WALLS.find((wall) => wall.key === list[0].wall))
+      const xs = separateOnShelf(
+        list.map((p) => ({ x: p.x, width: bookFootprint(p.book, flippedIsbns) })),
+        innerWidth,
+        DRAG_BOOK_GAP
+      )
+      list.forEach((p, i) => shown.push({ ...p, x: xs[i], flipped: flippedIsbns.has(p.book.isbn) }))
+    })
+    return shown
+  }, [placements, flippedIsbns])
+
   // Lleva el libro agarrado al hueco libre más cercano a x en esa balda (si no cabe, se queda donde estaba)
   const moveDragged = (slot, x, innerWidth) => {
     const bookId = draggedRef.current
@@ -200,7 +234,13 @@ function Experience({ onSelectBook }) {
       const others = list.filter(
         (p) => p !== dragged && p.wall === slot.wall && p.module === slot.module && p.shelf === slot.shelf
       )
-      const fitX = fitOnShelf(others, dragged.book.width, x, innerWidth, BOOK_GAP)
+      const fitX = fitOnShelf(
+        others.map((p) => ({ x: p.x, width: bookFootprint(p.book, flippedIsbns) })),
+        bookFootprint(dragged.book, flippedIsbns),
+        x - grabOffsetRef.current,
+        innerWidth,
+        DRAG_BOOK_GAP
+      )
       if (fitX === null) return list
       const sameSlot = dragged.wall === slot.wall && dragged.module === slot.module && dragged.shelf === slot.shelf
       // Sin cambio visible: misma lista, así React no vuelve a pintar las estanterías
@@ -211,8 +251,9 @@ function Experience({ onSelectBook }) {
 
   const bookDrag = {
     draggedId,
-    grab: (book) => {
+    grab: (book, offsetX = 0) => {
       draggedRef.current = book.id
+      grabOffsetRef.current = offsetX
       originRef.current = placements.find((p) => p.book.id === book.id)
       droppedRef.current = false
       setDraggedId(book.id)
@@ -256,7 +297,7 @@ function Experience({ onSelectBook }) {
           <BookshelfWall
             key={wall.key}
             wallKey={wall.key}
-            placements={placements.filter((p) => p.wall === wall.key)}
+            placements={shownPlacements.filter((p) => p.wall === wall.key)}
             wallLength={wall.length}
             position={wall.position}
             rotation={wall.rotation}

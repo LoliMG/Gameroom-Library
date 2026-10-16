@@ -24,6 +24,31 @@ export function calcularGrosor(pages) {
   return Math.max(MIN_DEPTH, (pages || 0) * DEPTH_PER_PAGE)
 }
 
+// Editorial según el código de editorial del ISBN, para los libros que la traen vacía en booksMeta.json
+const PUBLISHER_BY_ISBN_PREFIX = {
+  '97884082571': 'Crossbooks', // Una corte de… (Planeta, sello Crossbooks)
+  '978841835': 'Hidra',        // Trono de cristal
+  '978849043': 'Montena',      // Guardianes de la Ciudadela, El secreto de Xein
+  '978841746': 'Montena',      // La misión de Rox
+  '978846753': 'SM',           // Crónicas de la Torre
+}
+const publisherFromIsbn = (isbn) =>
+  Object.entries(PUBLISHER_BY_ISBN_PREFIX).find(([prefix]) => isbn.startsWith(prefix))?.[1]
+
+// Título del lomo cuando el título trae la saga u otros añadidos que no son el título (el panel muestra el completo)
+const SPINE_TITLES = {
+  '9788467502695': 'La Resistencia',                 // Memorias de Idhún I. …
+  '9788467505597': 'Tríada',                         // Memorias de Idhún II. …
+  '9788467511482': 'Panteón',                        // Memorias de Idhún III. …
+  '9788490439319': 'El bestiario de Axlin',          // Guardianes de la Ciudadela. …
+  '9788467539677': 'El valle de los lobos',          // Crónicas de la Torre I: …
+  '9788467539684': 'La maldición del maestro',       // Crónicas de la Torre II: …
+  '9788467539691': 'La llamada de los muertos',      // Crónicas de la Torre III: …
+  '9788467539707': 'Fenris, el elfo',                // Crónicas de la Torre IV: …
+  '9788408257127': 'Una corte de alas y ruina',      // … Nueva presentación
+  '9788408257134': 'Una corte de hielo y estrellas', // … Nueva presentación
+}
+
 // Configuración estilística personalizada para cada libro (paletas y sinopsis calibradas con las cubiertas)
 const bookStyles = {
   '9788410140462': {
@@ -81,6 +106,10 @@ const bookStyles = {
 }
 
 // Transformación y exportación del array completo de libros con dimensiones para visualización de canto
+// Escala de los libros respecto a sus medidas reales: algo más grandes para que se lean y se cojan mejor en la sala.
+// El más alto (0.215 m × 1.2 ≈ 0.26 m) sigue cabiendo en el hueco entre baldas (0.29 m)
+const BOOK_SCALE = 1.2
+
 // Solo los libros con portada: con cover null useTexture lanza un error y la escena entera no carga
 const books = booksMeta.filter((item) => coverMap[item.isbn]).map((item, index) => {
   const coverImage = coverMap[item.isbn]
@@ -94,13 +123,13 @@ const books = booksMeta.filter((item) => coverMap[item.isbn]).map((item, index) 
     isbn: item.isbn,
     title: item.title,
     author: item.author,
-    publisher: item.publisher || style.publisher || 'Editorial',
+    publisher: item.publisher || style.publisher || publisherFromIsbn(item.isbn) || 'Editorial',
     pages: item.pages,
     cover: coverImage,
     // Dimensiones de canto: width = grosor lomo, height = alto, depth = fondo de la cubierta
-    width: spineThickness,
-    height: style.coverHeight || 0.21,
-    depth: style.coverDepth || 0.14,
+    width: spineThickness * BOOK_SCALE,
+    height: (style.coverHeight || 0.21) * BOOK_SCALE,
+    depth: (style.coverDepth || 0.14) * BOOK_SCALE,
     color: '#f5eee3',
     spineGradient: style.spineGradient,
     spineTitleColor: style.spineTitleColor,
@@ -110,6 +139,7 @@ const books = booksMeta.filter((item) => coverMap[item.isbn]).map((item, index) 
     backColor: style.backColor,
     backTextColor: style.backTextColor,
     synopsis: style.synopsis,
+    spineTitle: SPINE_TITLES[item.isbn],
   }
 })
 

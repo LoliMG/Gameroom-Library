@@ -103,6 +103,30 @@
   color: var(--panel-text-primary);
 }
 
+/* Pie del panel: empujado al fondo, con el botón de volteo a la derecha */
+.book-detail-footer {
+  margin-top: auto;
+  padding-top: var(--panel-spacing-lg);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.book-detail-flip-btn {
+  background: var(--panel-close-bg);
+  color: var(--panel-accent);
+  border: 1px solid var(--panel-accent);
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.book-detail-flip-btn:hover,
+.book-detail-flip-btn:focus-visible {
+  background: rgba(226, 192, 112, 0.15);
+}
+
 /* Pantallas móviles (< 600px): el panel ocupa todo el ancho y se coloca abajo */
 @media (max-width: 600px) {
   .book-detail-panel {

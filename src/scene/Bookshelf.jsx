@@ -45,6 +45,8 @@ const FRONT_MARGIN = 0.04
 
 // Posición Z frontal donde quedan alineados los lomos mirando hacia el interior (+Z)
 const FRONT_SPINE_Z = BOOKSHELF_DEPTH / 2 - FRONT_MARGIN
+// Libro volteado: -90° en Y lleva la portada (cara +X del libro) hacia la sala (+Z), con el lomo a la izquierda
+const FLIPPED_BOOK_ROTATION_Y = -Math.PI / 2
 // Cuánto sale de la balda el libro que se está arrastrando
 const HELD_BOOK_PULL = 0.06
 
@@ -66,7 +68,8 @@ function getIntermediateBoardY(shelfIndex) {
  * Componente de estantería individual paramétrica en ancho
  *
  * @param {{ wall: string, module: number }} slot - Pared y módulo de esta estantería (parte del sitio de sus libros)
- * @param {Array<Object>} placements - Libros de este módulo con su balda (contada desde startShelf) y su centro X
+ * @param {Array<Object>} placements - Libros de este módulo con su balda (contada desde startShelf), su centro X y si
+ *   están volteados (de frente, con la portada hacia la sala)
  * @param {number} width - Ancho exterior del módulo en metros (por defecto BASE_SHELF_WIDTH = 1.2 m)
  * @param {Function} onSelectBook - Callback al pulsar un libro
  * @param {Object} bookDrag - Arrastre de libros: { draggedId, grab(book), hover(slot, x, innerWidth), drop(slot, x, innerWidth) }
@@ -180,11 +183,12 @@ function Bookshelf({ slot, placements = [], width = BASE_SHELF_WIDTH, onSelectBo
       ))}
 
       {/* 8. Libros en su sitio guardado (balda y centro X) */}
-      {placements.map(({ book, shelf, x }) => {
+      {placements.map(({ book, shelf, x, flipped }) => {
         // Altura Y: cota de apoyo de la balda + mitad de la altura del libro
         const posY = getShelfSurfaceY(shelf + startShelf) + book.height / 2
         // Profundidad Z: lomo al frente (+Z) y cuerpo proyectado hacia el fondo; el libro agarrado sale un poco
-        const posZ = FRONT_SPINE_Z - book.depth / 2 + (book.id === bookDrag.draggedId ? HELD_BOOK_PULL : 0)
+        // Volteado, el libro gira 90° y lo que va hacia el fondo es su grosor en vez de su fondo
+        const posZ = FRONT_SPINE_Z - (flipped ? book.width : book.depth) / 2 + (book.id === bookDrag.draggedId ? HELD_BOOK_PULL : 0)
 
         return (
           <Book
@@ -192,6 +196,7 @@ function Bookshelf({ slot, placements = [], width = BASE_SHELF_WIDTH, onSelectBo
             book={book}
             onSelect={onSelectBook}
             onGrab={bookDrag.grab}
+            rotationY={flipped ? FLIPPED_BOOK_ROTATION_Y : 0}
             position={[x, posY, posZ]}
             width={book.width}
             height={book.height}

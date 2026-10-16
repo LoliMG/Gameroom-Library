@@ -82,14 +82,14 @@ export function generateSpineTexture(book) {
   ctx.lineTo(canvas.width - 55, 115)
   ctx.stroke()
 
-  // 5. Título del libro (solo el título del libro, omitiendo la saga)
+  // 5. Título del libro: el del lomo si lo tiene (sin la saga), y si no el título sin lo que va entre paréntesis
   ctx.save()
   ctx.translate(canvas.width / 2, canvas.height / 2)
   ctx.rotate(Math.PI / 2)
   ctx.fillStyle = titleColor
 
   // Limpieza del título: elimina cualquier texto entre paréntesis como (Empíreo 1)
-  const cleanTitle = book.title.replace(/\s*\(.*?\)\s*/g, '').trim().toUpperCase()
+  const cleanTitle = (book.spineTitle ?? book.title).replace(/\s*\(.*?\)\s*/g, '').trim().toUpperCase()
 
   // Cálculo dinámico para hacer el título lo más grande posible dentro del lomo
   const maxTitleLength = 690

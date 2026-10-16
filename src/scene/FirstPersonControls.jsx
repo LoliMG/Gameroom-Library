@@ -3,7 +3,7 @@ import { useEffect, useRef } from 'react'
 // useFrame mueve la cámara en cada fotograma; useThree da acceso a cámara, lienzo y escena
 import { useFrame, useThree } from '@react-three/fiber'
 // Box3 para las cajas de colisión de los muebles
-import { Box3 } from 'three'
+import { Box3, MathUtils } from 'three'
 // Dimensiones de la habitación para limitar el paseo al interior
 import { ROOM_WIDTH, BACK_WALL_Z, FRONT_WALL_INNER_Z, FLOOR_Y } from '@/scene/Room'
 // Fondo de las estanterías de las paredes a y d (el jugador no puede meterse en ellas)
@@ -11,6 +11,10 @@ import { BOOKSHELF_DEPTH } from '@/scene/Bookshelf'
 
 // Altura de los ojos sobre el suelo y punto de partida (junto al ventanal, mirando a las estanterías del fondo)
 const EYE_HEIGHT = 1.25 // Altura de una persona pequeña
+// Agacharse: mientras se mantiene pulsada la Z los ojos bajan a esta altura, con una transición suave
+const CROUCH_KEY = 'KeyZ'
+const CROUCH_EYE_HEIGHT = 0.8
+const CROUCH_DAMPING = 10 // Rapidez de la transición (mayor = más rápida)
 const START_POSITION = [-0.4, FLOOR_Y + EYE_HEIGHT, 3.0]
 const START_YAW = 0       // Giro horizontal: 0 = mirando hacia la pared d (-Z)
 const START_PITCH = -0.08 // Ligeramente hacia abajo
@@ -65,15 +69,15 @@ function FirstPersonControls({ heldBookRef }) {
     camera.rotation.set(START_PITCH, START_YAW, 0, 'YXZ')
   }, [camera])
 
-  // Teclado: guarda qué teclas de movimiento están pulsadas
+  // Teclado: guarda qué teclas de movimiento (y la de agacharse) están pulsadas
   useEffect(() => {
     const onKeyDown = (event) => {
-      if (!KEY_DIRECTIONS[event.code] || event.target.closest?.('input, textarea')) return
+      if ((!KEY_DIRECTIONS[event.code] && event.code !== CROUCH_KEY) || event.target.closest?.('input, textarea')) return
       pressedKeys.current.add(event.code)
       event.preventDefault() // Evita que las flechas desplacen la página
     }
     const onKeyUp = (event) => pressedKeys.current.delete(event.code)
-    // Si la ventana pierde el foco con una tecla pulsada, no seguir caminando solo
+    // Si la ventana pierde el foco con una tecla pulsada, no seguir caminando (ni agachado) solo
     const onBlur = () => pressedKeys.current.clear()
     window.addEventListener('keydown', onKeyDown)
     window.addEventListener('keyup', onKeyUp)
@@ -131,10 +135,15 @@ function FirstPersonControls({ heldBookRef }) {
       if (found.length > 0) colliders.current = found
     }
 
-    // Dirección de entrada sumando las teclas pulsadas
+    // Altura de los ojos: baja al agacharse y vuelve al soltar la tecla
+    const eyeHeight = pressedKeys.current.has(CROUCH_KEY) ? CROUCH_EYE_HEIGHT : EYE_HEIGHT
+    camera.position.setY(MathUtils.damp(camera.position.y, FLOOR_Y + eyeHeight, CROUCH_DAMPING, Math.min(delta, MAX_FRAME_DELTA)))
+
+    // Dirección de entrada sumando las teclas de movimiento pulsadas
     let inputX = 0
     let inputZ = 0
     pressedKeys.current.forEach((code) => {
+      if (!KEY_DIRECTIONS[code]) return
       inputX += KEY_DIRECTIONS[code][0]
       inputZ += KEY_DIRECTIONS[code][1]
     })
