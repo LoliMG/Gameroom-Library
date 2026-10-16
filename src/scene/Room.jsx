@@ -19,13 +19,15 @@ import { useMemo } from 'react'
 // Hook useTexture de drei para la carga de mapas de textura PBR
 import { useTexture } from '@react-three/drei'
 // Importación de constantes de Three.js para repetición y espacio de color
-import { RepeatWrapping, SRGBColorSpace } from 'three'
+import { RepeatWrapping, SRGBColorSpace, Shape, ShapeGeometry } from 'three'
 // Importación de las texturas de suelo de madera oscura (Poly Haven, CC0)
 import woodDiffUrl from '@/assets/textures/floor/wood_diff_1k.jpg'
 import woodNorUrl from '@/assets/textures/floor/wood_nor_1k.jpg'
 import woodRoughUrl from '@/assets/textures/floor/wood_rough_1k.jpg'
 // Importación del componente del ventanal para la pared c
-import WindowWall, { WALL_COLOR, WALL_THICKNESS as FRONT_WALL_THICKNESS, WINDOW_WIDTH } from '@/scene/WindowWall'
+import WindowWall, { WALL_THICKNESS as FRONT_WALL_THICKNESS, WINDOW_WIDTH } from '@/scene/WindowWall'
+// Papel pintado de las paredes
+import useWallpaper, { WALLPAPER_TILE_SIZE, WALLPAPER_TINT } from '@/hooks/useWallpaper'
 // Fondo de las estanterías (para dejar muro a los lados del ventanal)
 import { BOOKSHELF_DEPTH } from '@/scene/Bookshelf'
 
@@ -45,7 +47,31 @@ const FLOOR_TEXTURE_TILE_SIZE = 1.0
 const FLOOR_REPEAT_X = ROOM_WIDTH / FLOOR_TEXTURE_TILE_SIZE // 4.5 / 1.0 = 4.5 repeticiones a lo ancho
 const FLOOR_REPEAT_Y = ROOM_DEPTH / FLOOR_TEXTURE_TILE_SIZE // 6.0 / 1.0 = 6.0 repeticiones a lo largo
 
-function Room() {
+// Pared b con el hueco de la puerta recortado desde el suelo (contorno en U, sin agujeros interiores).
+// Coordenadas locales del plano: X a lo largo de la pared (= Z del mundo - ROOM_CENTER_Z), Y en altura desde su centro.
+function createDoorWallGeometry({ minZ, maxZ, height }) {
+  const halfDepth = ROOM_DEPTH / 2
+  const halfHeight = ROOM_HEIGHT / 2
+  const holeStart = minZ - ROOM_CENTER_Z
+  const holeEnd = maxZ - ROOM_CENTER_Z
+  const holeTop = -halfHeight + height
+  const shape = new Shape()
+  shape.moveTo(-halfDepth, -halfHeight)
+  shape.lineTo(holeStart, -halfHeight)
+  shape.lineTo(holeStart, holeTop)
+  shape.lineTo(holeEnd, holeTop)
+  shape.lineTo(holeEnd, -halfHeight)
+  shape.lineTo(halfDepth, -halfHeight)
+  shape.lineTo(halfDepth, halfHeight)
+  shape.lineTo(-halfDepth, halfHeight)
+  shape.closePath()
+  return new ShapeGeometry(shape)
+}
+
+/**
+ * @param {{ minZ: number, maxZ: number, height: number }} doorOpening - Hueco de la puerta en la pared b (m)
+ */
+function Room({ doorOpening }) {
   // Carga asíncrona de mapas PBR de madera oscura para el suelo (useTexture suspende hasta que están listos)
   const loadedTextures = useTexture({
     map: woodDiffUrl,
@@ -72,6 +98,16 @@ function Room() {
       roughnessMap: setupTexture(loadedTextures.roughnessMap),
     }
   }, [loadedTextures])
+
+  // Geometría de la pared b con el hueco de la puerta; se recalcula solo si cambia el hueco
+  const { minZ, maxZ, height } = doorOpening
+  const doorWallGeometry = useMemo(() => createDoorWallGeometry({ minZ, maxZ, height }), [minZ, maxZ, height])
+
+  // Papel pintado: los planos de las paredes d y a tienen coordenadas de textura de 0 a 1 (repetición = medida / baldosa);
+  // la pared b con el hueco las tiene en metros (repetición = 1 / baldosa)
+  const wallpaperD = useWallpaper(ROOM_WIDTH / WALLPAPER_TILE_SIZE, ROOM_HEIGHT / WALLPAPER_TILE_SIZE)
+  const wallpaperA = useWallpaper(ROOM_DEPTH / WALLPAPER_TILE_SIZE, ROOM_HEIGHT / WALLPAPER_TILE_SIZE)
+  const wallpaperB = useWallpaper(1 / WALLPAPER_TILE_SIZE, 1 / WALLPAPER_TILE_SIZE)
 
   return (
     // Grupo contenedor 3D que agrupa el suelo y las 3 paredes visibles
@@ -107,8 +143,8 @@ function Room() {
       >
         {/* Geometría plana con ancho de la estancia y altura vertical */}
         <planeGeometry args={[ROOM_WIDTH, ROOM_HEIGHT]} />
-        {/* Material estándar liso con tono beige cálido suave */}
-        <meshStandardMaterial color={WALL_COLOR} />
+        {/* Papel pintado botánico */}
+        <meshStandardMaterial map={wallpaperD} color={WALLPAPER_TINT} />
       </mesh>
 
       {/* 3. PARED IZQUIERDA (a): Plano vertical en el lateral izquierdo alargado a 6 metros */}
@@ -122,11 +158,11 @@ function Room() {
       >
         {/* Geometría plana con la nueva profundidad de la estancia (6.0) y altura vertical */}
         <planeGeometry args={[ROOM_DEPTH, ROOM_HEIGHT]} />
-        {/* Material estándar liso con tono beige cálido suave */}
-        <meshStandardMaterial color={WALL_COLOR} />
+        {/* Papel pintado botánico */}
+        <meshStandardMaterial map={wallpaperA} color={WALLPAPER_TINT} />
       </mesh>
 
-      {/* 4. PARED DERECHA (b): Plano vertical en el lateral derecho alargado a 6 metros */}
+      {/* 4. PARED DERECHA (b): Plano vertical en el lateral derecho alargado a 6 metros, con el hueco de la puerta */}
       {/* Rotación: -90 grados (-PI / 2) sobre el eje Y para que la normal apunte hacia la IZQUIERDA (-X, interior) */}
       {/* Posición: En el límite derecho X = +ROOM_WIDTH / 2 (+2.6), centrada en Z=ROOM_CENTER_Z (+1.0) */}
       <mesh
@@ -135,10 +171,10 @@ function Room() {
         // receiveShadow: permite proyectar sombras sobre la pared lateral derecha
         receiveShadow
       >
-        {/* Geometría plana con la nueva profundidad de la estancia (6.0) y altura vertical */}
-        <planeGeometry args={[ROOM_DEPTH, ROOM_HEIGHT]} />
-        {/* Material estándar liso con tono beige cálido suave */}
-        <meshStandardMaterial color={WALL_COLOR} />
+        {/* Pared de 6.0 × 2.8 m con el hueco de la puerta recortado */}
+        <primitive object={doorWallGeometry} attach="geometry" />
+        {/* Papel pintado botánico */}
+        <meshStandardMaterial map={wallpaperB} color={WALLPAPER_TINT} />
       </mesh>
 
       {/* 5. PARED FRONTAL (c): Gran ventanal de cuarterones y cristal translúcido */}

@@ -8,13 +8,10 @@ import { PALETTE } from '@/scene/ambiencePalette'
 import { modelsManifest } from '@/data/modelsManifest'
 // Generador pseudoaleatorio con semilla: el jardín sale siempre igual
 import { createRandom } from '@/utils/random'
-// Recorte por alfa para las hojas con transparencia (evita fallos de orden de dibujo)
-import { applyAlphaCutout } from '@/utils/alphaCutout'
+// Mide, centra y escala cada modelo a su altura objetivo
+import { prepareModel } from '@/utils/prepareModel'
 // Clases de Three.js para el cielo y para medir y centrar los modelos
-import { CanvasTexture, SRGBColorSpace, RepeatWrapping, Box3, Vector3, Group, PropertyBinding } from 'three'
-// Clonado que respeta esqueletos: con clone() normal, un modelo con esqueleto (como azalea.glb) dibuja todas sus copias
-// amontonadas en el sitio del original; así fue como apareció una "flor flotante" dentro de la sala
-import { clone as cloneWithSkeleton } from 'three/examples/jsm/utils/SkeletonUtils.js'
+import { CanvasTexture, SRGBColorSpace, RepeatWrapping } from 'three'
 // Cota del suelo de la habitación (el jardín está al mismo nivel)
 import { FLOOR_Y } from '@/scene/Room'
 
@@ -24,18 +21,10 @@ const SKY_SIZE = [20, 12]
 const GROUND_Y = FLOOR_Y - 0.02      // Un poco por debajo del suelo interior para no parpadear con él
 const GROUND_POSITION = [0, GROUND_Y, 10.0]
 const GROUND_SIZE = [20, 12]
-// Verde musgo muy oscuro: fondo de la textura de hierba (el suelo que asoma se lee como sombra del sotobosque)
-const GROUND_COLOR = '#141c0d'
-
-// --- Textura de hierba generada por código (sin archivos externos) ---
-const GRASS_SEED = 23
-const GRASS_TEXTURE_SIZE = 256          // Resolución de una baldosa (px, potencia de 2 para los mipmaps)
-const GRASS_TILE_SIZE = 1.0             // Metros de suelo que cubre una baldosa
-const GRASS_BLADES = 3500               // Briznas por baldosa
-const GRASS_BLADE_LENGTH = [5, 14]      // Largo de una brizna (px)
-const GRASS_BLADE_WIDTH = 1.5           // Grosor de una brizna (px)
-// Verdes oscuros: el suelo no tiene iluminación, así que estos son los colores finales en pantalla
-const GRASS_COLORS = ['#1b2a10', '#22351a', '#2c4220', '#16220c', '#33491f']
+// El césped de grass_texture.glb es un plano de 4 × 4 m: sus mapas se repiten cada 4 m sobre todo el suelo del jardín
+const GRASS_TILE_SIZE = 4
+// Mapas del material que hay que repetir
+const GRASS_MAP_KEYS = ['map', 'normalMap', 'roughnessMap', 'metalnessMap', 'aoMap']
 
 // --- Patrón del jardín ---
 const GARDEN_SEED = 11          // Semilla fija del reparto
@@ -84,43 +73,29 @@ const GARDEN_TREES = [
   { node: 'Tree EZTree0.Medium011', position: [5.8, 9.1], height: 3.4, rotationY: 0.5 },
 ]
 
-// Dibuja una baldosa de hierba: briznas cortas en varios verdes con orientación al azar.
-// Cada brizna se dibuja también desplazada una baldosa en cada dirección para que la textura se repita sin costuras.
-function createGrassTexture() {
-  const random = createRandom(GRASS_SEED)
-  const size = GRASS_TEXTURE_SIZE
-  const canvas = document.createElement('canvas')
-  canvas.width = size
-  canvas.height = size
-  const ctx = canvas.getContext('2d')
-  ctx.fillStyle = GROUND_COLOR
-  ctx.fillRect(0, 0, size, size)
-  ctx.lineWidth = GRASS_BLADE_WIDTH
-  ctx.lineCap = 'round'
-  for (let i = 0; i < GRASS_BLADES; i++) {
-    const x = random() * size
-    const y = random() * size
-    const length = GRASS_BLADE_LENGTH[0] + random() * (GRASS_BLADE_LENGTH[1] - GRASS_BLADE_LENGTH[0])
-    const angle = random() * Math.PI * 2
-    const dx = Math.cos(angle) * length
-    const dy = Math.sin(angle) * length
-    ctx.strokeStyle = GRASS_COLORS[Math.floor(random() * GRASS_COLORS.length)]
-    ctx.beginPath()
-    for (const ox of [-size, 0, size]) {
-      for (const oy of [-size, 0, size]) {
-        ctx.moveTo(x + ox, y + oy)
-        ctx.lineTo(x + ox + dx, y + oy + dy)
-      }
-    }
-    ctx.stroke()
-  }
-  const texture = new CanvasTexture(canvas)
-  texture.colorSpace = SRGBColorSpace
-  texture.wrapS = RepeatWrapping
-  texture.wrapT = RepeatWrapping
-  // Repeticiones calculadas a partir del tamaño del suelo: una baldosa por metro
-  texture.repeat.set(GROUND_SIZE[0] / GRASS_TILE_SIZE, GROUND_SIZE[1] / GRASS_TILE_SIZE)
-  return texture
+// Suelo del jardín con el material de grass_texture.glb, con sus mapas repetidos para cubrir todo el suelo
+function GardenGround() {
+  const { materials } = useGLTF(modelsManifest.grassGround.url)
+  const material = useMemo(() => {
+    const ground = Object.values(materials)[0].clone()
+    GRASS_MAP_KEYS.forEach((key) => {
+      if (!ground[key]) return
+      const texture = ground[key].clone()
+      texture.wrapS = RepeatWrapping
+      texture.wrapT = RepeatWrapping
+      // Repeticiones calculadas a partir del tamaño del suelo
+      texture.repeat.set(GROUND_SIZE[0] / GRASS_TILE_SIZE, GROUND_SIZE[1] / GRASS_TILE_SIZE)
+      texture.needsUpdate = true
+      ground[key] = texture
+    })
+    return ground
+  }, [materials])
+  return (
+    <mesh position={GROUND_POSITION} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+      <planeGeometry args={GROUND_SIZE} />
+      <primitive object={material} attach="material" />
+    </mesh>
+  )
 }
 
 // Reparte las plantas de cada franja a lo largo de X con variación determinista
@@ -139,29 +114,6 @@ function buildRowPlants() {
       }
     })
   })
-}
-
-// Clona un modelo (o un nodo concreto) y lo envuelve en un grupo con la base centrada en el origen.
-// Devuelve el grupo y la escala que da la medida objetivo; así no dependemos de las escalas del manifiesto,
-// que en algunos modelos del jardín (árboles, lirio araña) dejaban las plantas de milímetros.
-function prepareModel(scene, node, height) {
-  scene.updateMatrixWorld(true)
-  // GLTFLoader sanea los nombres de nodo (espacios → _, sin puntos): se busca con el mismo saneado
-  const source = node ? scene.getObjectByName(PropertyBinding.sanitizeNodeName(node)) : scene
-  if (!source) throw new Error(`[Outside] No existe el nodo "${node}" en el modelo del jardín`)
-  const object = cloneWithSkeleton(source)
-  // Un nodo suelto pierde las transformaciones de sus padres: se las aplicamos para medirlo en el espacio del modelo
-  if (node) object.applyMatrix4(source.parent.matrixWorld)
-  object.updateMatrixWorld(true)
-  const box = new Box3().setFromObject(object)
-  const size = box.getSize(new Vector3())
-  const center = box.getCenter(new Vector3())
-  // Base apoyada en Y = 0 y centrada en X/Z
-  object.position.sub(new Vector3(center.x, box.min.y, center.z))
-  applyAlphaCutout(object)
-  const wrapper = new Group()
-  wrapper.add(object)
-  return { wrapper, scale: height / size.y }
 }
 
 // Una planta del jardín: carga el modelo del manifiesto, lo escala a su medida y lo apoya en el suelo
@@ -198,9 +150,6 @@ function Outside() {
     return texture
   }, [])
 
-  // Textura de hierba del suelo, generada una sola vez
-  const grassTexture = useMemo(() => createGrassTexture(), [])
-
   // Plantas de las franjas, calculadas una vez (son deterministas)
   const rowPlants = useMemo(() => buildRowPlants(), [])
 
@@ -214,14 +163,11 @@ function Outside() {
         <meshBasicMaterial map={skyTexture} depthWrite={false} />
       </mesh>
 
-      {/* 2. Suelo de hierba en sombra bajo las plantas: sin iluminación, porque la luz dorada fuerte lo aclaraba y se veía como tierra */}
-      <mesh position={GROUND_POSITION} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={GROUND_SIZE} />
-        <meshBasicMaterial map={grassTexture} />
-      </mesh>
 
       {/* 3. Plantas: franjas de flores y arbustos, acentos y arboleda */}
       <Suspense fallback={null}>
+        {/* 2. Suelo de césped (material de grass_texture.glb) */}
+        <GardenGround />
         {rowPlants.map((plant, i) => (
           <GardenPlant key={`row-${i}`} {...plant} />
         ))}

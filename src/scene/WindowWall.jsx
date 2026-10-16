@@ -6,13 +6,14 @@ import { useGLTF } from '@react-three/drei'
 import { Shape, ExtrudeGeometry } from 'three'
 // Importación del manifiesto centralizado de modelos 3D
 import { modelsManifest } from '@/data/modelsManifest'
+// Papel pintado de las paredes
+import useWallpaper, { WALLPAPER_TILE_SIZE, WALLPAPER_TINT } from '@/hooks/useWallpaper'
 
 // Valores por defecto de la pared en metros (el ancho no tiene: lo marca la habitación, ROOM_WIDTH en Room.jsx)
 export const DEFAULT_WALL_HEIGHT = 2.8    // Altura de suelo a techo (Y = -1.0 a +1.8)
 export const DEFAULT_FLOOR_Y = -1.0       // Cota del suelo
 
 // Color y grosor de la pared opaca que rodea los dos arcos del ventanal
-export const WALL_COLOR = '#2f3a2c' // Verde bosque oscuro (Fase 11); lo usan también las demás paredes (Room.jsx)
 export const WALL_THICKNESS = 0.12 // Algo más gruesa que el marco (~0.056 m) para formar un pequeño derrame
 
 // Parámetros calculados a partir de la caja envolvente original de window.glb:
@@ -24,6 +25,10 @@ const ORIGINAL_WIDTH = 8.1288
 
 // Ancho del ventanal ya escalado (8.1288 × 0.5536 ≈ 4.50 m): la habitación se dimensiona a partir de él
 export const WINDOW_WIDTH = ORIGINAL_WIDTH * WINDOW_SCALE
+// Medio ancho exterior del marco de cada arco (caja del nodo f_2: de -1.9 a 1.9 unidades originales)
+const ARCH_FRAME_HALF_WIDTH = 1.9
+// Muro visible entre los dos arcos: separación entre centros menos un marco entero ((4.3376 - 3.8) × 0.5536 ≈ 0.30 m)
+export const WINDOW_PIER_WIDTH = (ORIGINAL_CENTER_X * 2 - 2 * ARCH_FRAME_HALF_WIDTH) * WINDOW_SCALE
 
 // Desplazamiento X para centrar el ventanal en X = 0 (cubre de -2.25 m a +2.25 m)
 const LOCAL_OFFSET_X = -ORIGINAL_CENTER_X * WINDOW_SCALE // ~ -1.2006 m
@@ -160,6 +165,9 @@ function WindowWall({
   const localOffsetY = floorY - ORIGINAL_MIN_Y * WINDOW_SCALE // -1.0 + 1.2303 = +0.2303 m
 
   // Geometría de la pared con los huecos de los arcos; se recalcula solo si cambian las medidas
+  // Papel pintado con repetición en metros (las coordenadas de textura del muro extruido van en metros)
+  const wallpaper = useWallpaper(1 / WALLPAPER_TILE_SIZE, 1 / WALLPAPER_TILE_SIZE)
+
   const wallGeometry = useMemo(
     () => createWallGeometry(width, height, floorY, localOffsetY),
     [width, height, floorY, localOffsetY]
@@ -177,7 +185,8 @@ function WindowWall({
 
       {/* 2. PARED OPACA DE SUELO A TECHO con los dos arcos recortados; proyecta sombra para que la luz solo entre por el cristal */}
       <mesh geometry={wallGeometry} castShadow receiveShadow>
-        <meshStandardMaterial color={WALL_COLOR} />
+        {/* Papel pintado: ExtrudeGeometry da coordenadas de textura en metros */}
+        <meshStandardMaterial map={wallpaper} color={WALLPAPER_TINT} />
       </mesh>
     </group>
   )

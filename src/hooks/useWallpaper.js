@@ -1,0 +1,32 @@
+// Importación de useMemo de React para configurar cada copia una sola vez
+import { useMemo } from 'react'
+// useTexture de drei: carga la imagen (suspende hasta que está lista)
+import { useTexture } from '@react-three/drei'
+// Repetición continua y espacio de color de la textura
+import { RepeatWrapping, SRGBColorSpace } from 'three'
+// Papel pintado botánico (800 × 800 px, repetible)
+import wallpaperUrl from '@/assets/textures/wall/wallpaper.jpg'
+
+// Metros de pared que cubre una repetición del dibujo
+export const WALLPAPER_TILE_SIZE = 0.75
+// Tinte del material del papel: lo oscurece un poco sin cambiar su dibujo ni sus colores
+export const WALLPAPER_TINT = '#b4b4b4'
+
+/**
+ * Papel pintado de las paredes. Devuelve una copia de la textura con la repetición indicada:
+ * - Geometrías con coordenadas de textura en metros (ShapeGeometry, ExtrudeGeometry): repeatX = repeatY = 1 / WALLPAPER_TILE_SIZE.
+ * - Planos con coordenadas de 0 a 1: ancho / WALLPAPER_TILE_SIZE y alto / WALLPAPER_TILE_SIZE.
+ * Cada pared tiene su copia (la repetición es propia de cada textura); la imagen se comparte.
+ */
+export default function useWallpaper(repeatX, repeatY) {
+  const loaded = useTexture(wallpaperUrl)
+  return useMemo(() => {
+    const texture = loaded.clone()
+    texture.wrapS = RepeatWrapping
+    texture.wrapT = RepeatWrapping
+    texture.repeat.set(repeatX, repeatY)
+    texture.colorSpace = SRGBColorSpace
+    texture.needsUpdate = true
+    return texture
+  }, [loaded, repeatX, repeatY])
+}

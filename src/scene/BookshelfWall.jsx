@@ -17,6 +17,7 @@ import { layoutBooksOnShelves } from '@/utils/shelfLayout'
  * @param {Array<number>} position - Posición [x, y, z] del conjunto en la escena
  * @param {Array<number>} rotation - Rotación [x, y, z] del conjunto
  * @param {Function} onSelectBook - Callback disparado al hacer clic en un libro
+ * @param {number} startShelf - Balda desde la que empiezan los módulos (0 = desde el suelo; más arriba, sobre un mueble)
  */
 function BookshelfWall({
   books = [],
@@ -24,6 +25,7 @@ function BookshelfWall({
   position = [0, 0, 0],
   rotation = [0, 0, 0],
   onSelectBook,
+  startShelf = 0,
 }) {
   // Número de módulos calculados para una distribución uniforme
   const moduleCount = Math.max(1, Math.round(wallLength / BASE_SHELF_WIDTH))
@@ -43,7 +45,7 @@ function BookshelfWall({
     // Calculamos cuántos libros caben en las baldas de este módulo
     const { usedCount } = layoutBooksOnShelves(unassignedBooks, {
       innerWidth: moduleInnerWidth,
-      shelfCount: SHELF_COUNT,
+      shelfCount: SHELF_COUNT - startShelf,
       bookGap: BOOK_GAP,
     })
 
@@ -69,6 +71,7 @@ function BookshelfWall({
             books={shelfBooks}
             width={moduleWidth}
             onSelectBook={onSelectBook}
+            startShelf={startShelf}
           />
         </group>
       ))}

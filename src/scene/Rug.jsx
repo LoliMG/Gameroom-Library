@@ -7,9 +7,9 @@ import { modelsManifest } from '@/data/modelsManifest'
 // Importación del nivel del suelo de la estancia
 import { FLOOR_Y } from '@/scene/Room'
 
-// Medidas máximas de la alfombra en metros (Fase 6)
-export const RUG_WIDTH = 2.3 // Lado largo, paralelo al sofá (eje Z)
-export const RUG_DEPTH = 1.8 // Lado corto, desde el sofá hacia el interior de la sala (eje X)
+// Medidas máximas de la alfombra en metros: casi toda la sala (se gira 90° al colocarla, ver SofaCorner)
+export const RUG_WIDTH = 3.9 // Lado largo del modelo
+export const RUG_DEPTH = 3.3 // Lado corto del modelo
 
 // Caja envolvente original de rug.glb (unidades del modelo), medida en la auditoría de la Fase A
 const ORIGINAL_SIZE_X = 2.541   // Lado corto
@@ -20,14 +20,14 @@ const ORIGINAL_MIN_Y = 0.0089     // La base del modelo no está en Y = 0
 const ORIGINAL_HEIGHT = 0.0141    // Grosor del tejido con borlas
 
 // Escala uniforme para que la alfombra quepa en RUG_WIDTH x RUG_DEPTH sin deformar el estampado ni las borlas:
-// min(1.8 / 2.541, 2.3 / 3.6883) = min(0.708, 0.624) = 0.624 → resultado 2.30 m x 1.58 m
+// min(3.3 / 2.541, 3.9 / 3.6883) = min(1.30, 1.057) = 1.057 → resultado 3.90 m x 2.69 m
 const RUG_SCALE = Math.min(RUG_DEPTH / ORIGINAL_SIZE_X, RUG_WIDTH / ORIGINAL_SIZE_Z)
 
 // Pequeña separación sobre el suelo para evitar parpadeos (z-fighting) con la madera
 const RUG_FLOOR_GAP = 0.002
 
 // Altura de la cara superior de la alfombra sobre el suelo (para apoyar encima la mesa de café)
-export const RUG_TOP_HEIGHT = RUG_FLOOR_GAP + ORIGINAL_HEIGHT * RUG_SCALE // 0.002 + 0.0088 ≈ 0.011 m
+export const RUG_TOP_HEIGHT = RUG_FLOOR_GAP + ORIGINAL_HEIGHT * RUG_SCALE // 0.002 + 0.0149 ≈ 0.017 m
 
 // Desplazamiento interno del modelo para que su centro quede en el origen del grupo y su base a RUG_FLOOR_GAP
 const MODEL_OFFSET = [

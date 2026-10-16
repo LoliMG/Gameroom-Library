@@ -72,6 +72,13 @@ Los siguientes modelos 3D en formato `.glb` se encuentran en `src/assets/models/
 - **Libro vikingo / mágico (`other/viking_book.glb`)**: ["Viking book"](https://skfb.ly/6TqoO) por *katrin.kor*, licenciado bajo [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/).
 - **Candelabro con vela (`other/candle.glb`)**: ["Copper candlestick"](https://skfb.ly/oMYp6) por *shuvalov.di*, licenciado bajo [CC BY-SA 4.0](http://creativecommons.org/licenses/by-sa/4.0/).
 - **Taza de café (`other/coffee.glb`)**: ["Coffee"](https://sketchfab.com/3d-models/coffee-963a9e5d288c42509886c5efd4fedd3c) por *Rosnandie Yikie*, licenciado bajo [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/).
+- **Repisa de pared (`furniture/repisalarga.glb`)**: ["RepisaLarga"](https://sketchfab.com/3d-models/repisalarga-8b0bdc6ce8af46b5b7bf19599d34fd42) por *EmpDevTeam*, licenciado bajo [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/).
+- **Rodapié (`other/wall_skirting_board.glb`)**: ["wall skirting board"](https://sketchfab.com/3d-models/wall-skirting-board-3df08454597b4d438097bcb4678d5855) por *acaslavke*, licenciado bajo [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/).
+- **Mueble de almacenaje (`furniture/old_storage_cabinet.glb`)**: ["Old Storage Cabinet"](https://sketchfab.com/3d-models/old-storage-cabinet-feddab14991f4f368466fd6116161562) por *Daniyal Malik*, licenciado bajo [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/).
+- **Hiedra colgante (`flowers/ivy.glb`)**: ["ivy"](https://sketchfab.com/3d-models/ivy-b4b0419ec9ac4a71ae454145dbc88037) por *heyyodd*, licenciado bajo [CC BY-NC 4.0](http://creativecommons.org/licenses/by-nc/4.0/) (uso no comercial).
+- **Ponyta (`other/ponyta.glb`)**: ["Ponyta - Pokemon"](https://sketchfab.com/3d-models/ponyta-pokemon-e4e73f5a6b174e2d8fa957d7b720c7aa) por *Locur*, licenciado bajo [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/).
+- **Figura de Bakugo (`furniture/bakugo.glb`)**: ["Bakugo - My Hero Ultra Rumble"](https://sketchfab.com/3d-models/bakugo-my-hero-ultra-rumble-6e150076998047e185825153361400e0) por *Ye ye AI sh1t*, licenciado bajo [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/).
+- **Césped del jardín (`flowers/grass_texture.glb`)**: ["Simple Grass Ground (Free Low Model)"](https://sketchfab.com/3d-models/simple-grass-ground-free-low-model-758b5be71cd6427e9834d2968afff7c4) por *Shun Koizumi*, licenciado bajo [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/).
 
 ## Créditos de texturas
 

@@ -4,6 +4,8 @@ import { useMemo } from 'react'
 import { useGLTF, RoundedBox } from '@react-three/drei'
 // Importación del manifiesto centralizado de modelos 3D
 import { modelsManifest } from '@/data/modelsManifest'
+// Activa sombras en todas las mallas de un modelo clonado
+import { enableShadows } from '@/utils/shadows'
 // Importación de las cotas de la habitación para calcular posiciones relativas
 import { ROOM_WIDTH, FLOOR_Y, FRONT_WALL_INNER_Z } from '@/scene/Room'
 // Importación de la maceta con planta de interior (Fase 5)
@@ -12,9 +14,16 @@ import PlantPot from '@/scene/PlantPot'
 import Rug, { RUG_TOP_HEIGHT } from '@/scene/Rug'
 // Recorte por alfa para materiales con transparencia mezclada (el sofá viene entero en modo BLEND)
 import { applyAlphaCutout } from '@/utils/alphaCutout'
-// Vela con llama titilante (Fase 7) y vapor de la taza (Fase 9c)
-import CandleLight from '@/scene/CandleLight'
+// Candelabro con llama titilante (Fase 7) y vapor de la taza (Fase 9c)
+import Candlestick from '@/scene/Candlestick'
 import MugSteam from '@/scene/MugSteam'
+// Repisas de pared sobre el sofá
+import WallShelf, { WALL_SHELF_DEPTH_PER_LENGTH } from '@/scene/WallShelf'
+// Figuras sobre las repisas (hiedra, Ponyta y Bakugo)
+import ShelfFigure from '@/scene/ShelfFigure'
+// Postura relajada para personajes en postura en T
+import { relaxArms, spreadLegs } from '@/utils/pose'
+import { Vector3 } from 'three'
 
 // Constantes de dimensiones y separación del conjunto del rincón de lectura
 const WALL_B_X = ROOM_WIDTH / 2 // Cota X de la pared derecha b (+2.60 m)
@@ -31,9 +40,12 @@ const TABLE_Z = SOFA_Z // Alineada con el centro del sofá en Z (+2.10 m)
 // Patas de la mesa apoyadas sobre la cara superior de la alfombra
 const TABLE_Y = FLOOR_Y + RUG_TOP_HEIGHT // -1.0 + 0.011 = -0.989 m
 
-// Alfombra estampada (Fase 6): centrada bajo la mesa de café, apoyada en el suelo
-const RUG_X = TABLE_X // +1.20 m; con 1.58 m de fondo llega de X = +0.41 m a +1.99 m (entra bajo el frente del sofá)
-const RUG_Z = TABLE_Z // +2.10 m; con 2.30 m de largo llega de Z = +0.95 m a +3.25 m
+// Alfombra estampada: casi toda la sala (3.90 × 2.69 m), girada 90° para que su lado largo vaya a lo ancho.
+// X: de delante del mueble de la pared a (-1.5 m) hasta casi la pared b (+2.4 m), pasando bajo el sofá.
+// Z: de +0.75 m a +3.45 m; deja libre el pasillo entre la puerta (hasta Z = +0.25 m) y las estanterías del fondo.
+const RUG_X = 0.45
+const RUG_Z = 2.1
+const RUG_ROTATION_Y = Math.PI / 2
 // Altura superior del tablero de la mesa (suelo + grosor alfombra + altura de la mesa)
 const TABLE_TOP_Y = TABLE_Y + modelsManifest.coffeeTable.targetDimensions.height // -0.541 m
 
@@ -42,14 +54,56 @@ const TABLE_ITEM_CLEARANCE = 0.003
 const ITEMS_Y = TABLE_TOP_Y + TABLE_ITEM_CLEARANCE
 const MUG_POSITION = [TABLE_X - 0.12, ITEMS_Y, TABLE_Z + 0.14] // Taza hacia el frente izquierdo
 const CANDLESTICK_POSITION = [TABLE_X - 0.12, ITEMS_Y, TABLE_Z - 0.14] // Candelabro hacia el fondo izquierdo
-// Punta de la mecha de candle.glb: 0.1766 unidades de altura original (× escala del manifiesto)
-const CANDLESTICK_WICK_HEIGHT = 0.1766 * modelsManifest.candle.scale // ≈ 0.159 m
-// Llama estática que trae el propio modelo: se oculta porque la sustituye la llama titilante de CandleLight
-const CANDLESTICK_MODEL_FLAME_NODE = 'Flame_4'
-const CANDLE_FLAME_POSITION = [CANDLESTICK_POSITION[0], ITEMS_Y + CANDLESTICK_WICK_HEIGHT, CANDLESTICK_POSITION[2]]
 // La taza de coffee.glb mide ~3.8 cm de alto: el vapor nace justo encima del borde
 const MUG_RIM_HEIGHT = 0.038 * (modelsManifest.coffee.scale / 0.001)
 const STEAM_POSITION = [MUG_POSITION[0], ITEMS_Y + MUG_RIM_HEIGHT, MUG_POSITION[2]]
+
+// Repisas de pared sobre el sofá (pared b), colocadas según el boceto: la del lado de la puerta más alta,
+// la del lado del ventanal más baja y con un candelabro encima. y: cara superior de la tabla; z: centro de la repisa.
+const WALL_SHELF_LENGTH = 0.9                         // Largo de cada repisa (m)
+const WALL_SHELF_ROTATION_Y = Math.PI / 2             // Las escuadras (+Z del modelo) contra la pared b (+X)
+const WALL_SHELVES = [
+  { y: FLOOR_Y + 2.05, z: 1.75 }, // Izquierda (hacia la puerta), sobre el lado izquierdo del sofá
+  { y: FLOOR_Y + 1.6, z: 2.85 },  // Derecha (hacia el ventanal), sobre el lado derecho del sofá
+]
+// Candelabro sobre la repisa derecha: centrado en el fondo de la tabla y desplazado hacia su extremo del ventanal
+const WALL_SHELF_DEPTH = WALL_SHELF_DEPTH_PER_LENGTH * WALL_SHELF_LENGTH // ≈ 0.21 m
+const SHELF_CANDLE_POSITION = [WALL_B_X - WALL_SHELF_DEPTH / 2, WALL_SHELVES[1].y, WALL_SHELVES[1].z + 0.25]
+// Línea central de las repisas (mitad de su fondo): ahí se apoyan las figuras
+const SHELF_ITEMS_X = WALL_B_X - WALL_SHELF_DEPTH / 2
+
+// Hiedra colgante: la maceta va sobre el extremo izquierdo de la repisa de arriba y las ramas caen por debajo.
+// En ivy.glb la base de la maceta está al 64.5 % de la altura total (las ramas cuelgan 41 de sus 63.6 unidades)
+const IVY_HEIGHT = 0.83                 // Altura total con ramas (maceta ≈ 0.13 m de ancho)
+const IVY_VASE_BASE_FRACTION = 0.645
+const IVY_POSITION = [SHELF_ITEMS_X, WALL_SHELVES[0].y - IVY_VASE_BASE_FRACTION * IVY_HEIGHT, WALL_SHELVES[0].z - 0.37]
+// Ponyta de perfil sobre la repisa de arriba (la cabeza mira hacia el ventanal, +Z, como en el modelo)
+const PONYTA_HEIGHT = 0.22
+const PONYTA_POSITION = [SHELF_ITEMS_X, WALL_SHELVES[0].y, WALL_SHELVES[0].z + 0.11]
+// Crin y cola (material "Hair") brillando como fuego; intensidad > 1 para que el Bloom las haga resplandecer
+const PONYTA_GLOW = { material: 'Hair', color: '#ff7a1f', intensity: 1.6 }
+// Figura de Bakugo en la parte izquierda de la repisa de abajo (el candelabro queda a su derecha)
+const BAKUGO_HEIGHT = 0.32
+const BAKUGO_POSITION = [SHELF_ITEMS_X, WALL_SHELVES[1].y, WALL_SHELVES[1].z - 0.23]
+const BAKUGO_ROTATION_Y = -Math.PI / 2 // El modelo mira hacia +Z; girado mira a la sala (-X)
+// Postura alerta desde la postura en T: huesos de brazos y piernas de bakugo.glb y hacia dónde mira el modelo
+const BAKUGO_ARMS = [
+  { arm: 'L_arm_079', elbow: 'L_elbow_080', hand: 'L_hand_081' },
+  { arm: 'R_arm_0107', elbow: 'R_elbow_0108', hand: 'R_hand_0109' },
+]
+const BAKUGO_LEGS = [
+  { leg: 'L_leg_0139', knee: 'L_knee_0140' },
+  { leg: 'R_leg_0148', knee: 'R_knee_0149' },
+]
+const BAKUGO_FORWARD = new Vector3(0, 0, 1)
+// Ángulos (radianes): brazos separados del cuerpo, codos doblados y piernas abiertas
+const BAKUGO_ARM_SPREAD = 0.45
+const BAKUGO_ELBOW_BEND = 0.6
+const BAKUGO_LEG_SPREAD = 0.14
+const poseBakugo = (root) => {
+  relaxArms(root, BAKUGO_ARMS, BAKUGO_FORWARD, { armSpread: BAKUGO_ARM_SPREAD, elbowBend: BAKUGO_ELBOW_BEND })
+  spreadLegs(root, BAKUGO_LEGS, BAKUGO_LEG_SPREAD)
+}
 
 // Constante para la única maceta decorativa situada en la esquina entre el sofá y el ventanal
 // Extremo del sofá hacia el ventanal: el modelo llega a +1.613 unidades en su eje X local (× escala),
@@ -73,17 +127,6 @@ const CUSHION_COLOR_BURGUNDY = '#6b242a' // Burdeos / vino oscuro
 const CUSHION_COLOR_BEIGE = '#c7bca9'    // Beige estampado suave
 const BLANKET_COLOR = '#5c1e24'          // Manta de lana granate cálida
 
-// Helper para habilitar sombras recursivamente en una escena clonada de Three.js
-function enableShadows(scene) {
-  scene.traverse((node) => {
-    if (node.isMesh) {
-      node.castShadow = true
-      node.receiveShadow = true
-    }
-  })
-  return scene
-}
-
 /**
  * Componente que agrupa el sofá, cojines, manta, mesa de café con marquetería,
  * libro abierto, candelabro con vela real (candle.glb) y taza de café (coffee.glb).
@@ -100,15 +143,6 @@ function SofaCorner() {
   // 3. Carga del libro abierto para la mesa
   const bookTableGLTF = useGLTF(modelsManifest.bookTable.url)
   const bookTableScene = useMemo(() => enableShadows(bookTableGLTF.scene.clone()), [bookTableGLTF.scene])
-
-  // 4. Carga del modelo 3D de candelabro con vela (candle.glb)
-  const candleGLTF = useGLTF(modelsManifest.candle.url)
-  const candleScene = useMemo(() => {
-    const scene = enableShadows(candleGLTF.scene.clone())
-    const modelFlame = scene.getObjectByName(CANDLESTICK_MODEL_FLAME_NODE)
-    if (modelFlame) modelFlame.visible = false
-    return scene
-  }, [candleGLTF.scene])
 
   // 5. Carga del modelo 3D de taza y plato de café (coffee.glb)
   const coffeeGLTF = useGLTF(modelsManifest.coffee.url)
@@ -176,7 +210,7 @@ function SofaCorner() {
       </mesh>
 
       {/* 4. ALFOMBRA ESTAMPADA CON BORLAS (Fase 6): situada bajo la mesa y frente al sofá */}
-      <Rug position={[RUG_X, FLOOR_Y, RUG_Z]} />
+      <Rug position={[RUG_X, FLOOR_Y, RUG_Z]} rotationY={RUG_ROTATION_Y} />
 
       {/* 5. MACETA CON ROSAL DE INTERIOR: únicamente en la esquina entre el sofá y el ventanal */}
       <PlantPot position={[POT_X, POT_Y, POT_CORNER_Z]} scale={POT_SCALE} rotationY={-Math.PI / 3} />
@@ -209,19 +243,24 @@ function SofaCorner() {
         rotation={[0, Math.PI / 3, 0]}
       />
 
-      {/* 7c. Candelabro con vela real de cobre (candle.glb) hacia el fondo izquierdo */}
-      <primitive
-        object={candleScene}
-        position={CANDLESTICK_POSITION}
-        scale={modelsManifest.candle.scale}
-        rotation={[0, 0.2, 0]}
-      />
-
-      {/* 7d. Llama titilante sobre la mecha del candelabro (Fase 7); la cera ya viene en el modelo */}
-      <CandleLight position={CANDLE_FLAME_POSITION} withWax={false} />
+      {/* 7c. Candelabro de cobre con vela (candle.glb) y llama titilante, hacia el fondo izquierdo */}
+      <Candlestick position={CANDLESTICK_POSITION} rotationY={0.2} />
 
       {/* 7e. Vapor sutil que sube de la taza (Fase 9c) */}
       <MugSteam position={STEAM_POSITION} />
+
+      {/* 8. REPISAS SOBRE EL SOFÁ, apoyadas en la pared b */}
+      {WALL_SHELVES.map(({ y, z }) => (
+        <WallShelf key={z} position={[WALL_B_X, y, z]} rotationY={WALL_SHELF_ROTATION_Y} length={WALL_SHELF_LENGTH} />
+      ))}
+      {/* Candelabro en la repisa derecha; sin halo de luz porque el plan limita a 4 las luces de vela */}
+      <Candlestick position={SHELF_CANDLE_POSITION} rotationY={-0.4} withLight={false} />
+
+      {/* Figuras de las repisas */}
+      <ShelfFigure model="ivy" height={IVY_HEIGHT} position={IVY_POSITION} />
+      <ShelfFigure model="ponyta" height={PONYTA_HEIGHT} position={PONYTA_POSITION} glow={PONYTA_GLOW} />
+      {/* Bakugo en postura alerta (el modelo viene en postura en T) */}
+      <ShelfFigure model="bakugo" height={BAKUGO_HEIGHT} position={BAKUGO_POSITION} rotationY={BAKUGO_ROTATION_Y} pose={poseBakugo} />
     </group>
   )
 }

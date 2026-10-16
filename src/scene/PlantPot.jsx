@@ -4,20 +4,11 @@ import { useMemo } from 'react'
 import { useGLTF } from '@react-three/drei'
 // Importación del manifiesto centralizado de modelos 3D
 import { modelsManifest } from '@/data/modelsManifest'
+// Activa sombras en todas las mallas de un modelo clonado
+import { enableShadows } from '@/utils/shadows'
 
 // Escala por defecto definida a partir del manifiesto para rosal de interior (~1.4 m de altura)
 const DEFAULT_SCALE = modelsManifest.roseInAPot.scale
-
-// Helper para habilitar recursivamente sombras en todas las mallas del modelo
-function enableShadows(scene) {
-  scene.traverse((node) => {
-    if (node.isMesh) {
-      node.castShadow = true
-      node.receiveShadow = true
-    }
-  })
-  return scene
-}
 
 /**
  * Componente reutilizable para macetas con plantas decorativas de interior.

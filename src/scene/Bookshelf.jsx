@@ -2,6 +2,8 @@
 import Book from '@/scene/Book'
 // Importación de la función pura de reparto de libros por baldas
 import { layoutBooksOnShelves } from '@/utils/shelfLayout'
+// Madera recortada de la textura del mueble de la pared a, para que las estanterías tengan su mismo tono
+import useShelfWood from '@/hooks/useShelfWood'
 
 // Constantes de dimensiones de la estantería en metros
 export const BASE_SHELF_WIDTH = 1.2   // Ancho base de referencia para un módulo de estantería
@@ -13,8 +15,13 @@ export const SHELF_COUNT = 8          // Número de niveles de baldas disponible
 // Separación uniforme entre libros contiguos sobre la misma balda (1.5 cm)
 export const BOOK_GAP = 0.015
 
+// Grosor del panel trasero (tapa la pared entre baldas)
+const BACK_PANEL_THICKNESS = 0.01
+// Tinte del panel trasero: la misma madera, más oscura, para que se distinga de las baldas
+const BACK_PANEL_TINT = '#5c5c5c'
+
 // Color madera para el material de todos los tablones
-export const WOOD_COLOR = '#4a3320' // Roble oscuro (Fase 11); también lo usan el bloque de esquina y la moldura
+export const WOOD_COLOR = '#4a3320' // Roble oscuro (Fase 11); lo usa la moldura del techo (las estanterías llevan la textura de la repisa)
 
 // Altura interior libre disponible entre la base inferior y la tapa superior
 export const INNER_HEIGHT = SHELF_HEIGHT - 2 * BOARD_THICKNESS
@@ -22,6 +29,9 @@ export const INNER_HEIGHT = SHELF_HEIGHT - 2 * BOARD_THICKNESS
 // Espacio vertical libre de cada hueco entre baldas para 8 niveles de libros y 7 tablones intermedios
 export const COMPARTMENT_HEIGHT =
   (INNER_HEIGHT - (SHELF_COUNT - 1) * BOARD_THICKNESS) / SHELF_COUNT
+
+// Separación vertical entre baldas consecutivas (hueco + tablón, 0.3325 m): sirve para alinear muebles y módulos cortos
+export const SHELF_PITCH = COMPARTMENT_HEIGHT + BOARD_THICKNESS
 
 // Coordenada Y del centro del tablón horizontal de la base
 const BASE_BOARD_Y = -SHELF_HEIGHT / 2 + BOARD_THICKNESS / 2
@@ -58,8 +68,12 @@ function getIntermediateBoardY(shelfIndex) {
  * @param {Array<Object>} books - Libros a colocar en este módulo
  * @param {number} width - Ancho exterior del módulo en metros (por defecto BASE_SHELF_WIDTH = 1.2 m)
  * @param {Function} onSelectBook - Callback al pulsar un libro
+ * @param {number} startShelf - Balda desde la que empieza el módulo (0 = desde el suelo). Los módulos que empiezan
+ *   más arriba van encima de un mueble y sus baldas quedan alineadas con las de los módulos completos.
  */
-function Bookshelf({ books = [], width = BASE_SHELF_WIDTH, onSelectBook }) {
+function Bookshelf({ books = [], width = BASE_SHELF_WIDTH, onSelectBook, startShelf = 0 }) {
+  // Texturas de madera compartidas (veta vertical para laterales, a lo largo para tablones), con el tono del mueble
+  const wood = useShelfWood('cabinet')
   // Ancho interior útil entre los paneles laterales para este ancho concreto
   const innerWidth = width - 2 * BOARD_THICKNESS
 
@@ -73,46 +87,54 @@ function Bookshelf({ books = [], width = BASE_SHELF_WIDTH, onSelectBook }) {
     }
   }
 
-  // Reparto algorítmico de los libros recibidos a lo largo de las 8 baldas
+  // Reparto algorítmico de los libros en las baldas disponibles (de startShelf a la última)
   const { placed } = layoutBooksOnShelves(books, {
     innerWidth,
-    shelfCount: SHELF_COUNT,
+    shelfCount: SHELF_COUNT - startShelf,
     bookGap: BOOK_GAP,
   })
 
-  // Array de índices para generar los 7 tablones intermedios (de balda 1 a SHELF_COUNT - 1)
+  // Tablones intermedios: de la balda siguiente a la de arranque hasta la última
   const intermediateBoardIndices = Array.from(
-    { length: SHELF_COUNT - 1 },
-    (_, i) => i + 1
+    { length: SHELF_COUNT - 1 - startShelf },
+    (_, i) => i + 1 + startShelf
   )
+
+  // Parte baja del módulo: el suelo, o la cara inferior del tablón de la balda de arranque
+  const bottomY = startShelf === 0 ? -SHELF_HEIGHT / 2 : getShelfSurfaceY(startShelf) - BOARD_THICKNESS
+  // Laterales y panel trasero cubren desde la parte baja hasta arriba
+  const sideHeight = SHELF_HEIGHT / 2 - bottomY
+  const sideCenterY = (SHELF_HEIGHT / 2 + bottomY) / 2
+  // Tablón de abajo: el de la base o el de la balda de arranque
+  const baseBoardY = startShelf === 0 ? BASE_BOARD_Y : getIntermediateBoardY(startShelf)
 
   return (
     // Grupo contenedor 3D que agrupa la estructura de tablones y los libros colocados
     <group>
       {/* 1. Lateral izquierdo vertical */}
       <mesh
-        position={[-width / 2 + BOARD_THICKNESS / 2, 0, 0]}
+        position={[-width / 2 + BOARD_THICKNESS / 2, sideCenterY, 0]}
         castShadow
         receiveShadow
       >
-        <boxGeometry args={[BOARD_THICKNESS, SHELF_HEIGHT, BOOKSHELF_DEPTH]} />
-        <meshStandardMaterial color={WOOD_COLOR} />
+        <boxGeometry args={[BOARD_THICKNESS, sideHeight, BOOKSHELF_DEPTH]} />
+        <meshStandardMaterial map={wood.grainVertical} />
       </mesh>
 
       {/* 2. Lateral derecho vertical */}
       <mesh
-        position={[width / 2 - BOARD_THICKNESS / 2, 0, 0]}
+        position={[width / 2 - BOARD_THICKNESS / 2, sideCenterY, 0]}
         castShadow
         receiveShadow
       >
-        <boxGeometry args={[BOARD_THICKNESS, SHELF_HEIGHT, BOOKSHELF_DEPTH]} />
-        <meshStandardMaterial color={WOOD_COLOR} />
+        <boxGeometry args={[BOARD_THICKNESS, sideHeight, BOOKSHELF_DEPTH]} />
+        <meshStandardMaterial map={wood.grainVertical} />
       </mesh>
 
-      {/* 3. Tablón horizontal de la base */}
-      <mesh position={[0, BASE_BOARD_Y, 0]} castShadow receiveShadow>
+      {/* 3. Tablón horizontal de abajo (base del suelo o balda de arranque) */}
+      <mesh position={[0, baseBoardY, 0]} castShadow receiveShadow>
         <boxGeometry args={[innerWidth, BOARD_THICKNESS, BOOKSHELF_DEPTH]} />
-        <meshStandardMaterial color={WOOD_COLOR} />
+        <meshStandardMaterial map={wood.grainAlongLength} />
       </mesh>
 
       {/* 4. Tablones horizontales intermedios calculados dinámicamente */}
@@ -124,20 +146,26 @@ function Bookshelf({ books = [], width = BASE_SHELF_WIDTH, onSelectBook }) {
           receiveShadow
         >
           <boxGeometry args={[innerWidth, BOARD_THICKNESS, BOOKSHELF_DEPTH]} />
-          <meshStandardMaterial color={WOOD_COLOR} />
+          <meshStandardMaterial map={wood.grainAlongLength} />
         </mesh>
       ))}
 
       {/* 5. Tablón horizontal de la tapa superior */}
       <mesh position={[0, TOP_BOARD_Y, 0]} castShadow receiveShadow>
         <boxGeometry args={[innerWidth, BOARD_THICKNESS, BOOKSHELF_DEPTH]} />
-        <meshStandardMaterial color={WOOD_COLOR} />
+        <meshStandardMaterial map={wood.grainAlongLength} />
       </mesh>
 
-      {/* 6. Renderizado de los libros distribuidos mediante layoutBooksOnShelves */}
+      {/* 6. Panel trasero de madera entre los laterales: tapa la pared entre baldas */}
+      <mesh position={[0, sideCenterY, -BOOKSHELF_DEPTH / 2 + BACK_PANEL_THICKNESS / 2]} receiveShadow>
+        <boxGeometry args={[innerWidth, sideHeight, BACK_PANEL_THICKNESS]} />
+        <meshStandardMaterial map={wood.grainVertical} color={BACK_PANEL_TINT} />
+      </mesh>
+
+      {/* 7. Renderizado de los libros distribuidos mediante layoutBooksOnShelves */}
       {placed.map(({ book, shelfIndex, x }) => {
         // Altura Y: cota de apoyo de la balda + mitad de la altura del libro
-        const posY = getShelfSurfaceY(shelfIndex) + book.height / 2
+        const posY = getShelfSurfaceY(shelfIndex + startShelf) + book.height / 2
         // Profundidad Z: lomo al frente (+Z) y cuerpo proyectado hacia el fondo
         const posZ = FRONT_SPINE_Z - book.depth / 2
 

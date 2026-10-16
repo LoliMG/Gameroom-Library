@@ -11,6 +11,13 @@ import coffeeTableUrl from '@/assets/models/furniture/table.glb?url'
 import rugUrl from '@/assets/models/furniture/rug.glb?url'
 import windowUrl from '@/assets/models/furniture/window.glb?url'
 import doorUrl from '@/assets/models/furniture/door.glb?url'
+import shelfUrl from '@/assets/models/furniture/repisalarga.glb?url'
+import skirtingUrl from '@/assets/models/other/wall_skirting_board.glb?url'
+import cabinetUrl from '@/assets/models/furniture/old_storage_cabinet.glb?url'
+import ivyUrl from '@/assets/models/flowers/ivy.glb?url'
+import ponytaUrl from '@/assets/models/other/ponyta.glb?url'
+import bakugoUrl from '@/assets/models/furniture/bakugo.glb?url'
+import grassGroundUrl from '@/assets/models/flowers/grass_texture.glb?url'
 
 // Modelos varios (libros y accesorios de mesa)
 import bookTableUrl from '@/assets/models/other/book_open.glb?url'
@@ -106,6 +113,92 @@ export const modelsManifest = {
       author: 'Mehdi Shahsavan',
       license: 'CC-BY-4.0',
       url: 'https://skfb.ly/oVRQx',
+    },
+  },
+
+  // Repisa de pared con escuadras (sobre el sofá); su textura de madera también se usa en estanterías y rodapiés.
+  // Caja original: 200 × 53.3 × 45.7 (tabla arriba, de Y = 45 a 53.3; cara de la pared en Z = +22.83)
+  shelf: {
+    url: shelfUrl,
+    file: 'furniture/repisalarga.glb',
+    credit: {
+      title: 'RepisaLarga',
+      author: 'EmpDevTeam',
+      license: 'CC-BY-4.0',
+      url: 'https://sketchfab.com/3d-models/repisalarga-8b0bdc6ce8af46b5b7bf19599d34fd42',
+    },
+  },
+
+  // Perfil de rodapié extruido (sin textura ni UV). Caja original: largo X 2939.8, alto Y 1548.5 (de -98.7 a 1449.8),
+  // grueso Z 140.1 (cara de la pared en Z = +55.9, más grueso abajo)
+  skirting: {
+    url: skirtingUrl,
+    file: 'other/wall_skirting_board.glb',
+    credit: {
+      title: 'wall skirting board',
+      author: 'acaslavke',
+      license: 'CC-BY-4.0',
+      url: 'https://sketchfab.com/3d-models/wall-skirting-board-3df08454597b4d438097bcb4678d5855',
+    },
+  },
+
+  // Mueble bajo de almacenaje integrado en las estanterías de la pared a (302 triángulos)
+  cabinet: {
+    url: cabinetUrl,
+    file: 'furniture/old_storage_cabinet.glb',
+    credit: {
+      title: 'Old Storage Cabinet',
+      author: 'Daniyal Malik',
+      license: 'CC-BY-4.0',
+      url: 'https://sketchfab.com/3d-models/old-storage-cabinet-feddab14991f4f368466fd6116161562',
+    },
+  },
+
+  // Hiedra colgante en maceta (repisa izquierda sobre el sofá). Licencia NO comercial (CC-BY-NC)
+  ivy: {
+    url: ivyUrl,
+    file: 'flowers/ivy.glb',
+    credit: {
+      title: 'ivy',
+      author: 'heyyodd',
+      license: 'CC-BY-NC-4.0',
+      url: 'https://sketchfab.com/3d-models/ivy-b4b0419ec9ac4a71ae454145dbc88037',
+    },
+  },
+
+  // Figura de Ponyta (repisa izquierda); su material "Hair" brilla como fuego
+  ponyta: {
+    url: ponytaUrl,
+    file: 'other/ponyta.glb',
+    credit: {
+      title: 'Ponyta - Pokemon',
+      author: 'Locur',
+      license: 'CC-BY-4.0',
+      url: 'https://sketchfab.com/3d-models/ponyta-pokemon-e4e73f5a6b174e2d8fa957d7b720c7aa',
+    },
+  },
+
+  // Figura de Bakugo (repisa derecha). Con esqueleto (postura en T de origen; ~27 000 triángulos)
+  bakugo: {
+    url: bakugoUrl,
+    file: 'furniture/bakugo.glb',
+    credit: {
+      title: 'Bakugo - My Hero Ultra Rumble',
+      author: 'Ye ye AI sh1t',
+      license: 'CC-BY-4.0',
+      url: 'https://sketchfab.com/3d-models/bakugo-my-hero-ultra-rumble-6e150076998047e185825153361400e0',
+    },
+  },
+
+  // Plano de césped de 4 × 4 m con material PBR; su material cubre el suelo del jardín (texturas pesadas: ~27 MB)
+  grassGround: {
+    url: grassGroundUrl,
+    file: 'flowers/grass_texture.glb',
+    credit: {
+      title: 'Simple Grass Ground (Free Low Model)',
+      author: 'Shun Koizumi',
+      license: 'CC-BY-4.0',
+      url: 'https://sketchfab.com/3d-models/simple-grass-ground-free-low-model-758b5be71cd6427e9834d2968afff7c4',
     },
   },
 
