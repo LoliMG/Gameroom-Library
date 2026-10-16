@@ -269,3 +269,68 @@ export function generatePagesTexture() {
   texture.needsUpdate = true
   return texture
 }
+
+/**
+ * Colores del lomo y de la contraportada sacados de la portada, para los libros sin paleta calibrada a mano.
+ * El degradado del lomo sale de la franja izquierda de la portada (la que toca el lomo), por tercios de altura;
+ * el adorno, del color más saturado de la portada, y el texto, blanco o negro según lo claro que sea el fondo.
+ *
+ * @param {HTMLImageElement} image - Imagen de la portada ya cargada
+ * @returns {Object} Campos de color que entienden generateSpineTexture y generateBackCoverTexture
+ */
+export function paletteFromCover(image) {
+  // Portada reducida: drawImage promedia los píxeles y basta con pocos para sacar colores
+  const width = 24
+  const height = 36
+  const canvas = document.createElement('canvas')
+  canvas.width = width
+  canvas.height = height
+  const ctx = canvas.getContext('2d', { willReadFrequently: true })
+  ctx.drawImage(image, 0, 0, width, height)
+  const { data } = ctx.getImageData(0, 0, width, height)
+
+  // Color medio de la cuarta parte izquierda de la portada entre dos filas
+  const stripAverage = (fromRow, toRow) => {
+    const sum = [0, 0, 0]
+    let count = 0
+    for (let y = fromRow; y < toRow; y++) {
+      for (let x = 0; x < width / 4; x++) {
+        const i = (y * width + x) * 4
+        sum[0] += data[i]
+        sum[1] += data[i + 1]
+        sum[2] += data[i + 2]
+        count++
+      }
+    }
+    return sum.map((value) => value / count)
+  }
+
+  // Adorno: el píxel con más diferencia entre su canal mayor y menor (el más saturado)
+  let accent = [212, 175, 55]
+  let bestSaturation = 0
+  for (let i = 0; i < data.length; i += 4) {
+    const saturation = Math.max(data[i], data[i + 1], data[i + 2]) - Math.min(data[i], data[i + 1], data[i + 2])
+    if (saturation > bestSaturation) {
+      bestSaturation = saturation
+      accent = [data[i], data[i + 1], data[i + 2]]
+    }
+  }
+
+  const toCss = ([r, g, b]) => `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`
+  const top = stripAverage(0, height / 3)
+  const mid = stripAverage(height / 3, (2 * height) / 3)
+  const bottom = stripAverage((2 * height) / 3, height)
+  // Luminancia aproximada del centro del lomo: fondo claro → texto negro (el valor que reconoce generateSpineTexture)
+  const lightBackground = 0.2126 * mid[0] + 0.7152 * mid[1] + 0.0722 * mid[2] > 150
+  const textColor = lightBackground ? '#0a0a0a' : '#ffffff'
+
+  return {
+    spineGradient: { top: toCss(top), mid: toCss(mid), bottom: toCss(bottom) },
+    spineTitleColor: textColor,
+    spineAuthorColor: textColor,
+    spinePublisherColor: textColor,
+    spineRibsColor: toCss(accent),
+    backColor: toCss(mid),
+    backTextColor: textColor,
+  }
+}

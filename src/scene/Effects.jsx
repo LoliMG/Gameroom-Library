@@ -33,8 +33,9 @@ const SATURATION = 0.06       // Ligero aumento de saturación (-1 a 1)
 const BRIGHTNESS = 0.0        // Brillo (-1 a 1)
 const CONTRAST = 0.06         // Ligero aumento de contraste (-1 a 1)
 
-// Niebla exponencial muy ligera, cálida y oscura, para dar profundidad
-const FOG_COLOR = '#2a2420'
+// Niebla exponencial muy ligera: dentro de la sala apenas se nota (≈3 % en la pared del fondo); en el jardín es la bruma
+// cálida del atardecer que aclara lo lejano (el cielo y las colinas no la usan)
+const FOG_COLOR = '#b58272'
 const FOG_DENSITY = 0.028
 
 // Muestreo múltiple del compositor para mantener los bordes suaves (sustituye al antialias del lienzo)

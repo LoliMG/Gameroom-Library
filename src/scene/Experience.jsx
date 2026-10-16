@@ -1,5 +1,5 @@
-// Importación de Suspense de React para pausar el render hasta que las texturas estén cargadas
-import { Suspense } from 'react'
+// Suspense pausa el render hasta que las texturas estén cargadas; el resto guarda el orden y el arrastre de los libros
+import { Suspense, useEffect, useRef, useState } from 'react'
 // Environment de drei para reflejos sutiles
 import { Environment } from '@react-three/drei'
 // Importación de la paleta ambiental activa
@@ -19,22 +19,16 @@ import SofaCorner from '@/scene/SofaCorner'
 // Importación de la puerta de entrada de madera antigua (door.glb)
 import Door from '@/scene/Door'
 // Importación de la función pura de colocación en pared desde utils
-import { getWallPlacement } from '@/utils/shelfLayout'
-import { BOOKSHELF_DEPTH, SHELF_COUNT, SHELF_PITCH } from '@/scene/Bookshelf'
+import { getWallPlacement, fitOnShelf } from '@/utils/shelfLayout'
+import { BOOKSHELF_DEPTH, SHELF_COUNT, SHELF_PITCH, BOOK_GAP, BASE_SHELF_WIDTH, BOARD_THICKNESS } from '@/scene/Bookshelf'
 // Mueble bajo integrado en las estanterías de la pared a
 import StorageCabinet, { CABINET_LENGTH_PER_HEIGHT } from '@/scene/StorageCabinet'
-// Bloque de madera que une las estanterías en la esquina
-import ShelfCorner from '@/scene/ShelfCorner'
 // Rodapiés de madera y medidas del ventanal para saber dónde hay muro
 import SkirtingBoards from '@/scene/SkirtingBoards'
 import { WINDOW_WIDTH, WINDOW_PIER_WIDTH } from '@/scene/WindowWall'
-// Geometría compartida de las paredes de estanterías (también la usan velas y objetos de las baldas)
+// Geometría de la pared de estanterías (pared a, la del mueble)
 import {
   SHELF_WALL_Y,
-  WALL_D_SHELF_LENGTH,
-  SHELF_WALL_D_X,
-  SHELF_WALL_D_Z,
-  SHELF_WALL_D_ROTATION_Y,
   WALL_A_SHELF_LENGTH,
   SHELF_WALL_A_X,
   SHELF_WALL_A_Z,
@@ -50,7 +44,7 @@ import DustParticles from '@/scene/DustParticles'
 import FirstPersonControls from '@/scene/FirstPersonControls'
 
 // Posición y orientación de la puerta de entrada (door.glb) en la pared b (+X):
-// Situada en el vano entre las estanterías del fondo d (Z = -1.65 m) y el sofá (Z = +1.06 m)
+// Situada entre la pared del fondo d y el sofá (Z = +1.06 m)
 // Caja de door.glb × 0.009: el marco tiene 0.147 m de fondo a cada lado de su centro y la hoja ±0.055 m.
 // Se empotra en el hueco de la pared hasta que el marco solo asoma 1 cm: así no se ve su canto ni el marco trasero.
 const DOOR_FRAME_HALF_DEPTH = 0.147
@@ -66,22 +60,23 @@ const DOOR_FRAME_MAX_Z = DOOR_Z + 0.548 // +0.25 m
 // para que el marco tape los bordes del corte
 const DOOR_OPENING = { minZ: DOOR_Z - 0.53, maxZ: DOOR_Z + 0.48, height: 2.15 }
 
-// Rodapiés: solo donde se ve muro. Las paredes a y d están tapadas por estanterías hasta el suelo, y el trozo
-// izquierdo del muro del ventanal queda detrás de las estanterías de la pared a.
+// Rodapiés: solo donde se ve muro. La pared a está tapada por estanterías hasta el suelo, y el trozo
+// izquierdo del muro del ventanal queda detrás de ellas.
 // Cada tramo se recorre con la pared a la derecha (ver SkirtingBoards).
 const WALL_B_X = ROOM_WIDTH / 2
-const SHELF_D_FRONT_Z = BACK_WALL_Z + BOOKSHELF_DEPTH // -1.65 m
+const SHELF_A_FRONT_X = -ROOM_WIDTH / 2 + BOOKSHELF_DEPTH // -2.25 m
 const SKIRTING_SEGMENTS = [
-  // Pared b: del ventanal a la puerta y de la puerta a las estanterías del fondo
+  // Pared b: del ventanal a la puerta y de la puerta a la esquina del fondo
   { start: [WALL_B_X, FRONT_WALL_INNER_Z], end: [WALL_B_X, DOOR_FRAME_MAX_Z] },
-  { start: [WALL_B_X, DOOR_FRAME_MIN_Z], end: [WALL_B_X, SHELF_D_FRONT_Z] },
+  { start: [WALL_B_X, DOOR_FRAME_MIN_Z], end: [WALL_B_X, BACK_WALL_Z] },
+  // Pared del fondo d (sin estanterías): de la esquina con la pared b hasta el lateral de las estanterías de la pared a
+  { start: [WALL_B_X, BACK_WALL_Z], end: [SHELF_A_FRONT_X, BACK_WALL_Z] },
   // Muro del ventanal: entre los dos arcos y el trozo de la derecha (junto a la pared b)
   { start: [-WINDOW_PIER_WIDTH / 2, FRONT_WALL_INNER_Z], end: [WINDOW_PIER_WIDTH / 2, FRONT_WALL_INNER_Z] },
   { start: [WINDOW_WIDTH / 2, FRONT_WALL_INNER_Z], end: [WALL_B_X, FRONT_WALL_INNER_Z] },
 ]
 
-// Rotaciones de las dos paredes de estanterías (constantes en shelfWalls.js)
-const SHELF_WALL_D_ROTATION = [0, SHELF_WALL_D_ROTATION_Y, 0]
+// Rotación de la pared de estanterías (constante en shelfWalls.js)
 const SHELF_WALL_A_ROTATION = [0, SHELF_WALL_A_ROTATION_Y, 0]
 
 // MUEBLE EN LA PARED A: en el centro de la pared, con estanterías cortas encima y módulos completos a los lados.
@@ -90,7 +85,7 @@ const CABINET_START_SHELF = 3                                        // Los mód
 const CABINET_HEIGHT = CABINET_START_SHELF * SHELF_PITCH             // 0.9975 m
 const CABINET_LENGTH = CABINET_HEIGHT * CABINET_LENGTH_PER_HEIGHT    // ≈ 3.0 m (escala uniforme)
 const CABINET_CENTER_Z = SHELF_WALL_A_Z                              // Centrado en la pared a (+1.145 m)
-const WALL_A_START_Z = SHELF_WALL_A_Z - WALL_A_SHELF_LENGTH / 2      // Frente de las estanterías de la pared d (-1.65 m)
+const WALL_A_START_Z = SHELF_WALL_A_Z - WALL_A_SHELF_LENGTH / 2      // Pared del fondo d (-2.0 m)
 const WALL_A_END_Z = SHELF_WALL_A_Z + WALL_A_SHELF_LENGTH / 2        // Cara interior del muro del ventanal (+3.94 m)
 // Tramos de la pared a: módulos completos, módulos cortos sobre el mueble y módulos completos
 const WALL_A_RUNS = [
@@ -99,31 +94,142 @@ const WALL_A_RUNS = [
   { startZ: CABINET_CENTER_Z + CABINET_LENGTH / 2, endZ: WALL_A_END_Z, startShelf: 0 },
 ]
 
-function Experience({ onSelectBook }) {
-  // Reparto secuencial de libros: primero se llena la pared del fondo (d)
-  const wallDPlacement = getWallPlacement(books, WALL_D_SHELF_LENGTH)
+// Tramos de estanterías de la pared a (la pared del fondo d no lleva)
+const SHELF_WALLS = WALL_A_RUNS.map((run, i) => ({
+  key: `a${i}`,
+  length: run.endZ - run.startZ,
+  position: [SHELF_WALL_A_X, SHELF_WALL_Y, (run.startZ + run.endZ) / 2],
+  rotation: SHELF_WALL_A_ROTATION,
+  startShelf: run.startShelf,
+}))
 
-  // Los libros que no cupieron en la pared d continúan por los tramos de la pared a (del fondo hacia el ventanal)
-  let remainingBooks = wallDPlacement.remainingBooks
-  const wallARuns = []
-  for (const run of WALL_A_RUNS) {
-    const length = run.endZ - run.startZ
-    const placement = getWallPlacement(remainingBooks, length, { shelfCount: SHELF_COUNT - run.startShelf })
+// Colocación inicial: los libros llenan en orden los tramos de la pared a, del fondo hacia el ventanal
+function layoutAllBooks() {
+  let remainingBooks = books
+  const placements = []
+  for (const wall of SHELF_WALLS) {
+    const placement = getWallPlacement(remainingBooks, wall.length, { shelfCount: SHELF_COUNT - wall.startShelf })
+    placement.placements.forEach((p) => placements.push({ ...p, wall: wall.key }))
     remainingBooks = placement.remainingBooks
-    wallARuns.push({ ...run, length, books: placement.placedBooks })
   }
-
   // Advertencia de capacidad en consola en caso de libros sin colocar tras ambas paredes
   if (remainingBooks.length > 0) {
     console.warn(
       `[Experience] Quedan ${remainingBooks.length} libros sin colocar tras llenar todas las estanterías de las paredes d y a.`
     )
   }
+  return placements
+}
+
+// Clave de localStorage con el sitio de los libros que se han movido, por ISBN (el id cambia si se añaden libros)
+const PLACEMENTS_STORAGE_KEY = 'fantasy-bookroom:book-placements'
+
+// ¿El sitio guardado existe en las estanterías actuales? (lo que llega de localStorage puede estar viejo o roto)
+function isValidSlot(slot) {
+  const wall = SHELF_WALLS.find((w) => w.key === slot?.wall)
+  if (!wall) return false
+  const moduleCount = Math.max(1, Math.round(wall.length / BASE_SHELF_WIDTH))
+  const innerWidth = wall.length / moduleCount - 2 * BOARD_THICKNESS
+  return (
+    Number.isInteger(slot.module) && slot.module >= 0 && slot.module < moduleCount &&
+    Number.isInteger(slot.shelf) && slot.shelf >= 0 && slot.shelf < SHELF_COUNT - wall.startShelf &&
+    Number.isFinite(slot.x) && Math.abs(slot.x) <= innerWidth / 2
+  )
+}
+
+// Colocación inicial con los sitios guardados encima; si localStorage no responde (modo privado…), la de por defecto
+// shortcut: si se añaden libros, uno nuevo puede caer encima de uno movido; recolocarlos con fitOnShelf si pasa a menudo
+function loadPlacements() {
+  let saved = {}
+  try {
+    saved = JSON.parse(localStorage.getItem(PLACEMENTS_STORAGE_KEY)) ?? {}
+  } catch {
+    // Sin datos válidos: se usa la colocación por defecto
+  }
+  return layoutAllBooks().map((p) => {
+    const slot = saved[p.book.isbn]
+    return isValidSlot(slot) ? { ...p, wall: slot.wall, module: slot.module, shelf: slot.shelf, x: slot.x } : p
+  })
+}
+
+function Experience({ onSelectBook }) {
+  // Sitio de cada libro: { book, wall, module, shelf, x }; cambia al arrastrarlo y se guarda en localStorage
+  const [placements, setPlacements] = useState(loadPlacements)
+  // Libro agarrado: el estado lo pinta sacado de la balda; la ref la leen la cámara y las baldas en el mismo evento
+  const [draggedId, setDraggedId] = useState(null)
+  const draggedRef = useRef(null)
+  // Sitio del libro al agarrarlo (vuelve ahí si se suelta fuera de las baldas) y si se ha soltado sobre una balda
+  const originRef = useRef(null)
+  const droppedRef = useRef(false)
+
+  // Guarda los sitios al terminar cada arrastre (mientras se arrastra cambian en cada movimiento del puntero)
+  useEffect(() => {
+    if (draggedId !== null) return
+    const slots = Object.fromEntries(
+      placements.map(({ book, wall, module, shelf, x }) => [book.isbn, { wall, module, shelf, x }])
+    )
+    try {
+      localStorage.setItem(PLACEMENTS_STORAGE_KEY, JSON.stringify(slots))
+    } catch {
+      // Sin almacenamiento (modo privado, cuota llena): los libros se quedan donde están hasta recargar
+    }
+  }, [placements, draggedId])
+
+  // Soltar el botón en cualquier sitio termina el arrastre (después del onPointerUp de la balda de destino);
+  // si no se soltó sobre una balda, el libro vuelve a donde estaba
+  useEffect(() => {
+    const release = () => {
+      const origin = originRef.current
+      if (draggedRef.current !== null && !droppedRef.current && origin) {
+        setPlacements((list) => list.map((p) => (p.book.id === origin.book.id ? origin : p)))
+      }
+      draggedRef.current = null
+      originRef.current = null
+      setDraggedId(null)
+    }
+    window.addEventListener('pointerup', release)
+    return () => window.removeEventListener('pointerup', release)
+  }, [])
+
+  // Lleva el libro agarrado al hueco libre más cercano a x en esa balda (si no cabe, se queda donde estaba)
+  const moveDragged = (slot, x, innerWidth) => {
+    const bookId = draggedRef.current
+    if (bookId === null) return
+    setPlacements((list) => {
+      const dragged = list.find((p) => p.book.id === bookId)
+      const others = list.filter(
+        (p) => p !== dragged && p.wall === slot.wall && p.module === slot.module && p.shelf === slot.shelf
+      )
+      const fitX = fitOnShelf(others, dragged.book.width, x, innerWidth, BOOK_GAP)
+      if (fitX === null) return list
+      const sameSlot = dragged.wall === slot.wall && dragged.module === slot.module && dragged.shelf === slot.shelf
+      // Sin cambio visible: misma lista, así React no vuelve a pintar las estanterías
+      if (sameSlot && Math.abs(dragged.x - fitX) < 1e-4) return list
+      return list.map((p) => (p === dragged ? { ...p, ...slot, x: fitX } : p))
+    })
+  }
+
+  const bookDrag = {
+    draggedId,
+    grab: (book) => {
+      draggedRef.current = book.id
+      originRef.current = placements.find((p) => p.book.id === book.id)
+      droppedRef.current = false
+      setDraggedId(book.id)
+    },
+    // slot: { wall, module, shelf } de la balda bajo el puntero; x: punto de la balda en coordenadas de la estantería
+    hover: moveDragged,
+    drop: (slot, x, innerWidth) => {
+      if (draggedRef.current === null) return
+      moveDragged(slot, x, innerWidth)
+      droppedRef.current = true
+    },
+  }
 
   return (
     <>
       {/* Cámara en primera persona limitada al interior de la sala */}
-      <FirstPersonControls />
+      <FirstPersonControls heldBookRef={draggedRef} />
 
       {/* Postprocesado (Bloom, viñeta, color) y niebla ligera; ENABLE_EFFECTS los apaga todos */}
       <Effects />
@@ -142,31 +248,21 @@ function Experience({ onSelectBook }) {
         {/* Renderizado de la estructura de la habitación (suelo con textura de madera, paredes y ventanal frontal c) */}
         <Room doorOpening={DOOR_OPENING} />
 
-        {/* Bloque rinconero recto que une las dos paredes de estanterías en un ángulo recto limpio de 90° sin picos */}
-        <ShelfCorner />
-
         {/* Rodapiés de madera en los tramos de pared visibles */}
         <SkirtingBoards segments={SKIRTING_SEGMENTS} />
 
-        {/* Estanterías de la pared del fondo (d): cubren desde la esquina recta hasta la pared derecha con lomos hacia +Z */}
-        <BookshelfWall
-          books={wallDPlacement.placedBooks}
-          wallLength={WALL_D_SHELF_LENGTH}
-          position={[SHELF_WALL_D_X, SHELF_WALL_Y, SHELF_WALL_D_Z]}
-          rotation={SHELF_WALL_D_ROTATION}
-          onSelectBook={onSelectBook}
-        />
-
-        {/* Estanterías de la pared izquierda (a) en tres tramos, con los lomos mirando al interior (+X) */}
-        {wallARuns.map(({ startZ, endZ, length, books: runBooks, startShelf }) => (
+        {/* Estanterías de la pared izquierda (a) en tres tramos (el del centro, sobre el mueble), lomos hacia +X */}
+        {SHELF_WALLS.map((wall) => (
           <BookshelfWall
-            key={startZ}
-            books={runBooks}
-            wallLength={length}
-            position={[SHELF_WALL_A_X, SHELF_WALL_Y, (startZ + endZ) / 2]}
-            rotation={SHELF_WALL_A_ROTATION}
+            key={wall.key}
+            wallKey={wall.key}
+            placements={placements.filter((p) => p.wall === wall.key)}
+            wallLength={wall.length}
+            position={wall.position}
+            rotation={wall.rotation}
             onSelectBook={onSelectBook}
-            startShelf={startShelf}
+            bookDrag={bookDrag}
+            startShelf={wall.startShelf}
           />
         ))}
 

@@ -27,7 +27,7 @@ const PLAYER_RADIUS = 0.4 // También es la distancia mínima a paredes y estant
 // Límites del paseo: paredes y frente de las estanterías, menos el radio del jugador
 const MIN_X = -ROOM_WIDTH / 2 + BOOKSHELF_DEPTH + PLAYER_RADIUS // Frente de las estanterías de la pared a
 const MAX_X = ROOM_WIDTH / 2 - PLAYER_RADIUS                     // Pared b
-const MIN_Z = BACK_WALL_Z + BOOKSHELF_DEPTH + PLAYER_RADIUS      // Frente de las estanterías de la pared d
+const MIN_Z = BACK_WALL_Z + PLAYER_RADIUS                        // Pared del fondo d (sin estanterías)
 const MAX_Z = FRONT_WALL_INNER_Z - PLAYER_RADIUS                 // Muro del ventanal
 
 // Teclas (código físico, igual en cualquier distribución de teclado): [lateral, adelante/atrás]
@@ -49,7 +49,7 @@ function isBlocked(x, z, colliders) {
  * o, con el ratón capturado (pointer lock), mover el ratón sin pulsar.
  * La cámara no sale de la habitación y choca con los objetos marcados con userData.collider.
  */
-function FirstPersonControls() {
+function FirstPersonControls({ heldBookRef }) {
   const camera = useThree((state) => state.camera)
   const canvas = useThree((state) => state.gl.domElement)
   const scene = useThree((state) => state.scene)
@@ -96,7 +96,8 @@ function FirstPersonControls() {
     }
     const onPointerMove = (event) => {
       const locked = document.pointerLockElement === canvas
-      if (!locked && !dragging) return
+      // Arrastrando un libro la vista no gira (con el ratón capturado sí: así se apunta al hueco de destino)
+      if (!locked && (!dragging || heldBookRef.current !== null)) return
       const sensitivity = locked ? LOCKED_SENSITIVITY : DRAG_SENSITIVITY
       look.current.yaw -= event.movementX * sensitivity
       look.current.pitch = Math.max(-MAX_PITCH, Math.min(MAX_PITCH, look.current.pitch - event.movementY * sensitivity))
@@ -110,7 +111,7 @@ function FirstPersonControls() {
       window.removeEventListener('pointerup', onPointerUp)
       window.removeEventListener('pointermove', onPointerMove)
     }
-  }, [camera, canvas])
+  }, [camera, canvas, heldBookRef])
 
   // useFrame: camina según las teclas pulsadas, deslizándose contra paredes y muebles
   useFrame((_, delta) => {

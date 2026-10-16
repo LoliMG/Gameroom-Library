@@ -9,7 +9,9 @@ const AMBIENT_LIGHT_INTENSITY = 0.8   // Ajustada en la Fase 11: destacan el ven
 // Constantes de configuración de la luz natural exterior que entra por el gran ventanal
 const WINDOW_LIGHT_COLOR = PALETTE.lightColor         // Color de luz exterior según la paleta activa
 const WINDOW_LIGHT_INTENSITY = PALETTE.lightIntensity // Intensidad según la paleta activa
-const WINDOW_LIGHT_POSITION = [0.6, 2.8, 5.5]         // Posición exterior en altura apuntando hacia el interior de la sala
+// Sol bajo del atardecer: del mismo lado que el sol del cielo (SunsetSky, al fondo a la derecha) pero algo más alto,
+// para que entre por el ventanal y estire las sombras de los parteluces por el suelo
+const WINDOW_LIGHT_POSITION = [-2.4, 2.2, 10]
 
 // Constantes de configuración de sombras proyectadas por la luz del ventanal
 const SHADOW_MAP_SIZE = 1024 // Resolución en píxeles del mapa de sombras
@@ -40,11 +42,11 @@ function Lights() {
         shadow-mapSize-height={SHADOW_MAP_SIZE}
         shadow-bias={SHADOW_BIAS}
         shadow-camera-near={0.5}
-        shadow-camera-far={12}
-        shadow-camera-left={-3}
-        shadow-camera-right={3}
-        shadow-camera-top={3}
-        shadow-camera-bottom={-3}
+        shadow-camera-far={18}
+        shadow-camera-left={-4}
+        shadow-camera-right={4}
+        shadow-camera-top={4}
+        shadow-camera-bottom={-4}
       />
     </group>
   )

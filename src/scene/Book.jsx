@@ -8,19 +8,26 @@ import {
   generateSpineTexture,
   generateBackCoverTexture,
   generatePagesTexture,
+  paletteFromCover,
 } from '@/scene/bookTextureGenerator'
 
-function Book({ position, width, height, depth, onSelect, book }) {
+function Book({ position, width, height, depth, onSelect, onGrab, book }) {
   // Carga reactiva de la textura de la portada con useTexture y espacio de color sRGB
   const coverTexture = useTexture(book.cover, (loadedTexture) => {
     loadedTexture.colorSpace = SRGBColorSpace
   })
 
+  // Libros sin paleta calibrada a mano: los colores del lomo y la contraportada salen de su portada
+  const styledBook = useMemo(
+    () => (book.spineGradient ? book : { ...book, ...paletteFromCover(coverTexture.image) }),
+    [book, coverTexture]
+  )
+
   // Generación procedimental en Canvas 2D del lomo (con autor, título grande y editorial)
-  const spineTexture = useMemo(() => generateSpineTexture(book), [book])
+  const spineTexture = useMemo(() => generateSpineTexture(styledBook), [styledBook])
 
   // Generación procedimental en Canvas 2D de la contraportada (con sinopsis y código de barras)
-  const backTexture = useMemo(() => generateBackCoverTexture(book), [book])
+  const backTexture = useMemo(() => generateBackCoverTexture(styledBook), [styledBook])
 
   // Generación procedimental de la textura de hojas de papel con líneas verticales
   const pagesTexture = useMemo(() => generatePagesTexture(), [])
@@ -42,6 +49,12 @@ function Book({ position, width, height, depth, onSelect, book }) {
     <mesh
       position={position}
       onClick={handleClick}
+      // Arrastre: se agarra con el botón izquierdo; lo suelta la zona de la balda que hay detrás (Bookshelf)
+      onPointerDown={(event) => {
+        if (event.button !== 0) return
+        event.stopPropagation()
+        onGrab(book)
+      }}
       // castShadow: permite que el libro proyecte sombras sobre la balda y los libros contiguos
       castShadow
       // receiveShadow: permite que la superficie del libro reciba sombras proyectadas por otros elementos

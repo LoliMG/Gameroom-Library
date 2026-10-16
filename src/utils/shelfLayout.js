@@ -86,7 +86,8 @@ export function layoutBooksOnShelves(books = [], config = {}) {
  * @param {Array<Object>} books - Libros disponibles para colocar
  * @param {number} wallLength - Longitud total de la pared a cubrir en metros
  * @param {Object} [options] - Parámetros de geometría de los módulos
- * @returns {{ placedBooks: Array<Object>, remainingBooks: Array<Object>, usedCount: number }}
+ * @returns {{ placements: Array<{ book: Object, module: number, shelf: number, x: number }>, remainingBooks: Array<Object> }}
+ *   placements: módulo, balda y centro X de cada libro colocado; remainingBooks: los que no caben en esta pared
  */
 export function getWallPlacement(books = [], wallLength = 4.0, options = {}) {
   const baseShelfWidth = options.baseShelfWidth ?? 1.2
@@ -99,23 +100,54 @@ export function getWallPlacement(books = [], wallLength = 4.0, options = {}) {
   const moduleInnerWidth = moduleWidth - 2 * boardThickness
 
   let remaining = [...books]
-  let totalUsed = 0
+  const placements = []
 
   for (let i = 0; i < moduleCount; i++) {
-    const { usedCount } = layoutBooksOnShelves(remaining, {
+    const { placed, usedCount } = layoutBooksOnShelves(remaining, {
       innerWidth: moduleInnerWidth,
       shelfCount,
       bookGap,
     })
-    totalUsed += usedCount
+    placed.forEach(({ book, shelfIndex, x }) => placements.push({ book, module: i, shelf: shelfIndex, x }))
     remaining = remaining.slice(usedCount)
   }
 
   return {
-    placedBooks: books.slice(0, totalUsed),
-    remainingBooks: books.slice(totalUsed),
-    usedCount: totalUsed,
+    placements,
+    remainingBooks: remaining,
   }
 }
 
 export default layoutBooksOnShelves
+
+/**
+ * Centro X más cercano a `x` donde cabe un libro de ancho `width` en una balda sin pisar a los demás.
+ * Así se puede soltar un libro en cualquier punto: si cae encima de otro, se arrima al hueco libre más próximo.
+ *
+ * @param {Array<{ book: Object, x: number }>} others - Libros que ya están en esa balda
+ * @param {number} width - Grosor del libro que se coloca
+ * @param {number} x - Centro donde se ha soltado (coordenadas de la estantería, 0 = centro)
+ * @param {number} innerWidth - Ancho útil de la balda
+ * @param {number} [gap] - Separación mínima con los libros vecinos
+ * @returns {number|null} Centro donde queda el libro, o null si no cabe en ningún hueco de la balda
+ */
+export function fitOnShelf(others, width, x, innerWidth, gap = 0) {
+  const half = width / 2
+  // Tramos ocupados (con su separación), de izquierda a derecha; el último marca el panel derecho
+  const occupied = others
+    .map((other) => [other.x - other.book.width / 2 - gap, other.x + other.book.width / 2 + gap])
+    .sort((a, b) => a[0] - b[0])
+  occupied.push([innerWidth / 2, innerWidth / 2])
+
+  let best = null
+  let freeStart = -innerWidth / 2
+  for (const [start, end] of occupied) {
+    // Hueco libre [freeStart, start]: si el libro cabe, el centro más próximo a x dentro del hueco
+    if (start - freeStart >= width) {
+      const candidate = Math.min(Math.max(x, freeStart + half), start - half)
+      if (best === null || Math.abs(candidate - x) < Math.abs(best - x)) best = candidate
+    }
+    freeStart = Math.max(freeStart, end)
+  }
+  return best
+}

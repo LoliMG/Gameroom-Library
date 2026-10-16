@@ -18,6 +18,15 @@ import ivyUrl from '@/assets/models/flowers/ivy.glb?url'
 import ponytaUrl from '@/assets/models/other/ponyta.glb?url'
 import bakugoUrl from '@/assets/models/furniture/bakugo.glb?url'
 import grassGroundUrl from '@/assets/models/flowers/grass_texture.glb?url'
+import gardenBenchUrl from '@/assets/models/furniture/jap_bench.glb?url'
+import plushieSharkUrl from '@/assets/models/other/plushie_shark.glb?url'
+import pillowFishUrl from '@/assets/models/other/pillow_fish.glb?url'
+import fountainUrl from '@/assets/models/other/fountain.glb?url'
+import paperLanternsUrl from '@/assets/models/other/japanese_paper_lanterns.glb?url'
+import stoneWallUrl from '@/assets/models/other/stone_wall.glb?url'
+import elderStonesUrl from '@/assets/models/other/elder_stones.glb?url'
+import warriorUrl from '@/assets/models/other/warrior.glb?url'
+import flowerPotUrl from '@/assets/models/other/flower_pot.glb?url'
 
 // Modelos varios (libros y accesorios de mesa)
 import bookTableUrl from '@/assets/models/other/book_open.glb?url'
@@ -187,6 +196,114 @@ export const modelsManifest = {
       author: 'Ye ye AI sh1t',
       license: 'CC-BY-4.0',
       url: 'https://sketchfab.com/3d-models/bakugo-my-hero-ultra-rumble-6e150076998047e185825153361400e0',
+    },
+  },
+
+  // Banco de jardín japonés de madera (rincón del jardín)
+  gardenBench: {
+    url: gardenBenchUrl,
+    file: 'furniture/jap_bench.glb',
+    credit: {
+      title: 'Japanese Garden Bench',
+      author: 'stasloveless',
+      license: 'CC-BY-4.0',
+      url: 'https://sketchfab.com/3d-models/japanese-garden-bench-df71b965d0ba4a9596375133ac785e21',
+    },
+  },
+
+  // Tiburón de peluche sobre el banco del jardín
+  plushieShark: {
+    url: plushieSharkUrl,
+    file: 'other/plushie_shark.glb',
+    credit: {
+      title: 'Plushie Shark',
+      author: 'QuazrSCI',
+      license: 'CC-BY-4.0',
+      url: 'https://sketchfab.com/3d-models/plushie-shark-875414d5e45c42f9a5323ba8a8beed19',
+    },
+  },
+
+  // Cojín con forma de pez sobre el banco del jardín
+  pillowFish: {
+    url: pillowFishUrl,
+    file: 'other/pillow_fish.glb',
+    credit: {
+      title: 'pillow fish',
+      author: 'bintangprabulukita',
+      license: 'CC-BY-4.0',
+      url: 'https://sketchfab.com/3d-models/pillow-fish-40dc80cd0bbd4cf68f5ece871ceebbf0',
+    },
+  },
+
+  // Fuente de piedra del jardín, frente a la ventana derecha
+  fountain: {
+    url: fountainUrl,
+    file: 'other/fountain.glb',
+    credit: {
+      title: 'Fountain',
+      author: 'yorre.detavernier',
+      license: 'CC-BY-4.0',
+      url: 'https://sketchfab.com/3d-models/fountain-8580500134194ba5be3f6df7593049f2',
+    },
+  },
+
+  // Cuatro farolillos japoneses de papel distintos (nodos 'paper lantern1' a 'paper lantern4'), con brillo propio
+  paperLanterns: {
+    url: paperLanternsUrl,
+    file: 'other/japanese_paper_lanterns.glb',
+    credit: {
+      title: 'Japanese paper lanterns collection',
+      author: 'patrakeevasveta',
+      license: 'CC-BY-4.0',
+      url: 'https://sketchfab.com/3d-models/japanese-paper-lanterns-collection-484f311e91514be482f36234aad3934c',
+    },
+  },
+
+  // Tramo de muro de piedra con un pilar en cada extremo (se repite alrededor de la casa y el jardín; texturas: ~100 MB)
+  stoneWall: {
+    url: stoneWallUrl,
+    file: 'other/stone_wall.glb',
+    credit: {
+      title: 'Stone Wall | Low Poly | Game Ready',
+      author: 'kEam',
+      license: 'CC-BY-4.0',
+      url: 'https://sketchfab.com/3d-models/stone-wall-low-poly-game-ready-53b1128497e34d4b9766dcde10df230b',
+    },
+  },
+
+  // Varias losas de piedra planas en una sola malla (se separan al cargar: losas del camino del jardín)
+  elderStones: {
+    url: elderStonesUrl,
+    file: 'other/elder_stones.glb',
+    credit: {
+      title: 'Elder Stones',
+      author: 'Cheyenne.Bockart',
+      license: 'CC-BY-4.0',
+      url: 'https://sketchfab.com/3d-models/elder-stones-aa44e2d042e44238acd25c1a5e95b22c',
+    },
+  },
+
+  // Guerrero (sacerdote caído) de pie en el jardín, junto al banco. Muy pesado: ~1,9 millones de triángulos y 138 MB
+  warrior: {
+    url: warriorUrl,
+    file: 'other/warrior.glb',
+    credit: {
+      title: 'Corrupted Fallen Priest - Dark Fantasy',
+      author: 'Pigcraft',
+      license: 'CC-BY-4.0',
+      url: 'https://sketchfab.com/3d-models/corrupted-fallen-priest-dark-fantasy-1ab734d8c4464ae49d5b5091f3ea2afc',
+    },
+  },
+
+  // Macetero de piedra junto al banco del jardín
+  flowerPot: {
+    url: flowerPotUrl,
+    file: 'other/flower_pot.glb',
+    credit: {
+      title: 'Flower pot',
+      author: 'Ryoce',
+      license: 'CC-BY-4.0',
+      url: 'https://sketchfab.com/3d-models/flower-pot-ea1e03b01f8d45039d900e379f1f87d0',
     },
   },
 

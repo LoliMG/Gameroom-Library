@@ -64,7 +64,14 @@ function App() {
       </Canvas>
 
       {/* Controles de juego: HTML fuera del Canvas, por encima del lienzo */}
-      <PlayControls onLock={() => canvasRef.current?.requestPointerLock()} />
+      {/* Algunos visores (iframes sin permiso) rechazan la captura: se avisa y se sigue con arrastrar para mirar */}
+      <PlayControls
+        onLock={() =>
+          canvasRef.current
+            ?.requestPointerLock()
+            ?.catch((error) => console.warn('[PlayControls] No se pudo bloquear la cámara:', error.message))
+        }
+      />
 
       {/* BookDetailPanel se coloca fuera del <Canvas> como hermano suyo porque es un componente HTML tradicional; */}
       {/* los elementos HTML (div, img, button) no pueden procesarse dentro del contexto WebGL de Three.js. */}

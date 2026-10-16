@@ -51,7 +51,7 @@ function createWoodTextures(image, source) {
 
 /**
  * Madera recortada de la textura de un modelo para el resto del mobiliario.
- * `source`: 'cabinet' (tono del mueble: estanterías y bloque de esquina) o 'shelf' (tono de las repisas: rodapiés).
+ * `source`: 'cabinet' (tono del mueble: estanterías) o 'shelf' (tono de las repisas: rodapiés).
  * Devuelve { grainVertical, grainAlongLength }: veta en vertical para piezas de pie y a lo largo para piezas tumbadas.
  */
 export default function useShelfWood(source = 'shelf') {

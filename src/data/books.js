@@ -1,18 +1,16 @@
 // Lectura de los metadatos generados
 import booksMeta from '@/data/booksMeta.json'
 
-// Importación directa de las portadas guardadas con el título del libro
-import edenCover from '@/assets/covers/un-eden-de-huesos-en-flor.jpg'
-import sangreCover from '@/assets/covers/alas-de-sangre.jpg'
-import hierroCover from '@/assets/covers/alas-de-hierro.jpg'
-import onixCover from '@/assets/covers/alas-de-onix.jpg'
+// Importación de todas las portadas guardadas en assets/covers con nombre ISBN.(jpg|png|jpeg|webp)
+const coverModules = import.meta.glob('@/assets/covers/*.{jpg,png,jpeg,webp}', { eager: true, import: 'default' })
 
-// Mapa de portadas por ISBN
-const coverMap = {
-  '9788410140462': edenCover,
-  '9788408279990': sangreCover,
-  '9788408284550': hierroCover,
-  '9788408297079': onixCover,
+// Mapa dinámico de portadas indexado por ISBN
+const coverMap = {}
+for (const [filePath, url] of Object.entries(coverModules)) {
+  const match = filePath.match(/(\d{13})\.(jpg|png|jpeg|webp)$/)
+  if (match) {
+    coverMap[match[1]] = url
+  }
 }
 
 // Constantes para el cálculo dinámico del grosor del lomo en función de las páginas reales
@@ -83,8 +81,9 @@ const bookStyles = {
 }
 
 // Transformación y exportación del array completo de libros con dimensiones para visualización de canto
-const books = booksMeta.map((item, index) => {
-  const coverImage = coverMap[item.isbn] || null
+// Solo los libros con portada: con cover null useTexture lanza un error y la escena entera no carga
+const books = booksMeta.filter((item) => coverMap[item.isbn]).map((item, index) => {
+  const coverImage = coverMap[item.isbn]
   const style = bookStyles[item.isbn] || {}
 
   // Grosor del lomo calculado a partir de las páginas reales

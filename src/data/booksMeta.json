@@ -1,15 +1,13 @@
 [
   {
     "isbn": "9788410140462",
-    "title": "Un Edén de Huesos en Flor",
-    "author": "Libertad Delgado",
+    "title": "Un edén de huesos en flor",
+    "author": "Beatriz Esteban",
+    "pages": 576,
     "publisher": "NdeNovela",
-    "pages": 712,
     "source": {
-      "title": "Manual / NdeNovela",
-      "author": "Manual",
-      "pages": "Manual",
-      "cover": "Usuario"
+      "verified": "manual",
+      "cover": "manual"
     },
     "complete": true
   },
@@ -17,12 +15,12 @@
     "isbn": "9788408279990",
     "title": "Alas de sangre (Empíreo 1)",
     "author": "Rebecca Yarros",
-    "publisher": "Planeta",
     "pages": 736,
+    "publisher": "Planeta",
     "source": {
       "title": "Open Library",
       "author": "Open Library",
-      "pages": "Usuario",
+      "pages": "manual",
       "cover": "Open Library"
     },
     "complete": true
@@ -31,12 +29,12 @@
     "isbn": "9788408284550",
     "title": "Alas de hierro (Empíreo 2)",
     "author": "Rebecca Yarros",
+    "pages": 888,
     "publisher": "Planeta",
-    "pages": 896,
     "source": {
       "title": "Open Library",
       "author": "Open Library",
-      "pages": "Usuario",
+      "pages": "Open Library",
       "cover": "Open Library"
     },
     "complete": true
@@ -45,13 +43,367 @@
     "isbn": "9788408297079",
     "title": "Alas de ónix (Empíreo 3)",
     "author": "Rebecca Yarros",
+    "pages": 912,
     "publisher": "Planeta",
-    "pages": 896,
     "source": {
       "title": "Open Library",
       "author": "Open Library",
-      "pages": "Usuario",
+      "pages": "manual",
       "cover": "Open Library"
+    },
+    "complete": true
+  },
+  {
+    "isbn": "9788408285298",
+    "title": "Una Corte de Rosas y Espinas",
+    "author": "Sarah J. Maas",
+    "pages": 456,
+    "publisher": "Crossbooks",
+    "source": {
+      "user": "manual",
+      "cover": "usuario"
+    },
+    "complete": true
+  },
+  {
+    "isbn": "9788408257110",
+    "title": "Una corte de niebla y furia",
+    "author": "Sarah J. Maas",
+    "pages": 586,
+    "publisher": "Crossbooks",
+    "source": {
+      "title": "Open Library",
+      "author": "Open Library",
+      "pages": "Open Library",
+      "cover": "usuario"
+    },
+    "complete": true
+  },
+  {
+    "isbn": "9788408257127",
+    "title": "Una corte de alas y ruina. Nueva presentación",
+    "author": "Sarah J. Maas",
+    "pages": 672,
+    "source": {
+      "title": "Open Library",
+      "author": "Open Library",
+      "pages": "Open Library",
+      "cover": "Open Library"
+    },
+    "complete": true
+  },
+  {
+    "isbn": "9788408257134",
+    "title": "Una corte de hielo y estrellas. Nueva presentación",
+    "author": "Sarah J. Maas",
+    "pages": 272,
+    "source": {
+      "title": "Open Library",
+      "author": "Open Library",
+      "pages": "Open Library",
+      "cover": "Open Library"
+    },
+    "complete": true
+  },
+  {
+    "isbn": "9788418359286",
+    "title": "Trono de cristal",
+    "author": "Sarah J. Maas",
+    "pages": 492,
+    "source": {
+      "title": "Open Library",
+      "author": "Open Library",
+      "pages": "Open Library",
+      "cover": "Open Library"
+    },
+    "complete": true
+  },
+  {
+    "isbn": "9788418359293",
+    "title": "Corona de medianoche",
+    "author": "Sarah J. Maas",
+    "pages": 512,
+    "source": {
+      "title": "Open Library",
+      "author": "Open Library",
+      "pages": "Open Library",
+      "cover": "Open Library"
+    },
+    "complete": true
+  },
+  {
+    "isbn": "9788418359309",
+    "title": "Heredera de fuego",
+    "author": "Sarah J. Maas",
+    "pages": 672,
+    "source": {
+      "title": "Open Library",
+      "author": "Open Library",
+      "pages": "Open Library",
+      "cover": "Open Library"
+    },
+    "complete": true
+  },
+  {
+    "isbn": "9788418359316",
+    "title": "Reina de sombras",
+    "author": "Sarah J. Maas",
+    "pages": 736,
+    "source": {
+      "title": "Open Library",
+      "author": "Open Library",
+      "pages": "Open Library",
+      "cover": "Open Library"
+    },
+    "complete": true
+  },
+  {
+    "isbn": "9788418359323",
+    "title": "Imperio de tormentas",
+    "author": "Sarah J. Maas",
+    "pages": 786,
+    "source": {
+      "title": "Open Library",
+      "author": "Open Library",
+      "pages": "Open Library"
+    },
+    "complete": false
+  },
+  {
+    "isbn": "9788418359330",
+    "title": "Torre del Alba",
+    "author": "Sarah J. Maas",
+    "pages": 704,
+    "source": {
+      "title": "Open Library",
+      "author": "Open Library",
+      "pages": "Open Library",
+      "cover": "Open Library"
+    },
+    "complete": true
+  },
+  {
+    "isbn": "9788418359347",
+    "title": null,
+    "author": null,
+    "pages": null,
+    "source": {},
+    "complete": false
+  },
+  {
+    "isbn": "9788467502695",
+    "title": "Memorias de Idhún I. La Resistencia",
+    "author": "Laura Gallego",
+    "pages": 558,
+    "publisher": "SM",
+    "source": {
+      "title": "Open Library",
+      "author": "Open Library",
+      "pages": "Open Library",
+      "cover": "usuario"
+    },
+    "complete": true
+  },
+  {
+    "isbn": "9788467505597",
+    "title": "Memorias de Idhún II. Tríada",
+    "author": "Laura Gallego",
+    "pages": 766,
+    "publisher": "SM",
+    "source": {
+      "title": "Open Library",
+      "author": "Open Library",
+      "pages": "Open Library",
+      "cover": "usuario"
+    },
+    "complete": true
+  },
+  {
+    "isbn": "9788467511482",
+    "title": "Memorias de Idhún III. Panteón",
+    "author": "Laura Gallego",
+    "pages": 942,
+    "publisher": "SM",
+    "source": {
+      "title": "Open Library",
+      "author": "Open Library",
+      "pages": "Open Library",
+      "cover": "usuario"
+    },
+    "complete": true
+  },
+  {
+    "isbn": "9788490439319",
+    "title": "Guardianes de la Ciudadela. El bestiario de Axlin",
+    "author": "Laura Gallego",
+    "pages": 512,
+    "source": {
+      "title": "Open Library",
+      "author": "Open Library",
+      "pages": "manual",
+      "cover": "Open Library"
+    },
+    "complete": true
+  },
+  {
+    "isbn": "9788490439562",
+    "title": "El secreto de Xein",
+    "author": "Laura Gallego",
+    "pages": 448,
+    "source": {
+      "title": "Open Library",
+      "author": "Open Library",
+      "pages": "Open Library",
+      "cover": "Open Library"
+    },
+    "complete": true
+  },
+  {
+    "isbn": "9788417460655",
+    "title": "La misión de Rox",
+    "author": "Laura Gallego",
+    "pages": 704,
+    "source": {
+      "title": "Open Library",
+      "author": "Open Library",
+      "pages": "Open Library",
+      "cover": "Open Library"
+    },
+    "complete": true
+  },
+  {
+    "isbn": "9788467539677",
+    "title": "Crónicas de la Torre I: El valle de los lobos",
+    "author": "Laura Gallego",
+    "pages": 271,
+    "source": {
+      "title": "Open Library",
+      "author": "Open Library",
+      "pages": "Open Library",
+      "cover": "usuario"
+    },
+    "complete": true
+  },
+  {
+    "isbn": "9788467539684",
+    "title": "Crónicas de la Torre II: La maldición del maestro",
+    "author": "Laura Gallego",
+    "pages": 239,
+    "source": {
+      "title": "Open Library",
+      "author": "Open Library",
+      "pages": "manual",
+      "cover": "usuario"
+    },
+    "complete": true
+  },
+  {
+    "isbn": "9788467539691",
+    "title": "Crónicas de la Torre III: La llamada de los muertos",
+    "author": "Laura Gallego",
+    "pages": 239,
+    "source": {
+      "title": "Open Library",
+      "author": "Open Library",
+      "pages": "Open Library",
+      "cover": "usuario"
+    },
+    "complete": true
+  },
+  {
+    "isbn": "9788467539707",
+    "title": "Crónicas de la torre IV: Fenris, el elfo",
+    "author": "Laura Gallego",
+    "pages": 271,
+    "source": {
+      "title": "Open Library",
+      "author": "Open Library",
+      "pages": "Open Library",
+      "cover": "usuario"
+    },
+    "complete": true
+  },
+  {
+    "isbn": "9788408151487",
+    "title": "Un cuento oscuro",
+    "author": "Naomi Novik",
+    "pages": 688,
+    "publisher": "Planeta",
+    "source": {
+      "title": "Open Library",
+      "author": "Open Library",
+      "pages": "Open Library",
+      "cover": "usuario"
+    },
+    "complete": true
+  },
+  {
+    "isbn": "9788416517695",
+    "title": "Un trato con el rey de los elfos",
+    "author": "Elise Kova",
+    "pages": 416,
+    "publisher": "Umbriel",
+    "source": {
+      "title": "Open Library",
+      "author": "Open Library",
+      "pages": "Open Library",
+      "cover": "usuario"
+    },
+    "complete": true
+  },
+  {
+    "isbn": "9788416517947",
+    "title": "Un baile con el príncipe de los Fae",
+    "author": "Elise Kova",
+    "pages": 448,
+    "publisher": "Umbriel",
+    "source": {
+      "title": "Open Library",
+      "author": "Open Library",
+      "pages": "Open Library",
+      "cover": "usuario"
+    },
+    "complete": true
+  },
+  {
+    "isbn": "9788419030276",
+    "title": "Un duelo con el lord de los vampiros",
+    "author": "Elise Kova",
+    "pages": 576,
+    "publisher": "Umbriel",
+    "source": {
+      "title": "Umbriel",
+      "author": "Elise Kova",
+      "pages": "manual",
+      "cover": "usuario"
+    },
+    "complete": true
+  },
+  {
+    "isbn": "9788410085206",
+    "title": "Un dueto con el duque de las sirenas",
+    "author": "Elise Kova",
+    "pages": 576,
+    "publisher": "Umbriel",
+    "source": {
+      "title": "Umbriel",
+      "author": "Elise Kova",
+      "pages": "manual",
+      "cover": "usuario"
+    },
+    "complete": true
+  },
+  {
+    "isbn": "9788410085688",
+    "title": "Un amanecer con el caballero lobo",
+    "author": "Elise Kova",
+    "pages": 480,
+    "publisher": "Umbriel",
+    "source": {
+      "title": "Umbriel",
+      "author": "Elise Kova",
+      "pages": "manual",
+      "cover": "usuario"
     },
     "complete": true
   }
