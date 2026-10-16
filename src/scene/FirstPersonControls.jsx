@@ -1,0 +1,161 @@
+// Importación de useEffect y useRef de React para los escuchadores de teclado/ratón y el estado del jugador
+import { useEffect, useRef } from 'react'
+// useFrame mueve la cámara en cada fotograma; useThree da acceso a cámara, lienzo y escena
+import { useFrame, useThree } from '@react-three/fiber'
+// Box3 para las cajas de colisión de los muebles
+import { Box3 } from 'three'
+// Dimensiones de la habitación para limitar el paseo al interior
+import { ROOM_WIDTH, BACK_WALL_Z, FRONT_WALL_INNER_Z, FLOOR_Y } from '@/scene/Room'
+// Fondo de las estanterías de las paredes a y d (el jugador no puede meterse en ellas)
+import { BOOKSHELF_DEPTH } from '@/scene/Bookshelf'
+
+// Altura de los ojos sobre el suelo y punto de partida (junto al ventanal, mirando a las estanterías del fondo)
+const EYE_HEIGHT = 1.25 // Altura de una persona pequeña
+const START_POSITION = [-0.4, FLOOR_Y + EYE_HEIGHT, 3.0]
+const START_YAW = 0       // Giro horizontal: 0 = mirando hacia la pared d (-Z)
+const START_PITCH = -0.08 // Ligeramente hacia abajo
+
+// Movimiento y vista
+const WALK_SPEED = 1.6                  // Metros por segundo
+const MAX_FRAME_DELTA = 0.1             // Tope del paso de tiempo para no atravesar nada tras un tirón
+const DRAG_SENSITIVITY = 0.005          // Radianes por píxel al arrastrar
+const LOCKED_SENSITIVITY = 0.0025       // Radianes por píxel con el ratón capturado
+const MAX_PITCH = 1.35                  // Límite para mirar arriba/abajo (~77°)
+
+// Colisiones: el jugador es un círculo en planta
+const PLAYER_RADIUS = 0.4 // También es la distancia mínima a paredes y estanterías (más cerca parece que se atraviesan)
+// Límites del paseo: paredes y frente de las estanterías, menos el radio del jugador
+const MIN_X = -ROOM_WIDTH / 2 + BOOKSHELF_DEPTH + PLAYER_RADIUS // Frente de las estanterías de la pared a
+const MAX_X = ROOM_WIDTH / 2 - PLAYER_RADIUS                     // Pared b
+const MIN_Z = BACK_WALL_Z + BOOKSHELF_DEPTH + PLAYER_RADIUS      // Frente de las estanterías de la pared d
+const MAX_Z = FRONT_WALL_INNER_Z - PLAYER_RADIUS                 // Muro del ventanal
+
+// Teclas (código físico, igual en cualquier distribución de teclado): [lateral, adelante/atrás]
+// shortcut: sin controles táctiles para caminar; añadir un joystick virtual si se usa en móvil
+const KEY_DIRECTIONS = {
+  KeyW: [0, -1], ArrowUp: [0, -1],
+  KeyS: [0, 1], ArrowDown: [0, 1],
+  KeyA: [-1, 0], ArrowLeft: [-1, 0],
+  KeyD: [1, 0], ArrowRight: [1, 0],
+}
+
+// ¿El punto (x, z) cae dentro de alguna caja de colisión (ya ampliada con el radio del jugador)?
+function isBlocked(x, z, colliders) {
+  return colliders.some((box) => x > box.min.x && x < box.max.x && z > box.min.z && z < box.max.z)
+}
+
+/**
+ * Cámara en primera persona: WASD/flechas para caminar, arrastrar el ratón para mirar
+ * o, con el ratón capturado (pointer lock), mover el ratón sin pulsar.
+ * La cámara no sale de la habitación y choca con los objetos marcados con userData.collider.
+ */
+function FirstPersonControls() {
+  const camera = useThree((state) => state.camera)
+  const canvas = useThree((state) => state.gl.domElement)
+  const scene = useThree((state) => state.scene)
+  // Orientación actual y teclas pulsadas
+  const look = useRef({ yaw: START_YAW, pitch: START_PITCH })
+  const pressedKeys = useRef(new Set())
+  // Cajas de colisión de los muebles (se calculan cuando terminan de cargar los modelos)
+  const colliders = useRef(null)
+
+  // Posición y orientación iniciales; orden YXZ: primero giro horizontal y luego inclinación, como en un juego
+  useEffect(() => {
+    camera.position.set(...START_POSITION)
+    camera.rotation.set(START_PITCH, START_YAW, 0, 'YXZ')
+  }, [camera])
+
+  // Teclado: guarda qué teclas de movimiento están pulsadas
+  useEffect(() => {
+    const onKeyDown = (event) => {
+      if (!KEY_DIRECTIONS[event.code] || event.target.closest?.('input, textarea')) return
+      pressedKeys.current.add(event.code)
+      event.preventDefault() // Evita que las flechas desplacen la página
+    }
+    const onKeyUp = (event) => pressedKeys.current.delete(event.code)
+    // Si la ventana pierde el foco con una tecla pulsada, no seguir caminando solo
+    const onBlur = () => pressedKeys.current.clear()
+    window.addEventListener('keydown', onKeyDown)
+    window.addEventListener('keyup', onKeyUp)
+    window.addEventListener('blur', onBlur)
+    return () => {
+      window.removeEventListener('keydown', onKeyDown)
+      window.removeEventListener('keyup', onKeyUp)
+      window.removeEventListener('blur', onBlur)
+    }
+  }, [])
+
+  // Ratón: arrastrar para mirar, o mover sin pulsar si el ratón está capturado
+  useEffect(() => {
+    let dragging = false
+    const onPointerDown = (event) => {
+      if (event.button === 0) dragging = true
+    }
+    const onPointerUp = () => {
+      dragging = false
+    }
+    const onPointerMove = (event) => {
+      const locked = document.pointerLockElement === canvas
+      if (!locked && !dragging) return
+      const sensitivity = locked ? LOCKED_SENSITIVITY : DRAG_SENSITIVITY
+      look.current.yaw -= event.movementX * sensitivity
+      look.current.pitch = Math.max(-MAX_PITCH, Math.min(MAX_PITCH, look.current.pitch - event.movementY * sensitivity))
+      camera.rotation.set(look.current.pitch, look.current.yaw, 0, 'YXZ')
+    }
+    canvas.addEventListener('pointerdown', onPointerDown)
+    window.addEventListener('pointerup', onPointerUp)
+    window.addEventListener('pointermove', onPointerMove)
+    return () => {
+      canvas.removeEventListener('pointerdown', onPointerDown)
+      window.removeEventListener('pointerup', onPointerUp)
+      window.removeEventListener('pointermove', onPointerMove)
+    }
+  }, [camera, canvas])
+
+  // useFrame: camina según las teclas pulsadas, deslizándose contra paredes y muebles
+  useFrame((_, delta) => {
+    // Cajas de colisión: se recogen una vez que los muebles (dentro de Suspense) ya están en la escena
+    if (!colliders.current) {
+      const found = []
+      scene.traverse((object) => {
+        if (!object.userData.collider) return
+        const box = new Box3().setFromObject(object)
+        // Se amplía en planta con el radio del jugador para tratarlo como un punto
+        box.min.x -= PLAYER_RADIUS
+        box.min.z -= PLAYER_RADIUS
+        box.max.x += PLAYER_RADIUS
+        box.max.z += PLAYER_RADIUS
+        found.push(box)
+      })
+      if (found.length > 0) colliders.current = found
+    }
+
+    // Dirección de entrada sumando las teclas pulsadas
+    let inputX = 0
+    let inputZ = 0
+    pressedKeys.current.forEach((code) => {
+      inputX += KEY_DIRECTIONS[code][0]
+      inputZ += KEY_DIRECTIONS[code][1]
+    })
+    const length = Math.hypot(inputX, inputZ)
+    if (length === 0) return
+
+    // Se pasa la entrada al plano del suelo según hacia dónde mira el jugador (solo el giro horizontal)
+    const step = (WALK_SPEED * Math.min(delta, MAX_FRAME_DELTA)) / length
+    const sin = Math.sin(look.current.yaw)
+    const cos = Math.cos(look.current.yaw)
+    const moveX = (inputX * cos + inputZ * sin) * step
+    const moveZ = (-inputX * sin + inputZ * cos) * step
+
+    // Cada eje por separado: si uno choca, el otro sigue y el jugador se desliza
+    const boxes = colliders.current ?? []
+    const nextX = Math.max(MIN_X, Math.min(MAX_X, camera.position.x + moveX))
+    if (!isBlocked(nextX, camera.position.z, boxes)) camera.position.setX(nextX)
+    const nextZ = Math.max(MIN_Z, Math.min(MAX_Z, camera.position.z + moveZ))
+    if (!isBlocked(camera.position.x, nextZ, boxes)) camera.position.setZ(nextZ)
+  })
+
+  return null
+}
+
+export default FirstPersonControls

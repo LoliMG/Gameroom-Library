@@ -1,33 +1,42 @@
-import { useState } from 'react'
-// Importación del contenedor Canvas de React Three Fiber que inicializa el contexto WebGL
-import { Canvas } from '@react-three/fiber'
+import { useRef, useState } from 'react'
+// Contenedor Canvas de React Three Fiber y su gestor de eventos de puntero por defecto
+import { Canvas, events as createPointerEvents } from '@react-three/fiber'
 // Importación de la experiencia principal utilizando el alias "@"
 import Experience from '@/scene/Experience'
 // Importación del panel de detalle HTML mediante el alias "@"
 import BookDetailPanel from '@/components/BookDetailPanel'
-// Botones HTML para cambiar de punto de vista de la cámara (Fase 10)
-import CameraButtons from '@/components/CameraButtons'
-// Puntos de vista de la cámara: la cámara arranca en la vista por defecto
-import { CAMERA_VIEWS, DEFAULT_VIEW_ID } from '@/data/cameraViews'
+// Botón para capturar el ratón, mirilla y ayuda de controles
+import PlayControls from '@/components/PlayControls'
 
-// Posición inicial de la cámara: la de la vista por defecto (CameraRig la vuelve a fijar al montar)
-const CAMERA_POSITION = CAMERA_VIEWS.find((view) => view.id === DEFAULT_VIEW_ID).position
-
-// Campo de visión vertical de la cámara (grados)
-const CAMERA_FOV = 52
+// Campo de visión vertical de la cámara (grados); la posición la fija FirstPersonControls
+const CAMERA_FOV = 60
 
 // Color de fondo oscuro y cálido para envolver la habitación y crear atmósfera nocturna/acogedora
 const BACKGROUND_COLOR = '#171413'
 
+// Eventos de puntero de R3F con un cambio: con el ratón capturado, el clic apunta al centro (la mirilla)
+// en vez de a la última posición del cursor, que deja de moverse mientras está capturado
+function centerPointerWhenLocked(store) {
+  return {
+    ...createPointerEvents(store),
+    compute(event, state) {
+      if (document.pointerLockElement) state.pointer.set(0, 0)
+      else state.pointer.set((event.offsetX / state.size.width) * 2 - 1, -(event.offsetY / state.size.height) * 2 + 1)
+      state.raycaster.setFromCamera(state.pointer, state.camera)
+    },
+  }
+}
+
 function App() {
   // useState define el estado selectedBook que guarda el libro pulsado o null si no hay ninguno activo
   const [selectedBook, setSelectedBook] = useState(null)
-  // Punto de vista activo de la cámara y contador de peticiones (permite repetir la misma vista tras orbitar)
-  const [camera, setCamera] = useState({ viewId: DEFAULT_VIEW_ID, request: 0 })
+  // Lienzo WebGL, necesario para capturar el ratón desde el botón HTML
+  const canvasRef = useRef(null)
 
-  // Al pulsar un botón se pide una transición hacia esa vista
-  const handleSelectView = (viewId) => {
-    setCamera((current) => ({ viewId, request: current.request + 1 }))
+  // Al abrir un libro se suelta el ratón para poder usar el panel
+  const handleSelectBook = (book) => {
+    if (document.pointerLockElement) document.exitPointerLock()
+    setSelectedBook(book)
   }
 
   return (
@@ -39,24 +48,23 @@ function App() {
           height: '100vh',
           display: 'block',
         }}
-        // Perspectiva de cámara inicial; CameraRig se encarga después de las transiciones entre vistas
-        camera={{ position: CAMERA_POSITION, fov: CAMERA_FOV }}
+        camera={{ fov: CAMERA_FOV }}
+        events={centerPointerWhenLocked}
+        onCreated={({ gl }) => {
+          canvasRef.current = gl.domElement
+        }}
         // shadows: habilita el cálculo y renderizado de mapas de sombras en el motor WebGL de Three.js
         shadows
       >
         {/* Color de fondo oscuro y cálido acoplado directamente al fondo de la escena WebGL */}
         <color attach="background" args={[BACKGROUND_COLOR]} />
 
-        {/* Renderizado de la escena principal pasando el manejador de selección y el punto de vista activo */}
-        <Experience
-          onSelectBook={setSelectedBook}
-          viewId={camera.viewId}
-          viewRequest={camera.request}
-        />
+        {/* Renderizado de la escena principal pasando el manejador de selección de libros */}
+        <Experience onSelectBook={handleSelectBook} />
       </Canvas>
 
-      {/* Botones de puntos de vista: HTML fuera del Canvas, siguen funcionando con el panel abierto */}
-      <CameraButtons activeViewId={camera.viewId} onSelectView={handleSelectView} />
+      {/* Controles de juego: HTML fuera del Canvas, por encima del lienzo */}
+      <PlayControls onLock={() => canvasRef.current?.requestPointerLock()} />
 
       {/* BookDetailPanel se coloca fuera del <Canvas> como hermano suyo porque es un componente HTML tradicional; */}
       {/* los elementos HTML (div, img, button) no pueden procesarse dentro del contexto WebGL de Three.js. */}

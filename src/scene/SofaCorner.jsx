@@ -121,6 +121,8 @@ function SofaCorner() {
         object={sofaScene}
         position={[SOFA_X, SOFA_Y, SOFA_Z]}
         scale={modelsManifest.sofa.scale}
+        // collider: FirstPersonControls no deja atravesarlo
+        userData={{ collider: true }}
         // Rotación de -90 grados (-PI / 2) sobre Y para que el frontal mire hacia -X (interior)
         rotation={[0, -Math.PI / 2, 0]}
       />
@@ -184,6 +186,8 @@ function SofaCorner() {
         object={tableScene}
         position={[TABLE_X, TABLE_Y, TABLE_Z]}
         scale={modelsManifest.coffeeTable.scale}
+        // collider: FirstPersonControls no deja atravesarla
+        userData={{ collider: true }}
         rotation={[0, Math.PI / 6, 0]}
       />
 

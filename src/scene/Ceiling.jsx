@@ -58,7 +58,7 @@ const MOLDING_SEGMENTS = [
 
 /**
  * Techo plano y moldura perimetral.
- * El techo solo se ve desde dentro (cara frontal hacia abajo): al orbitar desde arriba con OrbitControls
+ * El techo solo se ve desde dentro (cara frontal hacia abajo): si la cámara mira desde arriba
  * se descarta su cara trasera y el interior sigue visible.
  */
 function Ceiling() {

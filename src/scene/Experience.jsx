@@ -42,8 +42,8 @@ import Ceiling from '@/scene/Ceiling'
 import Vines from '@/scene/Vines'
 import ShelfDecor from '@/scene/ShelfDecor'
 import DustParticles from '@/scene/DustParticles'
-// Fase 10: cámara con puntos de vista fijos y OrbitControls con límites
-import CameraRig from '@/scene/CameraRig'
+// Cámara en primera persona: WASD para caminar dentro de la sala, ratón para mirar
+import FirstPersonControls from '@/scene/FirstPersonControls'
 
 // Posición y orientación de la puerta de entrada (door.glb) en la pared b (+X):
 // Situada en el vano entre las estanterías del fondo d (Z = -1.65 m) y el sofá (Z = +1.06 m)
@@ -61,7 +61,7 @@ const SHELF_WALL_A_ROTATION = [0, SHELF_WALL_A_ROTATION_Y, 0]
 const CORNER_BLOCK_X = -ROOM_WIDTH / 2 + BOOKSHELF_DEPTH / 2 // -2.425m
 const CORNER_BLOCK_Z = BACK_WALL_Z + BOOKSHELF_DEPTH / 2     // -1.825m
 
-function Experience({ onSelectBook, viewId, viewRequest }) {
+function Experience({ onSelectBook }) {
   // Reparto secuencial de libros: primero se llena la pared del fondo (d)
   const wallDPlacement = getWallPlacement(books, WALL_D_SHELF_LENGTH)
 
@@ -80,8 +80,8 @@ function Experience({ onSelectBook, viewId, viewRequest }) {
 
   return (
     <>
-      {/* Cámara: puntos de vista fijos con transición suave y OrbitControls con límites */}
-      <CameraRig viewId={viewId} viewRequest={viewRequest} />
+      {/* Cámara en primera persona limitada al interior de la sala */}
+      <FirstPersonControls />
 
       {/* Postprocesado (Bloom, viñeta, color) y niebla ligera; ENABLE_EFFECTS los apaga todos */}
       <Effects />

@@ -36,6 +36,8 @@ function PlantPot({ position = [0, -1.0, 0], scale = DEFAULT_SCALE, rotationY = 
       position={position}
       scale={scale}
       rotation={[0, rotationY, 0]}
+      // collider: FirstPersonControls no deja atravesar la maceta
+      userData={{ collider: true }}
     />
   )
 }
