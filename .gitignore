@@ -29,5 +29,8 @@ dist-ssr
 *.sw?
 
 
+# Base de datos local de la biblioteca (datos personales: estados de lectura, sitio de los libros…)
+/data/*.sqlite*
+
 /docs/implementation_plan.md
 credits.md

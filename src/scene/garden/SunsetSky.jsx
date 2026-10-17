@@ -3,9 +3,9 @@ import { useMemo } from 'react'
 // Clases de three.js para la cúpula del cielo, las siluetas de las colinas y el degradado del prado
 import { BackSide, CanvasTexture, Color, Shape, ShapeGeometry, SRGBColorSpace, Vector3 } from 'three'
 // Colores del cielo de la paleta activa
-import { PALETTE } from '@/scene/ambiencePalette'
+import { PALETTE } from '@/scene/core/ambiencePalette'
 // Cota del suelo de la habitación
-import { FLOOR_Y } from '@/scene/Room'
+import { FLOOR_Y } from '@/scene/room/Room'
 // Aleatorio con semilla: las colinas salen siempre iguales
 import { createRandom } from '@/utils/random'
 

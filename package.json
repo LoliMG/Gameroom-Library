@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "fetch-books": "node scripts/fetchBooks.mjs"
+    "fetch-books": "node scripts/fetchBooks.mjs",
+    "check": "node scripts/checkShelfFit.mjs && node scripts/checkSplitIslands.mjs && node --no-warnings scripts/checkLibraryDb.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.9",

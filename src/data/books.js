@@ -110,8 +110,9 @@ const bookStyles = {
 // El más alto (0.215 m × 1.2 ≈ 0.26 m) sigue cabiendo en el hueco entre baldas (0.29 m)
 const BOOK_SCALE = 1.2
 
-// Solo los libros con portada: con cover null useTexture lanza un error y la escena entera no carga
-const books = booksMeta.filter((item) => coverMap[item.isbn]).map((item, index) => {
+// Solo los libros con portada y título: sin portada useTexture falla y sin título no hay lomo; en ambos casos la escena
+// entera dejaría de cargar (pasa mientras se rellena booksMeta.json a mano)
+const books = booksMeta.filter((item) => coverMap[item.isbn] && item.title).map((item, index) => {
   const coverImage = coverMap[item.isbn]
   const style = bookStyles[item.isbn] || {}
 
@@ -122,7 +123,7 @@ const books = booksMeta.filter((item) => coverMap[item.isbn]).map((item, index) 
     id: index + 1,
     isbn: item.isbn,
     title: item.title,
-    author: item.author,
+    author: item.author ?? '', // Sin autor, el lomo lo deja en blanco
     publisher: item.publisher || style.publisher || publisherFromIsbn(item.isbn) || 'Editorial',
     pages: item.pages,
     cover: coverImage,

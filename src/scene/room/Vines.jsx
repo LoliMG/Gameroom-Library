@@ -3,7 +3,7 @@ import { useMemo, useLayoutEffect, useRef } from 'react'
 // Clases de Three.js para construir las matrices de cada hoja instanciada
 import { Object3D } from 'three'
 // Importación de las dimensiones de la habitación
-import { ROOM_HEIGHT, FRONT_WALL_INNER_Z, FLOOR_Y } from '@/scene/Room'
+import { ROOM_HEIGHT, FRONT_WALL_INNER_Z, FLOOR_Y } from '@/scene/room/Room'
 // Generador pseudoaleatorio con semilla para que las hojas salgan siempre igual
 import { createRandom } from '@/utils/random'
 

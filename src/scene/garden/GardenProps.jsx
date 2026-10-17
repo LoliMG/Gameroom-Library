@@ -1,14 +1,14 @@
 // useMemo prepara modelos, perfiles y tramos de muro una sola vez; ref y efecto para animar el agua de la fuente
 import { useLayoutEffect, useMemo, useRef } from 'react'
-// Vector3 para medir las losas del camino
-import { Vector3 } from 'three'
+// Medir las losas del camino y girar la cabeza del guerrero
+import { Box3, MathUtils, Vector3 } from 'three'
 // useGLTF de drei para los modelos; Sparkles para el rocío de la fuente
 import { Sparkles, useGLTF } from '@react-three/drei'
 // useFrame mueve el agua de la fuente en cada fotograma
 import { useFrame } from '@react-three/fiber'
 // Muchas copias de un modelo, o de una geometría, con una llamada de dibujo por malla (muro y losas del camino)
-import InstancedModel from '@/scene/InstancedModel'
-import InstancedScatter from '@/scene/InstancedScatter'
+import InstancedModel from '@/scene/shared/InstancedModel'
+import InstancedScatter from '@/scene/shared/InstancedScatter'
 // Separa las losas sueltas de elder_stones.glb, que vienen todas en una malla
 import { splitIslands } from '@/utils/splitIslands'
 // Manifiesto de modelos y preparación (base en el suelo, escala a la altura pedida)
@@ -26,11 +26,18 @@ const PAPER_LANTERN_HEIGHTS = [0.45, 0.6, 0.35, 0.5]
 const BENCH_HEIGHT = 0.95
 // Altura del asiento con esa escala (asiento del modelo a 0.469 de 1.101 de alto)
 const BENCH_SEAT_Y = BENCH_HEIGHT * (0.469 / 1.101)
-// Peluches sobre el asiento, en coordenadas del banco: el tiburón tumbado a lo largo y el cojín pez apoyado en el respaldo
+// Peluches sobre el asiento, en coordenadas del banco: el cojín pez apoyado en el respaldo y el tiburón mirándolo
+// (en plushie_shark.glb la cabeza va hacia +Z: el giro lleva +Z hacia el pez)
+const FISH_POSITION = [-0.4, BENCH_SEAT_Y, -0.12]
+const SHARK_POSITION = [0.5, BENCH_SEAT_Y, 0.02]
+const SHARK_ROTATION_Y = Math.atan2(FISH_POSITION[0] - SHARK_POSITION[0], FISH_POSITION[2] - SHARK_POSITION[2])
 const BENCH_PLUSHIES = [
-  { model: 'plushieShark', height: 0.2, position: [0.45, BENCH_SEAT_Y, 0.02], rotation: [0, Math.PI / 2 + 0.3, 0] },
-  { model: 'pillowFish', height: 0.27, position: [-0.4, BENCH_SEAT_Y, -0.12], rotation: [-0.25, 0.2, 0] },
+  { model: 'plushieShark', height: 0.28, position: SHARK_POSITION, rotation: [0, SHARK_ROTATION_Y, 0] },
+  { model: 'pillowFish', height: 0.27, position: FISH_POSITION, rotation: [-0.25, 0.2, 0] },
 ]
+// Cuello del guerrero (warrior.glb), en fracción de su altura: los hombros llegan a 0.82 y la cabeza empieza en 0.88.
+// El giro de la cabeza va de 0 a completo entre estas dos alturas, para que el cuello no se parta
+const WARRIOR_NECK = { start: 0.83, end: 0.87 }
 // Fuente (fountain.glb, en centímetros): prepareModel la escala a esta altura (unos 2.2 m de ancho)
 const FOUNTAIN_HEIGHT = 1.25
 // Movimiento del agua: repeticiones de textura por segundo en los chorros, radianes por segundo de la lámina
@@ -63,6 +70,84 @@ export function ModelProp({ model, node, height, position, rotation = [0, 0, 0],
     [scene, node, height, alphaCutout]
   )
   return <primitive object={wrapper} position={position} rotation={rotation} scale={scale} />
+}
+
+/**
+ * Gira la cabeza de una figura sin esqueleto retorciendo los vértices por encima del cuello alrededor del eje vertical
+ * de la cabeza (los normales giran igual). Solo se copian las mallas que llegan al cuello: el resto se comparte.
+ *
+ * @param {Object3D} root - Figura ya preparada (prepareModel), sin escalar
+ * @param {number} angle - Giro de la cabeza en radianes (positivo: hacia la izquierda de la figura)
+ * @param {{ start: number, end: number }} neck - Alturas del cuello en fracción de la altura de la figura
+ */
+function turnHead(root, angle, neck) {
+  root.updateMatrixWorld(true)
+  const box = new Box3().setFromObject(root)
+  const height = box.max.y - box.min.y
+  const neckStart = box.min.y + neck.start * height
+  const neckEnd = box.min.y + neck.end * height
+  const meshes = []
+  root.traverse((object) => {
+    if (object.isMesh && new Box3().setFromObject(object).max.y > neckStart) meshes.push(object)
+  })
+
+  // Eje de giro: centro de la cabeza (media de los vértices por encima del cuello)
+  const point = new Vector3()
+  const center = new Vector3()
+  let count = 0
+  for (const mesh of meshes) {
+    const position = mesh.geometry.attributes.position
+    for (let i = 0; i < position.count; i++) {
+      point.fromBufferAttribute(position, i).applyMatrix4(mesh.matrixWorld)
+      if (point.y > neckEnd) {
+        center.add(point)
+        count++
+      }
+    }
+  }
+  center.divideScalar(Math.max(1, count))
+
+  const normal = new Vector3()
+  for (const mesh of meshes) {
+    const toRoot = mesh.matrixWorld
+    const fromRoot = toRoot.clone().invert()
+    // Copia propia: la geometría original la comparte la caché de useGLTF
+    const geometry = mesh.geometry.clone()
+    const position = geometry.attributes.position
+    const normals = geometry.attributes.normal
+    for (let i = 0; i < position.count; i++) {
+      point.fromBufferAttribute(position, i).applyMatrix4(toRoot)
+      if (point.y <= neckStart) continue
+      const a = angle * MathUtils.smoothstep(point.y, neckStart, neckEnd)
+      const cos = Math.cos(a)
+      const sin = Math.sin(a)
+      const dx = point.x - center.x
+      const dz = point.z - center.z
+      point.set(center.x + dx * cos + dz * sin, point.y, center.z - dx * sin + dz * cos).applyMatrix4(fromRoot)
+      position.setXYZ(i, point.x, point.y, point.z)
+      if (normals) {
+        normal.fromBufferAttribute(normals, i).transformDirection(toRoot)
+        normal.set(normal.x * cos + normal.z * sin, normal.y, -normal.x * sin + normal.z * cos).transformDirection(fromRoot)
+        normals.setXYZ(i, normal.x, normal.y, normal.z)
+      }
+    }
+    geometry.computeBoundingBox()
+    geometry.computeBoundingSphere()
+    mesh.geometry = geometry
+  }
+}
+
+/**
+ * Guerrero de pie (warrior.glb), con la cabeza girada headTurn radianes respecto al cuerpo.
+ */
+export function Warrior({ position, height, rotationY, headTurn }) {
+  const { scene } = useGLTF(modelsManifest.warrior.url)
+  const { wrapper, scale } = useMemo(() => {
+    const prepared = prepareModel(scene, undefined, height)
+    turnHead(prepared.wrapper, headTurn, WARRIOR_NECK)
+    return prepared
+  }, [scene, height, headTurn])
+  return <primitive object={wrapper} position={position} rotation={[0, rotationY, 0]} scale={scale} />
 }
 
 /**

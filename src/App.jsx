@@ -2,30 +2,19 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 // Contenedor Canvas de React Three Fiber y su gestor de eventos de puntero por defecto
 import { Canvas, events as createPointerEvents } from '@react-three/fiber'
 // Importación de la experiencia principal utilizando el alias "@"
-import Experience from '@/scene/Experience'
+import Experience from '@/scene/core/Experience'
 // Importación del panel de detalle HTML mediante el alias "@"
 import BookDetailPanel from '@/components/BookDetailPanel'
 // Botón para capturar el ratón, mirilla y ayuda de controles
 import PlayControls from '@/components/PlayControls'
+// Estado de la biblioteca guardado en la base de datos (con copia en el navegador)
+import { loadLibrary, saveLibraryPart } from '@/utils/libraryApi'
 
 // Campo de visión vertical de la cámara (grados); la posición la fija FirstPersonControls
 const CAMERA_FOV = 60
 
 // Color de fondo oscuro y cálido para envolver la habitación y crear atmósfera nocturna/acogedora
 const BACKGROUND_COLOR = '#171413'
-
-// Libros volteados (con la portada hacia la sala en vez del lomo), por ISBN, guardados entre visitas
-const FLIPPED_STORAGE_KEY = 'fantasy-bookroom:flipped-books'
-
-// Lista guardada de ISBN volteados; si localStorage no responde o el dato no es válido, ninguno
-function loadFlippedIsbns() {
-  try {
-    const saved = JSON.parse(localStorage.getItem(FLIPPED_STORAGE_KEY))
-    return Array.isArray(saved) ? saved.filter((isbn) => typeof isbn === 'string') : []
-  } catch {
-    return []
-  }
-}
 
 // Eventos de puntero de R3F con un cambio: con el ratón capturado, el clic apunta al centro (la mirilla)
 // en vez de a la última posición del cursor, que deja de moverse mientras está capturado
@@ -40,21 +29,29 @@ function centerPointerWhenLocked(store) {
   }
 }
 
-function App() {
+/**
+ * Sala con la biblioteca ya cargada. library: { placements, flipped, readingStatus } (ver libraryApi)
+ */
+function Bookroom({ library }) {
   // useState define el estado selectedBook que guarda el libro pulsado o null si no hay ninguno activo
   const [selectedBook, setSelectedBook] = useState(null)
   // ISBN de los libros puestos de frente (botón de volteo del panel)
-  const [flippedIsbns, setFlippedIsbns] = useState(loadFlippedIsbns)
+  const [flippedIsbns, setFlippedIsbns] = useState(library.flipped)
   const flippedSet = useMemo(() => new Set(flippedIsbns), [flippedIsbns])
   useEffect(() => {
-    try {
-      localStorage.setItem(FLIPPED_STORAGE_KEY, JSON.stringify(flippedIsbns))
-    } catch {
-      // Sin almacenamiento (modo privado, cuota llena): siguen volteados hasta recargar
-    }
+    saveLibraryPart('flipped', flippedIsbns)
   }, [flippedIsbns])
   const toggleFlip = (isbn) =>
     setFlippedIsbns((list) => (list.includes(isbn) ? list.filter((item) => item !== isbn) : [...list, isbn]))
+
+  // Estado de lectura por ISBN ('finished' | 'reading'; sin entrada = sin leer), desde la pantalla de la biblioteca
+  const [readingStatus, setReadingStatus] = useState(library.readingStatus)
+  useEffect(() => {
+    saveLibraryPart('readingStatus', readingStatus)
+  }, [readingStatus])
+  // Cambia el estado de lectura de uno o varios libros (pantalla de la biblioteca)
+  const setStatuses = (isbns, status) =>
+    setReadingStatus((all) => ({ ...all, ...Object.fromEntries(isbns.map((isbn) => [isbn, status])) }))
 
   // Lienzo WebGL, necesario para capturar el ratón desde el botón HTML
   const canvasRef = useRef(null)
@@ -86,7 +83,14 @@ function App() {
         <color attach="background" args={[BACKGROUND_COLOR]} />
 
         {/* Renderizado de la escena principal pasando el manejador de selección de libros */}
-        <Experience onSelectBook={handleSelectBook} flippedIsbns={flippedSet} />
+        <Experience
+          onSelectBook={handleSelectBook}
+          flippedIsbns={flippedSet}
+          readingStatus={readingStatus}
+          onSetStatus={setStatuses}
+          savedPlacements={library.placements}
+          onSavePlacements={(slots) => saveLibraryPart('placements', slots)}
+        />
       </Canvas>
 
       {/* Controles de juego: HTML fuera del Canvas, por encima del lienzo */}
@@ -110,6 +114,17 @@ function App() {
       />
     </>
   )
+}
+
+// Carga la biblioteca (base de datos o copia del navegador) antes de montar la sala: así nunca se guarda
+// el estado vacío por encima del guardado
+function App() {
+  const [library, setLibrary] = useState(null)
+  useEffect(() => {
+    loadLibrary().then(setLibrary)
+  }, [])
+  if (!library) return <p className="app-loading">Abriendo la biblioteca…</p>
+  return <Bookroom library={library} />
 }
 
 export default App

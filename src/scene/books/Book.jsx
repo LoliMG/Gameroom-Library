@@ -9,7 +9,7 @@ import {
   generateBackCoverTexture,
   generatePagesTexture,
   paletteFromCover,
-} from '@/scene/bookTextureGenerator'
+} from '@/scene/books/bookTextureGenerator'
 
 function Book({ position, rotationY = 0, width, height, depth, onSelect, onGrab, book }) {
   // Carga reactiva de la textura de la portada con useTexture y espacio de color sRGB

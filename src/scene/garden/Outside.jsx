@@ -9,13 +9,13 @@ import { modelsManifest } from '@/data/modelsManifest'
 // Generador pseudoaleatorio con semilla: el jardín sale siempre igual
 import { createRandom } from '@/utils/random'
 // Cota del suelo de la habitación (el jardín está al mismo nivel)
-import { FLOOR_Y } from '@/scene/Room'
+import { FLOOR_Y } from '@/scene/room/Room'
 // Cielo del atardecer, colinas y prado del fondo
-import SunsetSky from '@/scene/SunsetSky'
+import SunsetSky from '@/scene/garden/SunsetSky'
 // Fuente, muro, banco, losas y faroles
-import { Bench, Fountain, Lantern, ModelProp, PathStones, StoneWall, WALL_SEGMENT_LENGTH } from '@/scene/GardenProps'
+import { Bench, Fountain, Lantern, ModelProp, PathStones, StoneWall, Warrior, WALL_SEGMENT_LENGTH } from '@/scene/garden/GardenProps'
 // Muchas copias de un modelo en una sola llamada de dibujo (por malla)
-import InstancedModel from '@/scene/InstancedModel'
+import InstancedModel from '@/scene/shared/InstancedModel'
 
 // --- Suelo ---
 const GROUND_Y = FLOOR_Y - 0.02 // Un poco por debajo del suelo interior para no parpadear con él
@@ -54,6 +54,8 @@ const WARRIOR_POSITION = [3.0, GROUND_Y, 8.1]
 const WARRIOR_HEIGHT = 1.8
 const WARRIOR_FACING_WINDOW = Math.atan2(1.2 - WARRIOR_POSITION[0], 3.5 - WARRIOR_POSITION[2])
 const WARRIOR_ROTATION_Y = WARRIOR_FACING_WINDOW + 0.7
+// La cabeza, girada hacia la ventana respecto al cuerpo (queda a unos 17° de mirarla de frente)
+const WARRIOR_HEAD_TURN = -0.4
 // Macetero (flower_pot.glb)
 const FLOWER_POT_HEIGHT = 1.0
 const FLOWER_POT_TOP_Y = GROUND_Y + 0.98 // Boca del macetero, donde asoman los lirios
@@ -242,7 +244,7 @@ function Outside() {
       <Fountain position={FOUNTAIN_POSITION} />
       <Bench position={BENCH_POSITION} rotationY={BENCH_ROTATION_Y} />
       <ModelProp model="flowerPot" height={FLOWER_POT_HEIGHT} position={FLOWER_POT_POSITION} />
-      <ModelProp model="warrior" height={WARRIOR_HEIGHT} position={WARRIOR_POSITION} rotation={[0, WARRIOR_ROTATION_Y, 0]} />
+      <Warrior height={WARRIOR_HEIGHT} position={WARRIOR_POSITION} rotationY={WARRIOR_ROTATION_Y} headTurn={WARRIOR_HEAD_TURN} />
       {LANTERNS.map(([x, z], i) => (
         <Lantern key={`${x},${z}`} position={[x, GROUND_Y, z]} variant={i % 4} rotationY={i * 1.3} />
       ))}

@@ -25,11 +25,11 @@ import woodDiffUrl from '@/assets/textures/floor/wood_diff_1k.jpg'
 import woodNorUrl from '@/assets/textures/floor/wood_nor_1k.jpg'
 import woodRoughUrl from '@/assets/textures/floor/wood_rough_1k.jpg'
 // Importación del componente del ventanal para la pared c
-import WindowWall, { WALL_THICKNESS as FRONT_WALL_THICKNESS, WINDOW_WIDTH } from '@/scene/WindowWall'
+import WindowWall, { WALL_THICKNESS as FRONT_WALL_THICKNESS, WINDOW_WIDTH } from '@/scene/room/WindowWall'
 // Papel pintado de las paredes
 import useWallpaper, { WALLPAPER_TILE_SIZE, WALLPAPER_TINT } from '@/hooks/useWallpaper'
 // Fondo de las estanterías (para dejar muro a los lados del ventanal)
-import { BOOKSHELF_DEPTH } from '@/scene/Bookshelf'
+import { BOOKSHELF_DEPTH } from '@/scene/shelves/Bookshelf'
 
 // Cara interior del muro del ventanal (c): ahí se apoyan moldura, enredaderas, polvo y maceta
 export const FRONT_WALL_INNER_Z = FRONT_WALL_Z - FRONT_WALL_THICKNESS / 2 // 4.0 - 0.06 = 3.94 m
@@ -44,7 +44,11 @@ export const WALL_CENTER_Y = FLOOR_Y + ROOM_HEIGHT / 2 // -1.0 + 1.4 = 0.4
 // así que con 1 m por repetición cada tablón mide ~11 cm de ancho (objetivo del plan: ~12 cm)
 const FLOOR_TEXTURE_TILE_SIZE = 1.0
 // Repeticiones calculadas a partir de las dimensiones de la habitación para que el tablón no se estire
-const FLOOR_REPEAT_X = ROOM_WIDTH / FLOOR_TEXTURE_TILE_SIZE // 4.5 / 1.0 = 4.5 repeticiones a lo ancho
+// El suelo sigue por debajo de la pared b hasta pasar el marco de la puerta (empotrada hasta X ≈ 2.88 m): así bajo
+// la puerta se ve madera y no el césped del jardín. Fuera del hueco de la puerta queda tapado por la pared
+const FLOOR_DOORWAY_EXTENSION = 0.35
+const FLOOR_WIDTH = ROOM_WIDTH + FLOOR_DOORWAY_EXTENSION
+const FLOOR_REPEAT_X = FLOOR_WIDTH / FLOOR_TEXTURE_TILE_SIZE // Una repetición por metro, también en el trozo bajo la puerta
 const FLOOR_REPEAT_Y = ROOM_DEPTH / FLOOR_TEXTURE_TILE_SIZE // 6.0 / 1.0 = 6.0 repeticiones a lo largo
 
 // Pared b con el hueco de la puerta recortado desde el suelo (contorno en U, sin agujeros interiores).
@@ -116,13 +120,13 @@ function Room({ doorOpening }) {
       {/* Rotación: -90 grados (-PI / 2) sobre el eje X para que la normal apunte hacia ARRIBA (+Y) */}
       {/* Posición: Centrado en X=0, cota Y=FLOOR_Y (-1.0), y centro en Z=ROOM_CENTER_Z (+1.0) */}
       <mesh
-        position={[0, FLOOR_Y, ROOM_CENTER_Z]}
+        position={[FLOOR_DOORWAY_EXTENSION / 2, FLOOR_Y, ROOM_CENTER_Z]}
         rotation={[-Math.PI / 2, 0, 0]}
         // receiveShadow: permite que la superficie del suelo reciba y muestre las sombras proyectadas por otros objetos
         receiveShadow
       >
         {/* Geometría plana con ancho (ROOM_WIDTH = 5.2) y profundidad alargada (ROOM_DEPTH = 6.0) */}
-        <planeGeometry args={[ROOM_WIDTH, ROOM_DEPTH]} />
+        <planeGeometry args={[FLOOR_WIDTH, ROOM_DEPTH]} />
         {/* Material PBR estándar con mapas de madera oscura, vetas y rugosidad */}
         <meshStandardMaterial
           map={floorTextures.map}

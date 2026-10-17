@@ -5,7 +5,7 @@ import { useGLTF } from '@react-three/drei'
 // Importación del manifiesto centralizado de modelos 3D
 import { modelsManifest } from '@/data/modelsManifest'
 // Importación del nivel del suelo de la estancia
-import { FLOOR_Y } from '@/scene/Room'
+import { FLOOR_Y } from '@/scene/room/Room'
 
 // Medidas máximas de la alfombra en metros: casi toda la sala (se gira 90° al colocarla, ver SofaCorner)
 export const RUG_WIDTH = 3.9 // Lado largo del modelo

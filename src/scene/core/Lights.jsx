@@ -1,5 +1,5 @@
 // Importación de la paleta ambiental activa para coordinar la luz exterior
-import { PALETTE } from '@/scene/ambiencePalette'
+import { PALETTE } from '@/scene/core/ambiencePalette'
 
 // Constantes de configuración de la luz ambiental interior difusa
 // Se eleva la intensidad ambiental suavemente para mantener visibilidad acogedora sin luces artificiales interiores

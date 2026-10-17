@@ -9,7 +9,7 @@ import { modelsManifest } from '@/data/modelsManifest'
 // Madera de la repisa (mismo tono que repisas y estanterías)
 import useShelfWood from '@/hooks/useShelfWood'
 // Cota del suelo
-import { FLOOR_Y } from '@/scene/Room'
+import { FLOOR_Y } from '@/scene/room/Room'
 
 // Alto del rodapié en la escena (el grueso y el largo de cada pieza salen proporcionales: ≈ 1.5 cm y ≈ 31 cm)
 const SKIRTING_HEIGHT = 0.1625

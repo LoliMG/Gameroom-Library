@@ -1,7 +1,7 @@
 // Sparkles de drei: partículas que flotan y parpadean suavemente
 import { Sparkles } from '@react-three/drei'
 // Importación de las dimensiones de la habitación para situar el polvo en la luz del ventanal
-import { ROOM_WIDTH, FRONT_WALL_INNER_Z, FLOOR_Y } from '@/scene/Room'
+import { ROOM_WIDTH, FRONT_WALL_INNER_Z, FLOOR_Y } from '@/scene/room/Room'
 
 // Constantes del polvo flotante
 const DUST_COUNT = 70                 // Pocas partículas para no recargar

@@ -1,5 +1,5 @@
 // Importación del componente de estantería individual y sus constantes de geometría
-import Bookshelf, { BASE_SHELF_WIDTH } from '@/scene/Bookshelf'
+import Bookshelf, { BASE_SHELF_WIDTH } from '@/scene/shelves/Bookshelf'
 
 /**
  * Componente que cubre una pared con múltiples estanterías contiguas

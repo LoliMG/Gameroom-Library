@@ -1,11 +1,11 @@
 // Geometría de la pared de estanterías (pared a, la del mueble). La pared del fondo (d) no lleva estanterías:
 // solo papel pintado y rodapié.
 
-import { ROOM_WIDTH, BACK_WALL_Z, FRONT_WALL_INNER_Z, FLOOR_Y } from '@/scene/Room'
-import { SHELF_HEIGHT, BOOKSHELF_DEPTH } from '@/scene/Bookshelf'
+import { ROOM_WIDTH, BACK_WALL_Z, FRONT_WALL_INNER_Z, FLOOR_Y } from '@/scene/room/Room'
+import { SHELF_HEIGHT, BOOKSHELF_DEPTH } from '@/scene/shelves/Bookshelf'
 
-// Cota Y para apoyar la base de todas las estanterías (altura 2.7m) sobre el suelo (Y = -1.0)
-export const SHELF_WALL_Y = FLOOR_Y + SHELF_HEIGHT / 2 // -1.0 + 1.35 = 0.35
+// Cota Y del centro de las estanterías, con la base apoyada en el suelo (Y = -1.0)
+export const SHELF_WALL_Y = FLOOR_Y + SHELF_HEIGHT / 2
 
 // PARED IZQUIERDA (a):
 // Longitud útil: de la pared del fondo (-2.0 m) a la cara interior del muro del ventanal (+3.94 m).

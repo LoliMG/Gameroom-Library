@@ -7,7 +7,7 @@ import { modelsManifest } from '@/data/modelsManifest'
 // Activa sombras en todas las mallas de un modelo clonado
 import { enableShadows } from '@/utils/shadows'
 // Llama titilante (Fase 7)
-import CandleLight from '@/scene/CandleLight'
+import CandleLight from '@/scene/decor/CandleLight'
 
 // Escala del candelabro según el manifiesto
 const CANDLE_SCALE = modelsManifest.candle.scale

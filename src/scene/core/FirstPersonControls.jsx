@@ -5,9 +5,9 @@ import { useFrame, useThree } from '@react-three/fiber'
 // Box3 para las cajas de colisión de los muebles
 import { Box3, MathUtils } from 'three'
 // Dimensiones de la habitación para limitar el paseo al interior
-import { ROOM_WIDTH, BACK_WALL_Z, FRONT_WALL_INNER_Z, FLOOR_Y } from '@/scene/Room'
+import { ROOM_WIDTH, BACK_WALL_Z, FRONT_WALL_INNER_Z, FLOOR_Y } from '@/scene/room/Room'
 // Fondo de las estanterías de las paredes a y d (el jugador no puede meterse en ellas)
-import { BOOKSHELF_DEPTH } from '@/scene/Bookshelf'
+import { BOOKSHELF_DEPTH } from '@/scene/shelves/Bookshelf'
 
 // Altura de los ojos sobre el suelo y punto de partida (junto al ventanal, mirando a las estanterías del fondo)
 const EYE_HEIGHT = 1.25 // Altura de una persona pequeña

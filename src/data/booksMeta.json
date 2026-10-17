@@ -162,12 +162,14 @@
     "title": "Imperio de tormentas",
     "author": "Sarah J. Maas",
     "pages": 786,
+    "publisher": "Alfaguara",
     "source": {
       "title": "Open Library",
       "author": "Open Library",
-      "pages": "Open Library"
+      "pages": "Open Library",
+      "cover": "usuario"
     },
-    "complete": false
+    "complete": true
   },
   {
     "isbn": "9788418359330",
@@ -184,11 +186,17 @@
   },
   {
     "isbn": "9788418359347",
-    "title": null,
-    "author": null,
-    "pages": null,
-    "source": {},
-    "complete": false
+    "title": "Reino de cenizas",
+    "author": "Sarah J. Maas",
+    "pages": 960,
+    "publisher": "Alfaguara",
+    "source": {
+      "title": "manual",
+      "author": "Sarah J. Maas",
+      "pages": "manual",
+      "cover": "usuario"
+    },
+    "complete": true
   },
   {
     "isbn": "9788467502695",
@@ -403,6 +411,188 @@
       "title": "Umbriel",
       "author": "Elise Kova",
       "pages": "manual",
+      "cover": "usuario"
+    },
+    "complete": true
+  },
+  {
+    "isbn": "9788445009826",
+    "title": "Alas de fuego",
+    "author": "Laura Gallego",
+    "pages": 240,
+    "publisher": "Minotauro",
+    "source": {
+      "title": "Open Library",
+      "author": "Open Library",
+      "pages": "Open Library",
+      "cover": "usuario"
+    },
+    "complete": true
+  },
+  {
+    "isbn": "9788445009086",
+    "title": "Alas negras",
+    "author": "Laura Gallego",
+    "pages": 384,
+    "publisher": "Booket",
+    "source": {
+      "title": "Open Library",
+      "author": "Open Library",
+      "pages": "Open Library",
+      "cover": "usuario"
+    },
+    "complete": true
+  },
+  {
+    "isbn": "9788418483547",
+    "title": "El ciclo del eterno emperador",
+    "author": "Laura Gallego",
+    "pages": 528,
+    "publisher": "Montena",
+    "source": {
+      "title": "Open Library",
+      "author": "Open Library",
+      "pages": "Open Library",
+      "cover": "usuario"
+    },
+    "complete": true
+  },
+  {
+    "isbn": "9788419252982",
+    "title": "Hechicera de huesos",
+    "author": "Kathryn Purdie",
+    "pages": 480,
+    "publisher": "Puck",
+    "source": {
+      "title": "Puck",
+      "author": "Kathryn Purdie",
+      "pages": "manual",
+      "cover": "usuario"
+    },
+    "complete": true
+  },
+  {
+    "isbn": "9788410239265",
+    "title": "Hechicera de huesos: El amanecer",
+    "author": "Kathryn Purdie",
+    "pages": 448,
+    "publisher": "Puck",
+    "source": {
+      "title": "Puck",
+      "author": "Kathryn Purdie",
+      "pages": "manual",
+      "cover": "usuario"
+    },
+    "complete": true
+  },
+  {
+    "isbn": "9788417390617",
+    "title": "El príncipe cruel",
+    "author": "Holly Black",
+    "pages": 432,
+    "publisher": "Hidra",
+    "source": {
+      "title": "Open Library",
+      "author": "Open Library",
+      "pages": "Open Library",
+      "cover": "usuario"
+    },
+    "complete": true
+  },
+  {
+    "isbn": "9788417390624",
+    "title": "El rey malvado",
+    "author": "Holly Black",
+    "pages": 464,
+    "publisher": "Hidra",
+    "source": {
+      "title": "Open Library",
+      "author": "Open Library",
+      "pages": "Open Library",
+      "cover": "usuario"
+    },
+    "complete": true
+  },
+  {
+    "isbn": "9788417390631",
+    "title": "La reina de nada",
+    "author": "Holly Black",
+    "pages": 400,
+    "publisher": "Hidra",
+    "source": {
+      "title": "Open Library",
+      "author": "Open Library",
+      "pages": "Open Library",
+      "cover": "usuario"
+    },
+    "complete": true
+  },
+  {
+    "isbn": "9788415955214",
+    "title": "Déjame atrás",
+    "author": "K.M. Moronova",
+    "pages": 352,
+    "publisher": "Sombras",
+    "source": {
+      "title": "Sombras",
+      "author": "K.M. Moronova",
+      "pages": "manual",
+      "cover": "usuario"
+    },
+    "complete": true
+  },
+  {
+    "isbn": "9788484607441",
+    "title": "El sanador de caballos",
+    "author": "Gonzalo Giner",
+    "pages": 802,
+    "publisher": "Booket",
+    "source": {
+      "title": "Open Library",
+      "author": "Open Library",
+      "pages": "Open Library",
+      "cover": "usuario"
+    },
+    "complete": true
+  },
+  {
+    "isbn": "9788499082479",
+    "title": "El nombre del viento",
+    "author": "Patrick Rothfuss",
+    "pages": 872,
+    "publisher": "Debolsillo",
+    "source": {
+      "title": "Open Library",
+      "author": "Open Library",
+      "pages": "Open Library",
+      "cover": "usuario"
+    },
+    "complete": true
+  },
+  {
+    "isbn": "9788401022524",
+    "title": "El nombre del viento (Edición Especial 10º Aniversario)",
+    "author": "Patrick Rothfuss",
+    "pages": 944,
+    "publisher": "Plaza & Janés",
+    "source": {
+      "title": "Open Library",
+      "author": "Open Library",
+      "pages": "Open Library",
+      "cover": "usuario"
+    },
+    "complete": true
+  },
+  {
+    "isbn": "9788499899619",
+    "title": "El temor de un hombre sabio",
+    "author": "Patrick Rothfuss",
+    "pages": 1200,
+    "publisher": "Debolsillo",
+    "source": {
+      "title": "Open Library",
+      "author": "Open Library",
+      "pages": "Open Library",
       "cover": "usuario"
     },
     "complete": true

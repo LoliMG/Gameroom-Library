@@ -7,9 +7,9 @@ import {
   BACK_WALL_Z,
   FRONT_WALL_INNER_Z,
   FLOOR_Y,
-} from '@/scene/Room'
+} from '@/scene/room/Room'
 // Color de la madera de las estanterías
-import { WOOD_COLOR } from '@/scene/Bookshelf'
+import { WOOD_COLOR } from '@/scene/shelves/Bookshelf'
 
 // Color oscuro y cálido del techo
 const CEILING_COLOR = '#3b2f27'

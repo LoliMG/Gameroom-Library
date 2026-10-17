@@ -1,14 +1,19 @@
 // Importación del componente Book usando el alias "@"
-import Book from '@/scene/Book'
+import Book from '@/scene/books/Book'
 // Madera recortada de la textura del mueble de la pared a, para que las estanterías tengan su mismo tono
 import useShelfWood from '@/hooks/useShelfWood'
 
 // Constantes de dimensiones de la estantería en metros
 export const BASE_SHELF_WIDTH = 1.2   // Ancho base de referencia para un módulo de estantería
-export const SHELF_HEIGHT = 2.7       // Altura total de la estantería (de suelo a techo)
 export const BOOKSHELF_DEPTH = 0.35   // Profundidad de la estantería
 export const BOARD_THICKNESS = 0.04   // Grosor de todos los tablones de madera (4 cm)
-export const SHELF_COUNT = 8          // Número de niveles de baldas disponibles para libros (8 baldas)
+// Número de baldas para libros. Eran 8 hasta el techo: las dos de arriba no se alcanzaban y se quitaron,
+// así la tapa de la estantería queda libre para poner decoración
+export const SHELF_COUNT = 6
+// Espacio vertical libre de cada hueco entre baldas (el mismo que con 8 baldas): la altura de la estantería sale de él
+export const COMPARTMENT_HEIGHT = 0.2925
+// Altura total de la estantería: base, y por cada balda su hueco y el tablón de encima (6 baldas: 2.035 m)
+export const SHELF_HEIGHT = SHELF_COUNT * (COMPARTMENT_HEIGHT + BOARD_THICKNESS) + BOARD_THICKNESS
 
 // Separación uniforme entre libros contiguos sobre la misma balda (1.5 cm)
 export const BOOK_GAP = 0.015
@@ -20,13 +25,6 @@ const BACK_PANEL_TINT = '#5c5c5c'
 
 // Color madera para el material de todos los tablones
 export const WOOD_COLOR = '#4a3320' // Roble oscuro (Fase 11); lo usa la moldura del techo (las estanterías llevan la textura de la repisa)
-
-// Altura interior libre disponible entre la base inferior y la tapa superior
-export const INNER_HEIGHT = SHELF_HEIGHT - 2 * BOARD_THICKNESS
-
-// Espacio vertical libre de cada hueco entre baldas para 8 niveles de libros y 7 tablones intermedios
-export const COMPARTMENT_HEIGHT =
-  (INNER_HEIGHT - (SHELF_COUNT - 1) * BOARD_THICKNESS) / SHELF_COUNT
 
 // Separación vertical entre baldas consecutivas (hueco + tablón, 0.3325 m): sirve para alinear muebles y módulos cortos
 export const SHELF_PITCH = COMPARTMENT_HEIGHT + BOARD_THICKNESS

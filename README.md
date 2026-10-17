@@ -39,8 +39,13 @@ src/
 ├── data/               # Datos de la aplicación (libros, catálogo)
 ├── hooks/              # Hooks personalizados de React
 ├── scene/              # Todo lo que se renderiza dentro del <Canvas>
-│   ├── Experience.jsx  # Luces y composición de la escena
-│   └── SpinningBox.jsx # Cubo 3D con rotación en el eje Y
+│   ├── core/           # Composición de la escena, cámara en primera persona, luces, postprocesado y paleta
+│   ├── room/           # Estructura de la sala: suelo y paredes, ventanal, puerta, techo, rodapiés, alfombra
+│   ├── shelves/        # Estanterías de la pared a y mueble bajo empotrado
+│   ├── books/          # Libros (lomos y contraportadas generados) y pantalla de la biblioteca
+│   ├── decor/          # Rincón de lectura y decoración: sofá, repisas, velas, figuras, plantas
+│   ├── garden/         # Jardín al atardecer: cielo, colinas, muro, fuente, banco, farolillos
+│   └── shared/         # Piezas reutilizables para repetir modelos y geometrías (instanciado)
 ├── styles/             # Estilos CSS globales
 │   └── global.css      # Reset mínimo para visualización a pantalla completa
 ├── App.jsx             # Montaje del <Canvas> y la escena
@@ -88,6 +93,7 @@ Los siguientes modelos 3D en formato `.glb` se encuentran en `src/assets/models/
 - **Losas del camino (`other/elder_stones.glb`)**: ["Elder Stones"](https://sketchfab.com/3d-models/elder-stones-aa44e2d042e44238acd25c1a5e95b22c) por *Cheyenne.Bockart*, licenciado bajo [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/).
 - **Guerrero del jardín (`other/warrior.glb`)**: ["Corrupted Fallen Priest - Dark Fantasy"](https://sketchfab.com/3d-models/corrupted-fallen-priest-dark-fantasy-1ab734d8c4464ae49d5b5091f3ea2afc) por *Pigcraft*, licenciado bajo [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/).
 - **Macetero del jardín (`other/flower_pot.glb`)**: ["Flower pot"](https://sketchfab.com/3d-models/flower-pot-ea1e03b01f8d45039d900e379f1f87d0) por *Ryoce*, licenciado bajo [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/).
+- **Katana (`other/katana.glb`)**: ["Katana"](https://sketchfab.com/3d-models/katana-b061754e94ce434cbe1396b3bb6d8abc) por *aneeqayounas*, licenciado bajo [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/).
 
 ## Créditos de texturas
 

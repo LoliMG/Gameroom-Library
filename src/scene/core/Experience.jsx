@@ -3,29 +3,33 @@ import { Suspense, useEffect, useMemo, useRef, useState } from 'react'
 // Environment de drei para reflejos sutiles
 import { Environment } from '@react-three/drei'
 // Importación de la paleta ambiental activa
-import { PALETTE } from '@/scene/ambiencePalette'
+import { PALETTE } from '@/scene/core/ambiencePalette'
 // Importación del entorno exterior (jardín, árboles, flores y cielo)
-import Outside from '@/scene/Outside'
+import Outside from '@/scene/garden/Outside'
 // Importación del listado de libros disponibles
 import books from '@/data/books'
 // Importación del componente de iluminación personalizada
-import Lights from '@/scene/Lights'
+import Lights from '@/scene/core/Lights'
 // Importación de la estructura de la habitación y sus dimensiones clave
-import Room, { ROOM_WIDTH, BACK_WALL_Z, FLOOR_Y, FRONT_WALL_INNER_Z } from '@/scene/Room'
+import Room, { ROOM_WIDTH, BACK_WALL_Z, FLOOR_Y, FRONT_WALL_INNER_Z } from '@/scene/room/Room'
 // Importación del componente de pared de estanterías
-import BookshelfWall from '@/scene/BookshelfWall'
+import BookshelfWall from '@/scene/shelves/BookshelfWall'
 // Importación del rincón de lectura con sofá, cojines, manta, mesa de café y accesorios
-import SofaCorner from '@/scene/SofaCorner'
+import SofaCorner from '@/scene/decor/SofaCorner'
 // Importación de la puerta de entrada de madera antigua (door.glb)
-import Door from '@/scene/Door'
+import Door from '@/scene/room/Door'
+// Pantalla con el panel de la biblioteca (portadas, búsqueda y estados de lectura)
+import BookConsole from '@/scene/books/BookConsole'
+// Modelo del manifiesto colocado y escalado (la katana de encima de las estanterías)
+import { ModelProp } from '@/scene/garden/GardenProps'
 // Importación de la función pura de colocación en pared desde utils
 import { getWallPlacement, fitOnShelf, separateOnShelf } from '@/utils/shelfLayout'
-import { BOOKSHELF_DEPTH, SHELF_COUNT, SHELF_PITCH, BASE_SHELF_WIDTH, BOARD_THICKNESS } from '@/scene/Bookshelf'
+import { BOOKSHELF_DEPTH, SHELF_COUNT, SHELF_PITCH, BASE_SHELF_WIDTH, BOARD_THICKNESS, SHELF_HEIGHT } from '@/scene/shelves/Bookshelf'
 // Mueble bajo integrado en las estanterías de la pared a
-import StorageCabinet, { CABINET_LENGTH_PER_HEIGHT } from '@/scene/StorageCabinet'
+import StorageCabinet, { CABINET_LENGTH_PER_HEIGHT } from '@/scene/shelves/StorageCabinet'
 // Rodapiés de madera y medidas del ventanal para saber dónde hay muro
-import SkirtingBoards from '@/scene/SkirtingBoards'
-import { WINDOW_WIDTH, WINDOW_PIER_WIDTH } from '@/scene/WindowWall'
+import SkirtingBoards from '@/scene/room/SkirtingBoards'
+import { WINDOW_WIDTH, WINDOW_PIER_WIDTH } from '@/scene/room/WindowWall'
 // Geometría de la pared de estanterías (pared a, la del mueble)
 import {
   SHELF_WALL_Y,
@@ -33,15 +37,15 @@ import {
   SHELF_WALL_A_X,
   SHELF_WALL_A_Z,
   SHELF_WALL_A_ROTATION_Y,
-} from '@/scene/shelfWalls'
+} from '@/scene/shelves/shelfWalls'
 // Fase 8: postprocesado y niebla
-import Effects from '@/scene/Effects'
+import Effects from '@/scene/core/Effects'
 // Fase 9: techo y moldura, enredaderas y polvo flotante
-import Ceiling from '@/scene/Ceiling'
-import Vines from '@/scene/Vines'
-import DustParticles from '@/scene/DustParticles'
+import Ceiling from '@/scene/room/Ceiling'
+import Vines from '@/scene/room/Vines'
+import DustParticles from '@/scene/room/DustParticles'
 // Cámara en primera persona: WASD para caminar dentro de la sala, ratón para mirar
-import FirstPersonControls from '@/scene/FirstPersonControls'
+import FirstPersonControls from '@/scene/core/FirstPersonControls'
 
 // Posición y orientación de la puerta de entrada (door.glb) en la pared b (+X):
 // Situada entre la pared del fondo d y el sofá (Z = +1.06 m)
@@ -59,6 +63,17 @@ const DOOR_FRAME_MAX_Z = DOOR_Z + 0.548 // +0.25 m
 // Hueco en la pared b: entre la hoja (de -0.477 a +0.423 m, hasta 2.10 m) y el borde exterior del marco,
 // para que el marco tape los bordes del corte
 const DOOR_OPENING = { minZ: DOOR_Z - 0.53, maxZ: DOOR_Z + 0.48, height: 2.15 }
+
+// Katana con su soporte sobre las estanterías de la pared a, centrada y a lo largo de la pared. katana.glb va a lo
+// largo de X y mide 5.932 × 1.534 (largo × alto): se escala a 1 m de largo; girada 90° queda a lo largo de Z
+const KATANA_LENGTH = 1.0
+const KATANA_HEIGHT = KATANA_LENGTH * (1.534 / 5.932)
+const KATANA_POSITION = [SHELF_WALL_A_X, FLOOR_Y + SHELF_HEIGHT, SHELF_WALL_A_Z]
+const KATANA_ROTATION = [0, Math.PI / 2, 0]
+
+// Pantalla de la biblioteca en la pared b, entre la esquina del fondo y el marco de la puerta, mirando a la sala (-X)
+const CONSOLE_POSITION = [ROOM_WIDTH / 2 - 0.02, FLOOR_Y + 1.35, (BACK_WALL_Z + DOOR_FRAME_MIN_Z) / 2]
+const CONSOLE_ROTATION_Y = -Math.PI / 2
 
 // Rodapiés: solo donde se ve muro. La pared a está tapada por estanterías hasta el suelo, y el trozo
 // izquierdo del muro del ventanal queda detrás de ellas.
@@ -123,9 +138,9 @@ function layoutAllBooks() {
 
 // Separación mínima al soltar un libro junto a otros: casi pegados (el reparto inicial usa BOOK_GAP de Bookshelf, más holgado)
 const DRAG_BOOK_GAP = 0.002
-
-// Clave de localStorage con el sitio de los libros que se han movido, por ISBN (el id cambia si se añaden libros)
-const PLACEMENTS_STORAGE_KEY = 'fantasy-bookroom:book-placements'
+// Píxeles que hay que mover el ratón con el botón pulsado sobre un libro para que empiece a arrastrarse;
+// por debajo es un clic (abre el panel del libro)
+const DRAG_START_DISTANCE = 6
 
 // Módulos de una pared de estanterías y ancho útil de sus baldas (el mismo reparto que BookshelfWall)
 function moduleGeometry(wall) {
@@ -136,7 +151,7 @@ function moduleGeometry(wall) {
 // Hueco que ocupa un libro a lo largo de la balda: su grosor de lomo o, volteado (portada al frente), su fondo
 const bookFootprint = (book, flippedIsbns) => (flippedIsbns.has(book.isbn) ? book.depth : book.width)
 
-// ¿El sitio guardado existe en las estanterías actuales? (lo que llega de localStorage puede estar viejo o roto)
+// ¿El sitio guardado existe en las estanterías actuales? (puede ser de antes de cambiar las estanterías)
 function isValidSlot(slot) {
   const wall = SHELF_WALLS.find((w) => w.key === slot?.wall)
   if (!wall) return false
@@ -148,24 +163,18 @@ function isValidSlot(slot) {
   )
 }
 
-// Colocación inicial con los sitios guardados encima; si localStorage no responde (modo privado…), la de por defecto
+// Colocación inicial con los sitios guardados ({ isbn: sitio }, por ISBN: el id cambia si se añaden libros) encima
 // shortcut: si se añaden libros, uno nuevo puede caer encima de uno movido; recolocarlos con fitOnShelf si pasa a menudo
-function loadPlacements() {
-  let saved = {}
-  try {
-    saved = JSON.parse(localStorage.getItem(PLACEMENTS_STORAGE_KEY)) ?? {}
-  } catch {
-    // Sin datos válidos: se usa la colocación por defecto
-  }
+function loadPlacements(saved) {
   return layoutAllBooks().map((p) => {
     const slot = saved[p.book.isbn]
     return isValidSlot(slot) ? { ...p, wall: slot.wall, module: slot.module, shelf: slot.shelf, x: slot.x } : p
   })
 }
 
-function Experience({ onSelectBook, flippedIsbns }) {
-  // Sitio de cada libro: { book, wall, module, shelf, x }; cambia al arrastrarlo y se guarda en localStorage
-  const [placements, setPlacements] = useState(loadPlacements)
+function Experience({ onSelectBook, flippedIsbns, readingStatus, onSetStatus, savedPlacements, onSavePlacements }) {
+  // Sitio de cada libro: { book, wall, module, shelf, x }; cambia al arrastrarlo y se guarda en la base de datos
+  const [placements, setPlacements] = useState(() => loadPlacements(savedPlacements))
   // Libro agarrado: el estado lo pinta sacado de la balda; la ref la leen la cámara y las baldas en el mismo evento
   const [draggedId, setDraggedId] = useState(null)
   const draggedRef = useRef(null)
@@ -174,6 +183,28 @@ function Experience({ onSelectBook, flippedIsbns }) {
   // Distancia entre el punto agarrado y el centro del libro: el libro se mueve con la mano sin centrarse de golpe
   const grabOffsetRef = useRef(0)
   const droppedRef = useRef(false)
+  // Libro pulsado que aún no se arrastra ({ book, offsetX, origin, moved }): la cámara no gira mientras se pulsa
+  const pressRef = useRef(null)
+  // ¿El último clic terminó un arrastre? Entonces no abre el panel
+  const justDraggedRef = useRef(false)
+
+  // Con el botón pulsado sobre un libro, el arrastre empieza al pasar de DRAG_START_DISTANCE píxeles de movimiento
+  // (movementX/Y valen también con el ratón capturado, cuando el cursor no se mueve)
+  useEffect(() => {
+    const onPointerMove = (event) => {
+      const press = pressRef.current
+      if (!press || draggedRef.current !== null) return
+      press.moved += Math.abs(event.movementX) + Math.abs(event.movementY)
+      if (press.moved < DRAG_START_DISTANCE) return
+      draggedRef.current = press.book.id
+      grabOffsetRef.current = press.offsetX
+      originRef.current = press.origin
+      droppedRef.current = false
+      setDraggedId(press.book.id)
+    }
+    window.addEventListener('pointermove', onPointerMove)
+    return () => window.removeEventListener('pointermove', onPointerMove)
+  }, [])
 
   // Guarda los sitios al terminar cada arrastre (mientras se arrastra cambian en cada movimiento del puntero)
   useEffect(() => {
@@ -181,11 +212,9 @@ function Experience({ onSelectBook, flippedIsbns }) {
     const slots = Object.fromEntries(
       placements.map(({ book, wall, module, shelf, x }) => [book.isbn, { wall, module, shelf, x }])
     )
-    try {
-      localStorage.setItem(PLACEMENTS_STORAGE_KEY, JSON.stringify(slots))
-    } catch {
-      // Sin almacenamiento (modo privado, cuota llena): los libros se quedan donde están hasta recargar
-    }
+    onSavePlacements(slots)
+    // onSavePlacements es una función nueva en cada render de App: guardar solo cuando cambian los sitios
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [placements, draggedId])
 
   // Soltar el botón en cualquier sitio termina el arrastre (después del onPointerUp de la balda de destino);
@@ -196,8 +225,10 @@ function Experience({ onSelectBook, flippedIsbns }) {
       if (draggedRef.current !== null && !droppedRef.current && origin) {
         setPlacements((list) => list.map((p) => (p.book.id === origin.book.id ? origin : p)))
       }
+      justDraggedRef.current = draggedRef.current !== null
       draggedRef.current = null
       originRef.current = null
+      pressRef.current = null
       setDraggedId(null)
     }
     window.addEventListener('pointerup', release)
@@ -249,14 +280,17 @@ function Experience({ onSelectBook, flippedIsbns }) {
     })
   }
 
+  // Un clic que termina un arrastre no abre el panel del libro
+  const selectBook = (book) => {
+    if (!justDraggedRef.current) onSelectBook(book)
+  }
+
   const bookDrag = {
     draggedId,
+    // Pulsar un libro solo lo prepara para arrastrar: el arrastre empieza si el ratón se mueve (ver arriba)
     grab: (book, offsetX = 0) => {
-      draggedRef.current = book.id
-      grabOffsetRef.current = offsetX
-      originRef.current = placements.find((p) => p.book.id === book.id)
-      droppedRef.current = false
-      setDraggedId(book.id)
+      pressRef.current = { book, offsetX, origin: placements.find((p) => p.book.id === book.id), moved: 0 }
+      justDraggedRef.current = false
     },
     // slot: { wall, module, shelf } de la balda bajo el puntero; x: punto de la balda en coordenadas de la estantería
     hover: moveDragged,
@@ -270,7 +304,7 @@ function Experience({ onSelectBook, flippedIsbns }) {
   return (
     <>
       {/* Cámara en primera persona limitada al interior de la sala */}
-      <FirstPersonControls heldBookRef={draggedRef} />
+      <FirstPersonControls heldBookRef={pressRef} />
 
       {/* Postprocesado (Bloom, viñeta, color) y niebla ligera; ENABLE_EFFECTS los apaga todos */}
       <Effects />
@@ -301,7 +335,7 @@ function Experience({ onSelectBook, flippedIsbns }) {
             wallLength={wall.length}
             position={wall.position}
             rotation={wall.rotation}
-            onSelectBook={onSelectBook}
+            onSelectBook={selectBook}
             bookDrag={bookDrag}
             startShelf={wall.startShelf}
           />
@@ -315,6 +349,19 @@ function Experience({ onSelectBook, flippedIsbns }) {
 
         {/* Puerta de entrada de madera antigua (door.glb) en la pared b */}
         <Door position={[DOOR_X, DOOR_Y, DOOR_Z]} rotation={DOOR_ROTATION} />
+
+        {/* Katana sobre las estanterías */}
+        <ModelProp model="katana" height={KATANA_HEIGHT} position={KATANA_POSITION} rotation={KATANA_ROTATION} />
+
+        {/* Pantalla de la biblioteca junto a la puerta */}
+        <BookConsole
+          position={CONSOLE_POSITION}
+          rotationY={CONSOLE_ROTATION_Y}
+          books={books}
+          readingStatus={readingStatus}
+          onSetStatus={onSetStatus}
+          onOpenBook={selectBook}
+        />
 
         {/* Techo plano oscuro con moldura perimetral (solo visible desde dentro) */}
         <Ceiling />

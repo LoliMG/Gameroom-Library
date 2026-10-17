@@ -27,6 +27,7 @@ import stoneWallUrl from '@/assets/models/other/stone_wall.glb?url'
 import elderStonesUrl from '@/assets/models/other/elder_stones.glb?url'
 import warriorUrl from '@/assets/models/other/warrior.glb?url'
 import flowerPotUrl from '@/assets/models/other/flower_pot.glb?url'
+import katanaUrl from '@/assets/models/other/katana.glb?url'
 
 // Modelos varios (libros y accesorios de mesa)
 import bookTableUrl from '@/assets/models/other/book_open.glb?url'
@@ -304,6 +305,18 @@ export const modelsManifest = {
       author: 'Ryoce',
       license: 'CC-BY-4.0',
       url: 'https://sketchfab.com/3d-models/flower-pot-ea1e03b01f8d45039d900e379f1f87d0',
+    },
+  },
+
+  // Katana en su soporte, sobre las estanterías de la pared a
+  katana: {
+    url: katanaUrl,
+    file: 'other/katana.glb',
+    credit: {
+      title: 'Katana',
+      author: 'aneeqayounas',
+      license: 'CC-BY-4.0',
+      url: 'https://sketchfab.com/3d-models/katana-b061754e94ce434cbe1396b3bb6d8abc',
     },
   },
 

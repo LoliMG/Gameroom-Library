@@ -13,3 +13,13 @@ body,
   padding: 0;
   overflow: hidden;
 }
+
+/* Aviso mientras se carga la biblioteca (antes de montar la sala) */
+.app-loading {
+  margin: 0;
+  padding: 24px;
+  color: #e2c070;
+  background: #171413;
+  font-family: Georgia, serif;
+  height: 100%;
+}

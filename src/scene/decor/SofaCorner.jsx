@@ -7,20 +7,20 @@ import { modelsManifest } from '@/data/modelsManifest'
 // Activa sombras en todas las mallas de un modelo clonado
 import { enableShadows } from '@/utils/shadows'
 // Importación de las cotas de la habitación para calcular posiciones relativas
-import { ROOM_WIDTH, FLOOR_Y, FRONT_WALL_INNER_Z } from '@/scene/Room'
+import { ROOM_WIDTH, FLOOR_Y, FRONT_WALL_INNER_Z } from '@/scene/room/Room'
 // Importación de la maceta con planta de interior (Fase 5)
-import PlantPot from '@/scene/PlantPot'
+import PlantPot from '@/scene/decor/PlantPot'
 // Importación de la alfombra estampada con borlas (Fase 6)
-import Rug, { RUG_TOP_HEIGHT } from '@/scene/Rug'
+import Rug, { RUG_TOP_HEIGHT } from '@/scene/room/Rug'
 // Recorte por alfa para materiales con transparencia mezclada (el sofá viene entero en modo BLEND)
 import { applyAlphaCutout } from '@/utils/alphaCutout'
 // Candelabro con llama titilante (Fase 7) y vapor de la taza (Fase 9c)
-import Candlestick from '@/scene/Candlestick'
-import MugSteam from '@/scene/MugSteam'
+import Candlestick from '@/scene/decor/Candlestick'
+import MugSteam from '@/scene/decor/MugSteam'
 // Repisas de pared sobre el sofá
-import WallShelf, { WALL_SHELF_DEPTH_PER_LENGTH } from '@/scene/WallShelf'
+import WallShelf, { WALL_SHELF_DEPTH_PER_LENGTH } from '@/scene/decor/WallShelf'
 // Figuras sobre las repisas (hiedra, Ponyta y Bakugo)
-import ShelfFigure from '@/scene/ShelfFigure'
+import ShelfFigure from '@/scene/decor/ShelfFigure'
 // Postura relajada para personajes en postura en T
 import { relaxArms, spreadLegs } from '@/utils/pose'
 import { Vector3 } from 'three'
