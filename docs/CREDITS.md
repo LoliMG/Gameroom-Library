@@ -18,6 +18,8 @@ Este documento recoge todas las atribuciones de autoría y licencias de los mode
 | **Figura de Bakugo** | `furniture/bakugo.glb` | [Bakugo - My Hero Ultra Rumble](https://sketchfab.com/3d-models/bakugo-my-hero-ultra-rumble-6e150076998047e185825153361400e0) | [Ye ye AI sh1t](https://sketchfab.com/yeyeAIsh1t) | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
 | **Banco de jardín japonés** | `furniture/jap_bench.glb` | [Japanese Garden Bench](https://sketchfab.com/3d-models/japanese-garden-bench-df71b965d0ba4a9596375133ac785e21) | [stasloveless](https://sketchfab.com/stasloveless) | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
 | **Lámpara de pie** | `furniture/floor_lamp.glb` | [Floor Lamp](https://sketchfab.com/3d-models/floor-lamp-33eb258d9873435690254cfbb0ea46ec) | [bilgehan.korkmaz](https://sketchfab.com/bilgehan.korkmaz) | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
+| **Chimenea** | `furniture/fireplace.glb` | [Fireplace](https://skfb.ly/6UUFs) | [Mark Bai](https://sketchfab.com/bcfbox) | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
+| **Gramófono** | `furniture/old_gramophone.glb` | [Old Gramophone](https://skfb.ly/6WDvr) | [KIFIR](https://sketchfab.com/kifir) | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
 
 ---
 
@@ -53,6 +55,7 @@ Este documento recoge todas las atribuciones de autoría y licencias de los mode
 | **Guerrero sacerdote caído** | `other/warrior.glb` | [Corrupted Fallen Priest - Dark Fantasy](https://sketchfab.com/3d-models/corrupted-fallen-priest-dark-fantasy-1ab734d8c4464ae49d5b5091f3ea2afc) | [Pigcraft](https://sketchfab.com/Pigcraft) | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
 | **Macetero de piedra** | `other/flower_pot.glb` | [Flower pot](https://sketchfab.com/3d-models/flower-pot-ea1e03b01f8d45039d900e379f1f87d0) | [Ryoce](https://sketchfab.com/Ryoce) | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
 | **Katana con soporte** | `other/katana.glb` | [Katana](https://sketchfab.com/3d-models/katana-b061754e94ce434cbe1396b3bb6d8abc) | [aneeqayounas](https://sketchfab.com/aneeqayounas) | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
+| **Gato** | `other/toon_cat_free.glb` | [Toon Cat FREE](https://skfb.ly/6TKrP) | [Omabuarts Studio](https://sketchfab.com/omabuarts) | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
 
 ---
 
