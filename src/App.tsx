@@ -4,6 +4,7 @@ import { Canvas, events as createPointerEvents } from '@react-three/fiber'
 import type { CanvasProps } from '@react-three/fiber'
 // Tipos compartidos: libro, estado de la biblioteca, estado de lectura y formato de libro electrónico
 import type { Book, EbookFormat, LibraryState, ReadingStatus } from '@/types'
+import type { CollectionTools } from '@/components/BookDashboard'
 // Importación de la experiencia principal utilizando el alias "@"
 import Experience from '@/scene/core/Experience'
 // Importación del panel de detalle HTML mediante el alias "@"
@@ -39,7 +40,7 @@ const centerPointerWhenLocked: NonNullable<CanvasProps['events']> = (store) => {
 }
 
 /**
- * Sala con la biblioteca ya cargada. library: { placements, flipped, readingStatus } (ver libraryApi)
+ * Sala con la biblioteca ya cargada. library: { placements, flipped, readingStatus, tags, wishlist, settings } (ver libraryApi)
  */
 function Bookroom({ library }: { library: LibraryState }) {
   // useState define el estado selectedBook que guarda el libro pulsado o null si no hay ninguno activo
@@ -68,6 +69,34 @@ function Bookroom({ library }: { library: LibraryState }) {
   // Cambia el estado de lectura de uno o varios libros (pantalla de la biblioteca)
   const setStatuses = (isbns: string[], status: ReadingStatus) =>
     setReadingStatus((all) => ({ ...all, ...Object.fromEntries(isbns.map((isbn) => [isbn, status])) }))
+
+  // Etiquetas por ISBN, lista de deseos y ajustes (los cambia la consola; se guardan como el resto)
+  const [tags, setTags] = useState(library.tags)
+  const [wishlist, setWishlist] = useState(library.wishlist)
+  const [settings, setSettings] = useState(library.settings)
+  useEffect(() => {
+    saveLibraryPart('tags', tags)
+  }, [tags])
+  useEffect(() => {
+    saveLibraryPart('wishlist', wishlist)
+  }, [wishlist])
+  useEffect(() => {
+    saveLibraryPart('settings', settings)
+  }, [settings])
+  const collection: CollectionTools = {
+    tags,
+    onSetTags: (isbn, list) =>
+      setTags((all) => {
+        const next = { ...all }
+        if (list.length > 0) next[isbn] = list
+        else delete next[isbn]
+        return next
+      }),
+    wishlist,
+    onSetWishlist: setWishlist,
+    settings,
+    onSetSettings: setSettings,
+  }
 
   // Lienzo WebGL, necesario para capturar el ratón desde el botón HTML
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
@@ -106,6 +135,7 @@ function Bookroom({ library }: { library: LibraryState }) {
           onSetStatus={setStatuses}
           savedPlacements={library.placements}
           onSavePlacements={(slots: LibraryState['placements']) => saveLibraryPart('placements', slots)}
+          collection={collection}
         />
       </Canvas>
 

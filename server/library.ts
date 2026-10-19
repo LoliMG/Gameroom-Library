@@ -13,10 +13,11 @@ import type { IncomingMessage, ServerResponse } from 'node:http'
 // Tipo de Vite para el plugin que monta la API en el servidor de desarrollo
 import type { Plugin } from 'vite'
 // Tipos compartidos con la sala (la forma de los datos que van y vienen por la API)
-import type { Annotation, AnnotationColor, BookMeta, Bookmark, EbookFormat, LibraryState, ReaderLocation, ReadingStatus, Slot } from '../src/types.ts'
+import type { Annotation, AnnotationColor, AppSettings, BookMeta, Bookmark, EbookFormat, LibraryState, ReaderLocation, ReadingStatus, Slot, WishItem } from '../src/types.ts'
+import { DEFAULT_SETTINGS } from '../src/types.ts'
 // Búsqueda y alta de libros nuevos desde la consola (usa seedBooks, ValidationError e isPlainObject de aquí, solo dentro
 // de funciones: así la importación circular entre los dos archivos no da problemas)
-import { searchBooks, addBook, setSynopsis, CatalogConflictError } from './bookCatalog.ts'
+import { searchBooks, addBook, setSynopsis, updateBook, deleteBook, CatalogConflictError } from './bookCatalog.ts'
 import type { CatalogOptions } from './bookCatalog.ts'
 
 export const READING_STATUSES: readonly ReadingStatus[] = ['finished', 'reading', 'unread']
@@ -78,6 +79,11 @@ const SCHEMA = `
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   );
   CREATE INDEX IF NOT EXISTS bookmarks_isbn ON bookmarks(isbn);
+  -- Datos de la sala que no son de un libro concreto, como JSON: etiquetas, lista de deseos y ajustes
+  CREATE TABLE IF NOT EXISTS app_data (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+  );
 `
 
 // Filas de las tablas tal como las devuelve node:sqlite (una columna = una propiedad; SQLite no tiene booleanos: 0/1).
@@ -165,12 +171,30 @@ export function seedBooks(db: DatabaseSync, booksMeta: BookMeta[]) {
   })
 }
 
+// Valor guardado en app_data (o fallback si aún no hay ninguno)
+function readAppData<T>(db: DatabaseSync, key: string, fallback: T): T {
+  const row = db.prepare('SELECT value FROM app_data WHERE key = ?').get(key) as { value: string } | undefined
+  return row ? (JSON.parse(row.value) as T) : fallback
+}
+
+function writeAppData(db: DatabaseSync, key: string, value: unknown) {
+  db.prepare('INSERT INTO app_data (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value').run(key, JSON.stringify(value))
+}
+
 /**
  * Estado de la biblioteca con la misma forma que usa la sala:
- * { placements: { isbn: { wall, module, shelf, x } }, flipped: [isbn], readingStatus: { isbn: estado } }
+ * { placements: { isbn: { wall, module, shelf, x } }, flipped: [isbn], readingStatus: { isbn: estado }, tags, wishlist,
+ * settings }
  */
 export function readState(db: DatabaseSync): LibraryState {
-  const state: LibraryState = { placements: {}, flipped: [], readingStatus: {} }
+  const state: LibraryState = {
+    placements: {},
+    flipped: [],
+    readingStatus: {},
+    tags: readAppData(db, 'tags', {}),
+    wishlist: readAppData(db, 'wishlist', []),
+    settings: readAppData(db, 'settings', DEFAULT_SETTINGS),
+  }
   for (const row of db.prepare('SELECT * FROM book_state').all() as BookStateRow[]) {
     // Con pared hay sitio guardado: las cuatro columnas se escriben juntas (writePlacements)
     if (row.wall !== null) state.placements[row.isbn] = { wall: row.wall, module: row.module!, shelf: row.shelf!, x: row.x! }
@@ -248,6 +272,61 @@ export function writeReadingStatus(db: DatabaseSync, statuses: unknown) {
     db.exec("UPDATE book_state SET reading_status = 'unread'")
     for (const [isbn, status] of Object.entries(statuses)) update.run(status as ReadingStatus, isbn)
   })
+}
+
+const MAX_TAG_LENGTH = 40
+const MAX_TAGS_PER_BOOK = 20
+const MAX_WISHLIST = 500
+const ISBN13 = /^97[89][0-9]{10}$/
+const shortText = (value: unknown, max: number): value is string => typeof value === 'string' && value.trim().length > 0 && value.length <= max
+
+/** Sustituye las etiquetas por las recibidas ({ isbn: [etiqueta] }); las de libros que ya no están se descartan. */
+export function writeTags(db: DatabaseSync, tags: unknown) {
+  if (!isPlainObject(tags)) throw new ValidationError('Se esperaba un objeto { isbn: [etiquetas] }')
+  const known = knownIsbns(db)
+  const clean: Record<string, string[]> = {}
+  for (const [isbn, list] of Object.entries(tags)) {
+    if (!Array.isArray(list) || list.length > MAX_TAGS_PER_BOOK || !list.every((tag) => shortText(tag, MAX_TAG_LENGTH))) {
+      throw new ValidationError(`Etiquetas no válidas para ${isbn}`)
+    }
+    if (known.has(isbn) && list.length > 0) clean[isbn] = [...new Set(list.map((tag: string) => tag.trim()))]
+  }
+  writeAppData(db, 'tags', clean)
+}
+
+function validWish(item: unknown): item is WishItem {
+  return (
+    isPlainObject(item) &&
+    typeof item.isbn === 'string' && ISBN13.test(item.isbn) &&
+    shortText(item.title, 300) &&
+    (item.author === null || shortText(item.author, 300)) &&
+    (item.publisher === null || shortText(item.publisher, 300)) &&
+    (item.pages === null || integerBelow(item.pages, 10000)) &&
+    typeof item.coverUrl === 'string' && item.coverUrl.startsWith('https://') && item.coverUrl.length <= 500 &&
+    (item.format === 'book' || item.format === 'manga')
+  )
+}
+
+/** Sustituye la lista de deseos por la recibida. */
+export function writeWishlist(db: DatabaseSync, wishlist: unknown) {
+  if (!Array.isArray(wishlist) || wishlist.length > MAX_WISHLIST) throw new ValidationError('Se esperaba una lista de libros')
+  if (!wishlist.every(validWish)) throw new ValidationError('Hay un libro no válido en la lista de deseos')
+  // Solo los campos conocidos (lo demás que mande el navegador no se guarda)
+  writeAppData(db, 'wishlist', wishlist.map(({ isbn, title, author, publisher, pages, coverUrl, format }: WishItem) => ({ isbn, title, author, publisher, pages, coverUrl, format })))
+}
+
+/** Guarda los ajustes de la sala ({ city, latitude, longitude }). */
+export function writeSettings(db: DatabaseSync, settings: unknown) {
+  if (
+    !isPlainObject(settings) ||
+    !shortText(settings.city, 100) ||
+    typeof settings.latitude !== 'number' || Math.abs(settings.latitude) > 90 ||
+    typeof settings.longitude !== 'number' || Math.abs(settings.longitude) > 180
+  ) {
+    throw new ValidationError('Ajustes no válidos')
+  }
+  const clean: AppSettings = { city: settings.city.trim(), latitude: settings.latitude, longitude: settings.longitude }
+  writeAppData(db, 'settings', clean)
 }
 
 // --- Lector de libros electrónicos ---
@@ -485,6 +564,9 @@ const WRITERS: Partial<Record<string, (db: DatabaseSync, value: unknown) => void
   '/placements': writePlacements,
   '/flipped': writeFlipped,
   '/reading-status': writeReadingStatus,
+  '/tags': writeTags,
+  '/wishlist': writeWishlist,
+  '/settings': writeSettings,
 }
 
 /** Opciones de la API: carpeta de los libros electrónicos y, para añadir libros desde la consola, el catálogo */
@@ -499,8 +581,10 @@ export interface LibraryApiOptions {
  * - GET /ebooks (qué libros tienen libro electrónico), GET /ebooks/:isbn (el archivo)
  * - GET /reader/:isbn, PUT /reader/:isbn/position, POST /reader/:isbn/annotations, POST /reader/:isbn/bookmarks,
  *   PATCH /annotations/:id, DELETE /annotations/:id, DELETE /bookmarks/:id (el lector)
- * - GET /catalog/search?q=, POST /books, PUT /books/:isbn/synopsis (añadir libros y escribir su sinopsis desde la sala;
- *   catalog: { booksMetaFile, isbnsFile, coversDir, googleBooksKey })
+ * - PUT /tags, PUT /wishlist, PUT /settings (etiquetas, lista de deseos y ajustes de la consola)
+ * - GET /catalog/search?q=, POST /books, PUT /books/:isbn, DELETE /books/:isbn, PUT /books/:isbn/synopsis (añadir,
+ *   editar, quitar y escribir la sinopsis de libros desde la sala; catalog: { booksMetaFile, isbnsFile, coversDir,
+ *   googleBooksKey })
  */
 export function createLibraryApi(db: DatabaseSync, { ebooksDir, catalog }: LibraryApiOptions = {}) {
   const send = (res: ServerResponse, status: number, body: unknown) => {
@@ -536,6 +620,15 @@ export function createLibraryApi(db: DatabaseSync, { ebooksDir, catalog }: Libra
         } catch (error) {
           if (error instanceof CatalogConflictError) return send(res, 409, { error: error.message })
           throw error
+        }
+      }
+
+      const bookMatch = /^\/books\/([0-9X]+)$/i.exec(route)
+      if (bookMatch && catalog) {
+        if (req.method === 'PUT') return send(res, 200, updateBook(db, catalog, bookMatch[1], await readJsonBody(req)))
+        if (req.method === 'DELETE') {
+          deleteBook(db, catalog, bookMatch[1])
+          return send(res, 200, { ok: true })
         }
       }
 

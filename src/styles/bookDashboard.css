@@ -46,13 +46,24 @@
 
 .dashboard-title {
   margin: 0;
-  font-size: 32px;
-  color: var(--dash-accent);
+  font-size: 30px;
   white-space: nowrap;
+}
+
+/* El título es un botón que vuelve al inicio: se ve como el título de siempre */
+.dashboard-title button {
+  padding: 0;
+  font: inherit;
+  font-weight: 700;
+  color: var(--dash-accent);
+  background: none;
+  border: none;
+  cursor: pointer;
 }
 
 .dashboard-search {
   flex: 1;
+  min-width: 0;
   padding: 12px 16px;
   font: inherit;
   color: var(--dash-text);
@@ -250,8 +261,21 @@
 }
 
 
+/* Fila de tipo de libro y etiquetas: los tipos se reparten el ancho y las etiquetas ocupan lo justo */
 .dashboard-filters.is-format {
-  grid-template-columns: repeat(3, 1fr);
+  display: flex;
+  /* Con muchas etiquetas, las que no caben bajan a otra línea en vez de quedar cortadas */
+  flex-wrap: wrap;
+}
+
+.dashboard-filters.is-format .dashboard-filter {
+  flex: 1;
+}
+
+.dashboard-filters.is-format .dashboard-filter.is-tag {
+  flex: 0 0 auto;
+  min-width: 52px;
+  padding: 10px 12px;
 }
 
 /* Botones de acción (Añadir libro, Buscar, Añadir…) */
@@ -447,4 +471,92 @@
 
 .manual-book-cover .dashboard-action {
   text-align: center;
+}
+
+/* Quitar un libro: botón de aviso (rojo apagado) */
+.dashboard-action.is-danger {
+  color: #e08a7a;
+  background: transparent;
+  border-color: #e08a7a;
+}
+
+/* Estrella de favorito, arriba a la derecha de la portada */
+.dashboard-card-star {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  z-index: 1;
+  padding: 0 4px;
+  font-size: 26px;
+  line-height: 1;
+  color: var(--dash-muted);
+  background: rgba(20, 17, 15, 0.7);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.dashboard-card-star.is-on {
+  color: var(--dash-accent);
+}
+
+/* Botones de solo icono de la cabecera (lista de deseos y ajustes) */
+.dashboard-action.is-icon {
+  min-width: 48px;
+  padding: 10px 12px;
+  font-size: 22px;
+  line-height: 1;
+}
+
+/* Localizar y Editar: dos iconos abajo a la derecha, en la línea del estado de lectura */
+.dashboard-card-actions {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  display: flex;
+  gap: 2px;
+}
+
+.dashboard-card-actions button {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  color: var(--dash-muted);
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.dashboard-card-actions svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.dashboard-card-actions button:hover {
+  color: var(--dash-accent);
+  background: rgba(226, 192, 112, 0.12);
+}
+
+/* Ajustes */
+.settings-title {
+  margin: 0;
+  font-size: 22px;
+  color: var(--dash-accent);
+}
+
+.settings-places {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }

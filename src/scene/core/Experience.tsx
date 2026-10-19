@@ -30,7 +30,8 @@ import SelectionBox, { MIN_BOX_SIZE } from '@/scene/books/SelectionBox'
 // Modelo del manifiesto colocado y escalado (la katana de encima de las estanterías)
 import { Lantern, ModelProp } from '@/scene/garden/GardenProps'
 // Importación de la función pura de colocación en pared desde utils
-import { getWallPlacement, fitGroupOnShelf, separateOnShelf, placeSavedBooks, placeNewBooks } from '@/utils/shelfLayout'
+import { getWallPlacement, fitGroupOnShelf, separateOnShelf, placeSavedBooks, syncShelfBooks } from '@/utils/shelfLayout'
+import type { CollectionTools } from '@/components/BookDashboard'
 import { BOOKSHELF_DEPTH, SHELF_COUNT, SHELF_PITCH, BASE_SHELF_WIDTH, BOARD_THICKNESS, SHELF_HEIGHT } from '@/scene/shelves/Bookshelf'
 // Mueble bajo integrado en las estanterías de la pared a
 import StorageCabinet, { CABINET_LENGTH_PER_HEIGHT } from '@/scene/shelves/StorageCabinet'
@@ -212,15 +213,13 @@ interface ExperienceProps {
   /** Sitios guardados por ISBN (de la base de datos) */
   savedPlacements: Record<string, Slot>
   onSavePlacements: (slots: Record<string, Slot>) => void
+  /** Etiquetas, lista de deseos y ajustes, para la consola */
+  collection: CollectionTools
 }
 
-function Experience({ onSelectBook, flippedIsbns, readingStatus, onSetStatus, savedPlacements, onSavePlacements }: ExperienceProps) {
+function Experience({ onSelectBook, flippedIsbns, readingStatus, onSetStatus, savedPlacements, onSavePlacements, collection }: ExperienceProps) {
   // Sitio de cada libro: { book, wall, module, shelf, x }; cambia al arrastrarlo y se guarda en la base de datos
   const [placements, setPlacements] = useState<Placement[]>(() => loadPlacements(savedPlacements))
-  // Libro añadido desde la consola: Vite actualiza la lista de libros sin recargar la página y vuelve a pintar la sala;
-  // los que aún no están en las estanterías van al primer hueco libre (y se guardan como cualquier cambio de sitio)
-  const withNewBooks = placeNewBooks(placements, books, SHELF_WALLS, DRAG_BOOK_GAP)
-  if (withNewBooks !== placements) setPlacements(withNewBooks)
   // Libros arrastrados (el agarrado y, si era parte de una selección, el resto): el estado los pinta sacados de la
   // balda; las refs las leen la cámara y las baldas en el mismo evento
   const [draggedIds, setDraggedIds] = useState(NO_BOOKS)
@@ -228,6 +227,14 @@ function Experience({ onSelectBook, flippedIsbns, readingStatus, onSetStatus, sa
   const groupRef = useRef<number[]>([]) // ids de los libros que se mueven juntos, en su orden
   // Selección múltiple (Ctrl + arrastrar o Ctrl + clic): ids de los libros elegidos
   const [selectedIds, setSelectedIds] = useState(NO_BOOKS)
+  // Libro añadido, editado o quitado desde la consola: Vite actualiza la lista de libros sin recargar la página y vuelve a
+  // pintar la sala; los nuevos van al primer hueco libre (y se guardan como cualquier cambio de sitio). Al quitar uno, los
+  // id (el orden en la lista) cambian: la selección se suelta para no quedarse con libros que no son
+  const syncedPlacements = syncShelfBooks(placements, books, SHELF_WALLS, DRAG_BOOK_GAP)
+  if (syncedPlacements !== placements) {
+    if (syncedPlacements.length < placements.length) setSelectedIds(NO_BOOKS)
+    setPlacements(syncedPlacements)
+  }
   // Sitio de los libros al agarrarlos (vuelven ahí si se sueltan fuera de las baldas) y si se han soltado sobre una balda
   const originRef = useRef<Placement[] | null>(null)
   // Distancia entre el punto agarrado y el centro del libro: el libro se mueve con la mano sin centrarse de golpe
@@ -370,6 +377,10 @@ function Experience({ onSelectBook, flippedIsbns, readingStatus, onSetStatus, sa
     onSelectBook(book)
   }
 
+  // "Localizar" en la consola: el libro se ilumina en su estantería (como un libro seleccionado: brilla y sale un poco
+  // de la balda). Al pulsarlo se abre su panel y la selección se suelta, así que deja de brillar (ver selectBook)
+  const locateBook = (book: Book) => setSelectedIds(new Set([book.id]))
+
   const bookDrag: BookDrag = {
     draggedIds,
     selectedIds,
@@ -477,6 +488,8 @@ function Experience({ onSelectBook, flippedIsbns, readingStatus, onSetStatus, sa
           readingStatus={readingStatus}
           onSetStatus={onSetStatus}
           onOpenBook={selectBook}
+          onLocateBook={locateBook}
+          collection={collection}
         />
 
         {/* Techo plano oscuro con moldura perimetral (solo visible desde dentro) */}

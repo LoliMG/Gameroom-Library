@@ -45,6 +45,15 @@ export const addBookToCollection = (book: NewBook) => requestJson<AddedBook>('/a
 export const saveSynopsis = (isbn: string, synopsis: string) =>
   requestJson<{ isbn: string; synopsis: string | null }>(`/api/books/${isbn}/synopsis`, jsonBody('PUT', { synopsis }))
 
+/** Datos de un libro que se pueden cambiar desde la consola */
+export type BookChanges = Pick<NewBook, 'title' | 'author' | 'publisher' | 'pages' | 'format' | 'saga' | 'saga_index'>
+
+/** Cambia los datos de un libro de la colección (la sala se actualiza sola al cambiar booksMeta.json) */
+export const updateBook = (isbn: string, changes: BookChanges) => request(`/api/books/${isbn}`, jsonBody('PUT', changes))
+
+/** Quita un libro de la colección, con su estado, subrayados y marcadores */
+export const deleteBook = (isbn: string) => request(`/api/books/${isbn}`, { method: 'DELETE' })
+
 /** Mensaje tras añadir un libro: dónde queda y si su sinopsis falta o va en otro idioma */
 export function addedMessage(entry: AddedBook): string {
   const placed = 'Añadido: ya está en el primer hueco libre de las estanterías.'

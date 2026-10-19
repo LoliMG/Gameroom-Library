@@ -1,7 +1,12 @@
-// Búsqueda, filtro y selección del panel de la biblioteca
+// Búsqueda, filtro y selección del panel de la biblioteca, y sus pantallas: añadir, editar, lista de deseos y ajustes
 import { useMemo, useState } from 'react'
-import type { Book, ReadingStatus } from '@/types'
+import type { Dispatch, SetStateAction } from 'react'
+import type { AppSettings, Book, CatalogBook, ReadingStatus, WishItem } from '@/types'
+import { FAVORITE_TAG } from '@/types'
 import AddBookPanel from '@/components/AddBookPanel'
+import BookEditForm from '@/components/BookEditForm'
+import WishlistPanel from '@/components/WishlistPanel'
+import SettingsPanel from '@/components/SettingsPanel'
 import '@/styles/bookDashboard.css'
 
 // Estados de lectura (mismas claves que guarda App): etiqueta para filtros, botones e insignias
@@ -24,6 +29,21 @@ const FORMAT_FILTERS: { value: FormatFilter; label: string }[] = [
 ]
 const formatGroup = (book: Book): FormatGroup => (book.format === 'manga' ? 'manga' : 'novel')
 
+/** Etiquetas, lista de deseos y ajustes: los guarda App como el resto del estado de la biblioteca */
+export interface CollectionTools {
+  tags: Record<string, string[]>
+  /** Sustituye las etiquetas de un libro (lista vacía = sin etiquetas) */
+  onSetTags: (isbn: string, tags: string[]) => void
+  wishlist: WishItem[]
+  /** Como el setState de React: acepta la lista nueva o una función que la calcula a partir de la actual */
+  onSetWishlist: Dispatch<SetStateAction<WishItem[]>>
+  settings: AppSettings
+  onSetSettings: (settings: AppSettings) => void
+}
+
+// Pantalla de la consola: portadas, añadir libro, lista de deseos o ajustes (editar va aparte: editingIsbn)
+type View = 'books' | 'add' | 'wishlist' | 'settings'
+
 // Búsqueda sin distinguir mayúsculas ni tildes ("idhun" encuentra "Idhún")
 const normalize = (text: string | null | undefined) => (text ?? '').normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase()
 
@@ -41,14 +61,45 @@ interface BookDashboardProps {
   onSetStatus: (isbns: string[], status: ReadingStatus) => void
   /** Abre el panel de detalle del libro */
   onOpenBook: (book: Book) => void
+  /** Ilumina el libro en su estantería (deja de brillar al pulsarlo) */
+  onLocateBook: (book: Book) => void
+  collection: CollectionTools
 }
 
-function BookDashboard({ books, readingStatus, onSetStatus, onOpenBook }: BookDashboardProps) {
+function BookDashboard({ books, readingStatus, onSetStatus, onOpenBook, onLocateBook, collection }: BookDashboardProps) {
+  const { tags, onSetTags, wishlist, onSetWishlist, settings, onSetSettings } = collection
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<StatusFilter>('all')
   const [formatFilter, setFormatFilter] = useState<FormatFilter>('all')
-  const [addingBook, setAddingBook] = useState(false) // ¿Se está buscando un libro para añadirlo?
+  const [tagFilter, setTagFilter] = useState<string | null>(null)
+  const [view, setView] = useState<View>('books')
+  const [editingIsbn, setEditingIsbn] = useState<string | null>(null)
   const [selected, setSelected] = useState(() => new Set<string>())
+  const editingBook = books.find((book) => book.isbn === editingIsbn) ?? null
+
+  // Etiquetas que se usan en la colección, para filtrar: favoritos primero y el resto por orden alfabético
+  const allTags = useMemo(() => {
+    const used = new Set(Object.values(tags).flat())
+    used.delete(FAVORITE_TAG)
+    return [FAVORITE_TAG, ...[...used].sort((a, b) => a.localeCompare(b, 'es'))]
+  }, [tags])
+  const isFavorite = (book: Book) => tags[book.isbn]?.includes(FAVORITE_TAG) ?? false
+  const toggleFavorite = (book: Book) => {
+    const current = tags[book.isbn] ?? []
+    onSetTags(book.isbn, isFavorite(book) ? current.filter((tag) => tag !== FAVORITE_TAG) : [FAVORITE_TAG, ...current])
+  }
+  const wishedIsbns = useMemo(() => new Set(wishlist.map((item) => item.isbn)), [wishlist])
+  const addWish = ({ isbn, title, author, publisher, pages, coverUrl, format }: CatalogBook) =>
+    onSetWishlist((list) => [...list, { isbn, title, author, publisher, pages, coverUrl, format }])
+  // Título "Mi biblioteca": vuelve a la pantalla de inicio (todas las portadas, sin búsqueda ni filtros)
+  const goHome = () => {
+    setView('books')
+    setEditingIsbn(null)
+    setQuery('')
+    setFilter('all')
+    setFormatFilter('all')
+    setTagFilter(null)
+  }
 
   const statusOf = (book: Book) => readingStatus[book.isbn] ?? 'unread'
 
@@ -70,10 +121,11 @@ function BookDashboard({ books, readingStatus, onSetStatus, onOpenBook }: BookDa
     return books.filter((book) => {
       if (filter !== 'all' && (readingStatus[book.isbn] ?? 'unread') !== filter) return false
       if (formatFilter !== 'all' && formatGroup(book) !== formatFilter) return false
+      if (tagFilter && !tags[book.isbn]?.includes(tagFilter)) return false
       const text = normalize(`${book.title} ${book.author} ${book.publisher} ${book.saga ?? ''}`)
       return words.every((word) => text.includes(word))
     })
-  }, [books, readingStatus, query, filter, formatFilter])
+  }, [books, readingStatus, query, filter, formatFilter, tagFilter, tags])
 
   const toggleSelected = (isbn: string) =>
     setSelected((current) => {
@@ -97,7 +149,11 @@ function BookDashboard({ books, readingStatus, onSetStatus, onOpenBook }: BookDa
   return (
     <div className="dashboard">
       <header className="dashboard-header">
-        <h2 className="dashboard-title">Mi biblioteca</h2>
+        <h2 className="dashboard-title">
+          <button type="button" onClick={goHome} title="Volver al inicio">
+            Mi biblioteca
+          </button>
+        </h2>
         <input
           type="search"
           className="dashboard-search"
@@ -106,19 +162,41 @@ function BookDashboard({ books, readingStatus, onSetStatus, onOpenBook }: BookDa
           value={query}
           onChange={(event) => setQuery(event.target.value)}
         />
+        <button type="button" className="dashboard-action" aria-pressed={view === 'add'} onClick={() => setView(view === 'add' ? 'books' : 'add')}>
+          Añadir libro
+        </button>
         <button
           type="button"
-          className="dashboard-action"
-          aria-pressed={addingBook}
-          onClick={() => setAddingBook((open) => !open)}
+          className="dashboard-action is-quiet is-icon"
+          aria-pressed={view === 'wishlist'}
+          aria-label={`Lista de deseos (${wishlist.length})`}
+          title={`Lista de deseos (${wishlist.length})`}
+          onClick={() => setView(view === 'wishlist' ? 'books' : 'wishlist')}
         >
-          Añadir libro
+          ♡
+        </button>
+        <button
+          type="button"
+          className="dashboard-action is-quiet is-icon"
+          aria-pressed={view === 'settings'}
+          aria-label="Ajustes"
+          title="Ajustes"
+          onClick={() => setView(view === 'settings' ? 'books' : 'settings')}
+        >
+          ⚙
         </button>
       </header>
 
-      {addingBook && <AddBookPanel ownedIsbns={ownedIsbns} onClose={() => setAddingBook(false)} />}
+      {editingBook && (
+        <BookEditForm key={editingBook.isbn} book={editingBook} tags={tags[editingBook.isbn] ?? []} onSetTags={onSetTags} onDone={() => setEditingIsbn(null)} />
+      )}
+      {!editingBook && view === 'add' && (
+        <AddBookPanel ownedIsbns={ownedIsbns} wishedIsbns={wishedIsbns} onWish={addWish} onClose={() => setView('books')} />
+      )}
+      {!editingBook && view === 'wishlist' && <WishlistPanel wishlist={wishlist} onSetWishlist={onSetWishlist} onSearch={() => setView('add')} />}
+      {!editingBook && view === 'settings' && <SettingsPanel settings={settings} onSetSettings={onSetSettings} />}
 
-      {!addingBook && (
+      {!editingBook && view === 'books' && (
         <>
           <div className="dashboard-filters" role="group" aria-label="Filtrar por estado de lectura">
             {FILTERS.map(({ value, label }) => (
@@ -144,6 +222,20 @@ function BookDashboard({ books, readingStatus, onSetStatus, onOpenBook }: BookDa
                 onClick={() => setFormatFilter(value)}
               >
                 {label} <span className="dashboard-count">{formatCounts[value]}</span>
+              </button>
+            ))}
+            {/* Etiquetas en la misma fila: la estrella filtra los favoritos */}
+            {allTags.map((tag) => (
+              <button
+                key={tag}
+                type="button"
+                className="dashboard-filter is-tag"
+                aria-pressed={tagFilter === tag}
+                aria-label={tag === FAVORITE_TAG ? 'Ver solo los favoritos' : `Ver solo los libros con la etiqueta ${tag}`}
+                title={tag === FAVORITE_TAG ? 'Favoritos' : tag}
+                onClick={() => setTagFilter(tagFilter === tag ? null : tag)}
+              >
+                {tag === FAVORITE_TAG ? '★' : tag}
               </button>
             ))}
           </div>
@@ -186,11 +278,37 @@ function BookDashboard({ books, readingStatus, onSetStatus, onOpenBook }: BookDa
                       checked={isSelected}
                       onChange={() => toggleSelected(book.isbn)}
                     />
+                    <button
+                      type="button"
+                      className={`dashboard-card-star${isFavorite(book) ? ' is-on' : ''}`}
+                      aria-pressed={isFavorite(book)}
+                      aria-label={`${isFavorite(book) ? 'Quitar de favoritos' : 'Marcar como favorito'}: ${book.title}`}
+                      title={isFavorite(book) ? 'Quitar de favoritos' : 'Marcar como favorito'}
+                      onClick={() => toggleFavorite(book)}
+                    >
+                      {isFavorite(book) ? '★' : '☆'}
+                    </button>
                     <button type="button" className="dashboard-card-open" onClick={() => onOpenBook(book)}>
                       <img src={book.cover} alt="" className="dashboard-cover" />
                       <span className="dashboard-card-title">{book.title}</span>
                       <span className={`dashboard-badge status-${status}`}>{READING_LABELS[status]}</span>
                     </button>
+                    {/* Iconos junto al estado de lectura: localizar en la sala (diana) y editar (lápiz) */}
+                    <div className="dashboard-card-actions">
+                      <button type="button" onClick={() => onLocateBook(book)} aria-label={`Localizar ${book.title} en la sala`} title="Localizar en la sala">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <circle cx="12" cy="12" r="7" />
+                          <circle cx="12" cy="12" r="2" />
+                          <path d="M12 1v4M12 19v4M1 12h4M19 12h4" />
+                        </svg>
+                      </button>
+                      <button type="button" onClick={() => setEditingIsbn(book.isbn)} aria-label={`Editar ${book.title}`} title="Editar">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <path d="M4 20h4L19 9l-4-4L4 16z" />
+                          <path d="M14 6l4 4" />
+                        </svg>
+                      </button>
+                    </div>
                   </li>
                 )
               })}
