@@ -146,14 +146,19 @@ export function generateSpineTexture(book: SpineSource): CanvasTexture | null {
  */
 export function generateBackCoverTexture(book: BackCoverSource): CanvasTexture | null {
   const canvas = document.createElement('canvas')
-  canvas.width = 768
-  canvas.height = 1152
+  // Se dibuja en coordenadas de 768 × 1152 sobre un lienzo de la mitad: desde la balda se ve igual y la textura ocupa
+  // cuatro veces menos memoria gráfica (la sinopsis para leer está en la vista en grande, BookViewer, como texto)
+  const W = 768
+  const H = 1152
+  canvas.width = W / 2
+  canvas.height = H / 2
   const ctx = canvas.getContext('2d')
   if (!ctx) return null
+  ctx.scale(0.5, 0.5)
 
   // Fondo
   ctx.fillStyle = book.backColor || '#1c1524'
-  ctx.fillRect(0, 0, canvas.width, canvas.height)
+  ctx.fillRect(0, 0, W, H)
 
   const ribsColor = book.spineRibsColor || '#d4af37'
   const textColor = book.backTextColor || '#f5ecf1'
@@ -162,32 +167,32 @@ export function generateBackCoverTexture(book: BackCoverSource): CanvasTexture |
   // Marco decorativo
   ctx.strokeStyle = isLight ? 'rgba(0, 0, 0, 0.25)' : 'rgba(255, 255, 255, 0.2)'
   ctx.lineWidth = 2
-  ctx.strokeRect(30, 30, canvas.width - 60, canvas.height - 60)
+  ctx.strokeRect(30, 30, W - 60, H - 60)
 
   // Título (destacado)
   ctx.fillStyle = ribsColor
   ctx.font = 'bold 42px "Times New Roman", Georgia, serif'
   ctx.textAlign = 'center'
-  ctx.fillText(book.title, canvas.width / 2, 95)
+  ctx.fillText(book.title, W / 2, 95)
 
   // Autor
   ctx.fillStyle = isLight ? '#2a2a2a' : 'rgba(255, 255, 255, 0.85)'
   ctx.font = 'italic 25px "Times New Roman", Georgia, serif'
-  ctx.fillText(book.author, canvas.width / 2, 140)
+  ctx.fillText(book.author, W / 2, 140)
 
   // Línea divisoria
   ctx.strokeStyle = ribsColor
   ctx.lineWidth = 1
   ctx.beginPath()
   ctx.moveTo(140, 170)
-  ctx.lineTo(canvas.width - 140, 170)
+  ctx.lineTo(W - 140, 170)
   ctx.stroke()
 
   // Sinopsis
   ctx.fillStyle = textColor
   ctx.font = '22px "Times New Roman", Georgia, serif'
   ctx.textAlign = 'left'
-  const maxWidth = canvas.width - 160
+  const maxWidth = W - 160
   const lineHeight = 36
   const x = 80
   let y = 230
@@ -208,8 +213,8 @@ export function generateBackCoverTexture(book: BackCoverSource): CanvasTexture |
   ctx.fillText(line, x, y)
 
   // Código de barras al pie
-  const barcodeX = canvas.width / 2 - 120
-  const barcodeY = canvas.height - 180
+  const barcodeX = W / 2 - 120
+  const barcodeY = H - 180
   ctx.fillStyle = '#ffffff'
   ctx.fillRect(barcodeX, barcodeY, 240, 90)
 
@@ -226,12 +231,12 @@ export function generateBackCoverTexture(book: BackCoverSource): CanvasTexture |
   ctx.fillStyle = '#111111'
   ctx.font = '14px monospace'
   ctx.textAlign = 'center'
-  ctx.fillText(book.isbn || '978-84-00000-0', canvas.width / 2, barcodeY + 80)
+  ctx.fillText(book.isbn || '978-84-00000-0', W / 2, barcodeY + 80)
 
   // Editorial al pie
   ctx.fillStyle = ribsColor
   ctx.font = 'bold 22px "Times New Roman", Georgia, serif'
-  ctx.fillText((book.publisher || '').toUpperCase(), canvas.width / 2, canvas.height - 50)
+  ctx.fillText((book.publisher || '').toUpperCase(), W / 2, H - 50)
 
   const texture = new CanvasTexture(canvas)
   texture.colorSpace = SRGBColorSpace
