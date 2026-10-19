@@ -136,6 +136,62 @@ export function paletteForElevation(elevation: number): AmbiencePalette {
   return NIGHT
 }
 
+/** Tiempo de la ciudad (lo da weatherApi.ts con Open-Meteo) */
+export interface Weather {
+  /** Nubes: 0 (despejado) a 1 (cubierto) */
+  cloudCover: number
+  /** Lluvia: 0 (nada) a 1 (fuerte) */
+  rain: number
+  /** Niebla */
+  fog: boolean
+  /** Tormenta (suenan truenos) */
+  thunder: boolean
+  /** Viento en km/h */
+  windSpeed: number
+  /** Temperatura en °C */
+  temperature: number
+}
+
+/** Cielo despejado y sin viento (mientras no se sabe el tiempo, o si no se puede consultar) */
+export const CLEAR_WEATHER: Weather = { cloudCover: 0, rain: 0, fog: false, thunder: false, windSpeed: 0, temperature: 20 }
+
+// Cielo cubierto: cuánto se apagan los colores (saturación) y cuánto se oscurecen, y cuánto baja la luz del ventanal
+const OVERCAST_DESATURATE = 0.75
+const OVERCAST_DARKEN = 0.25
+const OVERCAST_LIGHT = 0.55
+
+// Color gris a medias: menos saturado y algo más oscuro, según amount (0 = igual, 1 = del todo cubierto)
+function overcastColor(color: string, amount: number) {
+  const hsl = { h: 0, s: 0, l: 0 }
+  new Color(color).getHSL(hsl)
+  return `#${new Color().setHSL(hsl.h, hsl.s * (1 - OVERCAST_DESATURATE * amount), hsl.l * (1 - OVERCAST_DARKEN * amount)).getHexString()}`
+}
+
+/**
+ * La atmósfera con el tiempo encima: las nubes (y más aún la lluvia) apagan el cielo, las colinas y la luz, y tapan las
+ * estrellas. El sol y la niebla los ajusta quien pinta (SunsetSky y Effects) con weather.
+ */
+export function applyWeather(palette: AmbiencePalette, weather: Weather): AmbiencePalette {
+  const amount = Math.min(1, weather.cloudCover * 0.85 + weather.rain * 0.3)
+  if (amount === 0) return palette
+  const gray = (color: string) => overcastColor(color, amount)
+  return {
+    ...palette,
+    skyTop: gray(palette.skyTop),
+    skyBottom: gray(palette.skyBottom),
+    skyGlow: gray(palette.skyGlow),
+    lightColor: gray(palette.lightColor),
+    lightIntensity: palette.lightIntensity * (1 - OVERCAST_LIGHT * amount),
+    ambientIntensity: palette.ambientIntensity * (1 - 0.2 * amount),
+    envIntensity: palette.envIntensity * (1 - 0.4 * amount),
+    fogColor: gray(palette.fogColor),
+    hills: [gray(palette.hills[0]), gray(palette.hills[1]), gray(palette.hills[2])],
+    meadowNear: gray(palette.meadowNear),
+    meadowFar: gray(palette.meadowFar),
+    stars: palette.stars * (1 - weather.cloudCover),
+  }
+}
+
 /**
  * Posición del sol en el cielo para una fecha y un lugar (fórmula aproximada del Almanaque Náutico; error < 1°).
  *

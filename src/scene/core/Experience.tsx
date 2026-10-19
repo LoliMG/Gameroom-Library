@@ -8,11 +8,14 @@ import type { Book, Placement, ReadingStatus, ShelfWall, Slot } from '@/types'
 import { Environment, Lightformer, Preload } from '@react-three/drei'
 // Importación de la paleta ambiental activa
 import useAmbience from '@/hooks/useAmbience'
+import useWeather from '@/hooks/useWeather'
 // Cielo, colinas, prado y estrellas del momento del día
 import SunsetSky from '@/scene/garden/SunsetSky'
-// Grillos y viento de fondo de noche
-import NightSounds from '@/scene/core/NightSounds'
-import type { AppSettings } from '@/types'
+// Grillos, viento y lluvia de fondo; gotas de lluvia tras el ventanal
+import AmbientSounds from '@/scene/core/AmbientSounds'
+import RainFall from '@/scene/garden/RainFall'
+import type { AppSettings, SoundVolumes } from '@/types'
+import { paletteForElevation } from '@/scene/core/ambiencePalette'
 // Importación del entorno exterior (jardín, árboles, flores y cielo)
 import Outside from '@/scene/garden/Outside'
 // Importación del listado de libros disponibles
@@ -208,17 +211,22 @@ const bookFootprint = (book: Book, flippedIsbns: Set<string>) => (flippedIsbns.h
 // los libros sin sitio (recién añadidos desde la consola) van al primer hueco libre (ver placeSavedBooks)
 const loadPlacements = (saved: Record<string, Slot>) => placeSavedBooks(layoutAllBooks(), saved, SHELF_WALLS, DRAG_BOOK_GAP)
 
+// Volúmenes con los sonidos silenciados en Ajustes
+const SILENT: SoundVolumes = { wind: 0, rain: 0, thunder: 0, crickets: 0 }
+
 /**
- * Lo que cambia con la hora: niebla, reflejos del entorno, luces y cielo. Va en su propio componente para que el reloj
- * (que cambia cada minuto) solo vuelva a pintar esto y no toda la sala con sus libros
+ * Lo que cambia con la hora y con el tiempo de la ciudad: niebla, reflejos del entorno, luces, cielo, lluvia y sonidos.
+ * Va en su propio componente para que los relojes (la hora cambia cada minuto, el tiempo cada 15) solo vuelvan a pintar
+ * esto y no toda la sala con sus libros
  */
 function DayCycle({ settings }: { settings: AppSettings }) {
-  const ambience = useAmbience(settings)
+  const weather = useWeather(settings)
+  const ambience = useAmbience(settings, weather)
   const { palette } = ambience
   return (
     <>
       {/* Postprocesado (Bloom, viñeta, color) y niebla ligera; ENABLE_EFFECTS los apaga todos */}
-      <Effects fogColor={palette.fogColor} />
+      <Effects fogColor={palette.fogColor} fog={weather.fog} rain={weather.rain} />
 
       {/* Reflejos sutiles (cristal, metal, agua): entorno hecho en la propia escena con dos paneles de luz, el cálido del
           ventanal y el del cielo. Los presets de drei descargan un HDR de internet y, si la conexión falla, la sala no carga.
@@ -234,9 +242,18 @@ function DayCycle({ settings }: { settings: AppSettings }) {
       {/* Cielo con el sol donde está, colinas, prado y estrellas de noche */}
       <SunsetSky ambience={ambience} />
 
-      {/* Grillos y viento muy suaves: empiezan al anochecer (con las estrellas) y suenan toda la noche; en Ajustes se
-          pueden silenciar */}
-      <NightSounds level={settings.sound ? palette.stars : 0} />
+      {/* Lluvia tras el ventanal, cuando llueve en la ciudad */}
+      <RainFall intensity={weather.rain} windSpeed={weather.windSpeed} />
+
+      {/* Grillos y viento muy suaves de noche (empiezan al anochecer, con las estrellas), lluvia cuando llueve y truenos con
+          tormenta; en Ajustes se ajusta el volumen de cada uno o se silencian todos. La noche se mide sin las nubes (las
+          nubes tapan las estrellas, no la noche) */}
+      <AmbientSounds
+        level={paletteForElevation(ambience.sunElevation).stars}
+        rain={weather.rain}
+        thunder={weather.thunder}
+        volumes={settings.sound ? settings.volumes : SILENT}
+      />
     </>
   )
 }

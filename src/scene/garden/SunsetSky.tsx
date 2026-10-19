@@ -125,7 +125,7 @@ function createStarGeometry() {
  * Nada de esto lleva niebla ni luces: sus colores ya son los de la bruma de cada momento del día.
  */
 function SunsetSky({ ambience }: { ambience: Ambience }) {
-  const { palette, sunDirection, sunElevation } = ambience
+  const { palette, sunDirection, sunElevation, weather } = ambience
   const skyUniforms = useMemo(
     () => ({
       zenithColor: { value: new Color() },
@@ -137,14 +137,16 @@ function SunsetSky({ ambience }: { ambience: Ambience }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- los valores se ponen abajo, en cada cambio del ambiente
     []
   )
-  // Colores del momento y sol: su disco se ve solo cuando está sobre el horizonte (de -1° a 2° va apareciendo)
+  // Colores del momento y sol: su disco se ve solo cuando está sobre el horizonte (de -1° a 2° va apareciendo) y las
+  // nubes lo tapan
   useEffect(() => {
     skyUniforms.zenithColor.value.set(palette.skyTop)
     skyUniforms.horizonColor.value.set(palette.skyBottom)
     skyUniforms.glowColor.value.set(palette.skyGlow)
-    skyUniforms.sunColor.value.copy(SUN_COLOR).multiplyScalar(Math.min(1, Math.max(0, (sunElevation + 1) / 3)))
+    const aboveHorizon = Math.min(1, Math.max(0, (sunElevation + 1) / 3))
+    skyUniforms.sunColor.value.copy(SUN_COLOR).multiplyScalar(aboveHorizon * (1 - weather.cloudCover))
     skyUniforms.sunDirection.value.copy(sunDirection)
-  }, [skyUniforms, palette, sunDirection, sunElevation])
+  }, [skyUniforms, palette, sunDirection, sunElevation, weather.cloudCover])
   const hills = useMemo(() => HILL_LAYERS.map((layer) => ({ ...layer, geometry: createHillGeometry(layer) })), [])
   const meadowTexture = useMemo(() => createMeadowTexture(palette.meadowNear, palette.meadowFar), [palette.meadowNear, palette.meadowFar])
   useEffect(() => () => meadowTexture.dispose(), [meadowTexture])

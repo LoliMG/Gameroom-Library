@@ -1,9 +1,18 @@
-// Ajustes de la consola: silenciar los sonidos de fondo y la ciudad del tiempo de la sala. La ciudad se busca con el
+// Ajustes de la consola: los sonidos de fondo (silenciarlos o el volumen de cada uno) y la ciudad del tiempo de la sala. La ciudad se busca con el
 // geocodificador de Open-Meteo (gratis y sin clave), que da sus coordenadas: con ellas la sala calcula la hora del sol
 // y pedirá el clima
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import type { AppSettings } from '@/types'
+import type { AppSettings, SoundVolumes } from '@/types'
+import { MAX_SOUND_VOLUME } from '@/types'
+
+// Cada sonido de fondo con su nombre y cuándo suena
+const SOUNDS: { key: keyof SoundVolumes; label: string; when: string }[] = [
+  { key: 'wind', label: 'Viento', when: 'de noche y con lluvia' },
+  { key: 'rain', label: 'Lluvia', when: 'cuando llueve' },
+  { key: 'thunder', label: 'Tormenta', when: 'truenos cuando hay tormenta' },
+  { key: 'crickets', label: 'Grillos', when: 'de noche sin lluvia' },
+]
 
 /** Un resultado del geocodificador (https://open-meteo.com/en/docs/geocoding-api): solo los campos que se usan */
 interface Place {
@@ -50,16 +59,39 @@ function SettingsPanel({ settings, onSetSettings }: SettingsPanelProps) {
 
   return (
     <section className="add-book" aria-label="Ajustes">
-      <h3 className="settings-title">Sonido</h3>
+      <h3 className="settings-title">Sonidos</h3>
       <div className="add-book-form">
         <button
           type="button"
           className={`dashboard-action${settings.sound ? ' is-quiet' : ''}`}
           onClick={() => onSetSettings({ ...settings, sound: !settings.sound })}
         >
-          {settings.sound ? '🔇 Silenciar los sonidos' : '🔊 Activar los sonidos'}
+          {settings.sound ? '🔇 Silenciar todos' : '🔊 Activar los sonidos'}
         </button>
-        <span className="add-book-message">{settings.sound ? 'De noche suenan grillos y viento de fondo.' : 'Los sonidos de fondo están silenciados.'}</span>
+        <span className="add-book-message">{settings.sound ? 'El volumen de cada sonido (100 % es el normal):' : 'Los sonidos de fondo están silenciados.'}</span>
+      </div>
+      <div className="settings-volumes">
+        {SOUNDS.map(({ key, label, when }) => {
+          const percent = Math.round(settings.volumes[key] * 100)
+          return (
+            <label key={key} className="settings-volume">
+              <span>
+                {label} <small>({when})</small>
+              </span>
+              <input
+                type="range"
+                min={0}
+                max={MAX_SOUND_VOLUME * 100}
+                step={5}
+                value={percent}
+                disabled={!settings.sound}
+                aria-valuetext={`${percent} %`}
+                onChange={(event) => onSetSettings({ ...settings, volumes: { ...settings.volumes, [key]: Number(event.target.value) / 100 } })}
+              />
+              <output>{percent} %</output>
+            </label>
+          )
+        })}
       </div>
 
       <h3 className="settings-title">Tiempo de la sala</h3>

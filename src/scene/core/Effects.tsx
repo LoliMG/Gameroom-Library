@@ -36,6 +36,9 @@ const CONTRAST = 0.06         // Ligero aumento de contraste (-1 a 1)
 // Niebla exponencial muy ligera: dentro de la sala apenas se nota (≈3 % en la pared del fondo); en el jardín es la bruma
 // que aclara (u oscurece, de noche) lo lejano. Su color es el del momento del día (el cielo y las colinas no la usan)
 const FOG_DENSITY = 0.028
+// Con niebla o lluvia de verdad (el tiempo de la ciudad), la bruma es más espesa: por cuánto se multiplica
+const FOG_WEATHER_DENSITY = 4
+const RAIN_WEATHER_DENSITY = 1.8
 
 // Muestreo múltiple del compositor para mantener los bordes suaves (sustituye al antialias del lienzo)
 const COMPOSER_MULTISAMPLING = 4
@@ -43,13 +46,19 @@ const COMPOSER_MULTISAMPLING = 4
 /**
  * Postprocesado (Bloom, viñeta, profundidad de campo opcional y corrección de color) y niebla ligera.
  */
-function Effects({ fogColor }: { fogColor: string }) {
+/**
+ * @param fogColor - Color de la bruma del momento del día
+ * @param fog - Hay niebla en la ciudad
+ * @param rain - Lluvia: 0 (nada) a 1 (fuerte)
+ */
+function Effects({ fogColor, fog, rain }: { fogColor: string; fog: boolean; rain: number }) {
+  const density = FOG_DENSITY * (fog ? FOG_WEATHER_DENSITY : 1) * (1 + (RAIN_WEATHER_DENSITY - 1) * rain)
   if (!ENABLE_EFFECTS) return null
 
   return (
     <>
       {/* Niebla exponencial: attach="fog" la asigna a scene.fog */}
-      <fogExp2 attach="fog" args={[fogColor, FOG_DENSITY]} />
+      <fogExp2 attach="fog" args={[fogColor, density]} />
 
       {/* EffectComposer sustituye el render normal por una cadena de pasadas de postprocesado */}
       <EffectComposer multisampling={COMPOSER_MULTISAMPLING}>
