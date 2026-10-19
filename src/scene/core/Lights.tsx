@@ -1,16 +1,11 @@
-// Importación de la paleta ambiental activa para coordinar la luz exterior
-import { PALETTE } from '@/scene/core/ambiencePalette'
+// Atmósfera del momento del día (useAmbience): color e intensidad de la luz del ventanal y de la luz difusa
+import type { AmbiencePalette } from '@/scene/core/ambiencePalette'
 // Vector3Tuple: [x, y, z] en metros (el formato que aceptan position y rotation en React Three Fiber)
 import type { Vector3Tuple } from 'three'
 
-// Constantes de configuración de la luz ambiental interior difusa
-// Se eleva la intensidad ambiental suavemente para mantener visibilidad acogedora sin luces artificiales interiores
-const AMBIENT_LIGHT_COLOR = '#f3e4d0' // Tono cálido de atardecer para levantar penumbras sin bombillas artificiales (Fase 11)
-const AMBIENT_LIGHT_INTENSITY = 0.8   // Ajustada en la Fase 11: destacan el ventanal y las velas y los lomos se siguen leyendo
-
-// Constantes de configuración de la luz natural exterior que entra por el gran ventanal
-const WINDOW_LIGHT_COLOR = PALETTE.lightColor         // Color de luz exterior según la paleta activa
-const WINDOW_LIGHT_INTENSITY = PALETTE.lightIntensity // Intensidad según la paleta activa
+// La luz difusa y la del ventanal cambian con la hora (colores e intensidades de la atmósfera: ver ambiencePalette.ts).
+// La del ventanal entra siempre por el ventanal (es la luz del cielo, no la del sol directo: de mañana el sol queda
+// detrás de la casa y alumbraría la sala atravesando la pared del fondo).
 // Sol bajo del atardecer: del mismo lado que el sol del cielo (SunsetSky, al fondo a la derecha) pero algo más alto,
 // para que entre por el ventanal y estire las sombras de los parteluces por el suelo
 const WINDOW_LIGHT_POSITION: Vector3Tuple = [-2.4, 2.2, 10]
@@ -24,20 +19,20 @@ const SHADOW_BIAS = -0.0005  // Desplazamiento numérico para evitar acné de so
  * Se eliminan las luces artificiales dentro de la habitación (lámpara y bombilla puntual),
  * dejando que la iluminación provenga exclusivamente del ventanal exterior y de la luz difusa natural.
  */
-function Lights() {
+function Lights({ palette }: { palette: AmbiencePalette }) {
   return (
     // Grupo contenedor para todas las fuentes de iluminación de la escena
     <group>
       {/* 1. Luz ambiental natural difusa para levantar suavemente las penumbras de la biblioteca */}
       <ambientLight
-        color={AMBIENT_LIGHT_COLOR}
-        intensity={AMBIENT_LIGHT_INTENSITY}
+        color={palette.ambientColor}
+        intensity={palette.ambientIntensity}
       />
 
       {/* 2. Luz exterior natural que entra por el ventanal proyectando sombras en el interior */}
       <directionalLight
-        color={WINDOW_LIGHT_COLOR}
-        intensity={WINDOW_LIGHT_INTENSITY}
+        color={palette.lightColor}
+        intensity={palette.lightIntensity}
         position={WINDOW_LIGHT_POSITION}
         castShadow
         shadow-mapSize-width={SHADOW_MAP_SIZE}

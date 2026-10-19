@@ -141,18 +141,20 @@ export interface WishItem {
   format: BookFormat
 }
 
-/** Ajustes de la sala: ciudad del tiempo (con sus coordenadas, para pedir el clima a Open-Meteo) */
+/** Ajustes de la sala: ciudad del tiempo (con sus coordenadas, para pedir el clima a Open-Meteo) y sonido */
 export interface AppSettings {
   city: string
   latitude: number
   longitude: number
+  /** Sonidos de fondo (grillos y viento de noche); false = silenciados */
+  sound: boolean
 }
 
 /** Etiqueta de los libros favoritos (la estrella de la consola) */
 export const FAVORITE_TAG = 'Favorito'
 
 /** Ajustes por defecto (los que hay hasta que se cambian en la consola) */
-export const DEFAULT_SETTINGS: AppSettings = { city: 'Málaga', latitude: 36.7213, longitude: -4.4214 }
+export const DEFAULT_SETTINGS: AppSettings = { city: 'Málaga', latitude: 36.7213, longitude: -4.4214, sound: true }
 
 /** Colores de subrayado del lector (los mismos que acepta el servidor) */
 export type AnnotationColor = 'yellow' | 'pink' | 'green' | 'blue'

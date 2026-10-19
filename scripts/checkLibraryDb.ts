@@ -37,7 +37,7 @@ assert.deepEqual(readState(db), {
   readingStatus: {},
   tags: {},
   wishlist: [],
-  settings: { city: 'Málaga', latitude: 36.7213, longitude: -4.4214 },
+  settings: { city: 'Málaga', latitude: 36.7213, longitude: -4.4214, sound: true },
 })
 
 // Guardar y leer: los ISBN que no existen se ignoran
@@ -79,9 +79,10 @@ assert.throws(() => writeWishlist(db, [{ ...wish, isbn: '123' }]), ValidationErr
 assert.throws(() => writeWishlist(db, [{ ...wish, coverUrl: 'http://localhost/x.jpg' }]), ValidationError)
 
 // Ajustes: ciudad con coordenadas válidas
-writeSettings(db, { city: ' Granada ', latitude: 37.18, longitude: -3.6 })
-assert.deepEqual(readState(db).settings, { city: 'Granada', latitude: 37.18, longitude: -3.6 })
-assert.throws(() => writeSettings(db, { city: 'X', latitude: 200, longitude: 0 }), ValidationError)
+writeSettings(db, { city: ' Granada ', latitude: 37.18, longitude: -3.6, sound: false })
+assert.deepEqual(readState(db).settings, { city: 'Granada', latitude: 37.18, longitude: -3.6, sound: false })
+assert.throws(() => writeSettings(db, { city: 'X', latitude: 200, longitude: 0, sound: true }), ValidationError)
+assert.throws(() => writeSettings(db, { city: 'X', latitude: 0, longitude: 0, sound: 'sí' }), ValidationError)
 
 // --- Lector ---
 // Carpeta de libros electrónicos: solo cuentan los nombres que son un ISBN (nada de rutas ni otros archivos)

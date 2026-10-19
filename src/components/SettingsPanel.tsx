@@ -1,5 +1,6 @@
-// Ajustes de la consola: la ciudad del tiempo de la sala. Se busca con el geocodificador de Open-Meteo (gratis y sin
-// clave), que da sus coordenadas: con ellas la sala pedirá el clima y la hora de salida y puesta del sol
+// Ajustes de la consola: silenciar los sonidos de fondo y la ciudad del tiempo de la sala. La ciudad se busca con el
+// geocodificador de Open-Meteo (gratis y sin clave), que da sus coordenadas: con ellas la sala calcula la hora del sol
+// y pedirá el clima
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import type { AppSettings } from '@/types'
@@ -42,13 +43,25 @@ function SettingsPanel({ settings, onSetSettings }: SettingsPanelProps) {
   }
 
   const choose = (place: Place) => {
-    onSetSettings({ city: place.name, latitude: place.latitude, longitude: place.longitude })
+    onSetSettings({ ...settings, city: place.name, latitude: place.latitude, longitude: place.longitude })
     setPlaces(null)
     setQuery('')
   }
 
   return (
     <section className="add-book" aria-label="Ajustes">
+      <h3 className="settings-title">Sonido</h3>
+      <div className="add-book-form">
+        <button
+          type="button"
+          className={`dashboard-action${settings.sound ? ' is-quiet' : ''}`}
+          onClick={() => onSetSettings({ ...settings, sound: !settings.sound })}
+        >
+          {settings.sound ? '🔇 Silenciar los sonidos' : '🔊 Activar los sonidos'}
+        </button>
+        <span className="add-book-message">{settings.sound ? 'De noche suenan grillos y viento de fondo.' : 'Los sonidos de fondo están silenciados.'}</span>
+      </div>
+
       <h3 className="settings-title">Tiempo de la sala</h3>
       <p className="add-book-message">
         Ciudad: <strong>{settings.city}</strong> ({settings.latitude.toFixed(2)}, {settings.longitude.toFixed(2)}). La luz, el cielo y

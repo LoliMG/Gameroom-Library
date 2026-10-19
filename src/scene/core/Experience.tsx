@@ -7,7 +7,12 @@ import type { Book, Placement, ReadingStatus, ShelfWall, Slot } from '@/types'
 // Environment de drei para reflejos sutiles, generado en la escena con paneles de luz (Lightformer)
 import { Environment, Lightformer, Preload } from '@react-three/drei'
 // Importación de la paleta ambiental activa
-import { PALETTE } from '@/scene/core/ambiencePalette'
+import useAmbience from '@/hooks/useAmbience'
+// Cielo, colinas, prado y estrellas del momento del día
+import SunsetSky from '@/scene/garden/SunsetSky'
+// Grillos y viento de fondo de noche
+import NightSounds from '@/scene/core/NightSounds'
+import type { AppSettings } from '@/types'
 // Importación del entorno exterior (jardín, árboles, flores y cielo)
 import Outside from '@/scene/garden/Outside'
 // Importación del listado de libros disponibles
@@ -153,10 +158,18 @@ const SHELF_WALLS = WALL_A_RUNS.map((run, i): ShelfWallRun => {
 // mirando a la pared a), en la mitad de ese tramo
 const TOP_LANTERN_POSITION: Vector3Tuple = [SHELF_WALL_A_X, FLOOR_Y + SHELF_HEIGHT, SHELF_WALLS[0].position[2]]
 
-// Farolillo de papel pequeño del jardín en la balda de abajo del módulo del ventanal (tramo a2), hacia el ventanal.
-// Mide 0.35 m en el jardín; aquí se baja a 0.24 m para que quepa en el hueco de la balda (0.29 m)
-// shortcut: los libros arrastrados no lo esquivan; si se quiere, apartarlo en separateOnShelf como un libro más
-const SHELF_LANTERN = { wall: SHELF_WALLS[2], x: -0.45, height: 0.24, lightColor: '#ffb36b' }
+// Farolillos de papel pequeños del jardín en las baldas, con una luz cálida tenue. Miden 0.35 m en el jardín; aquí se
+// bajan a 0.24 m para que quepan en el hueco de la balda (0.29 m). x: a lo largo del tramo (0 = su centro, + hacia el
+// fondo de la sala); shelf: balda contando desde el suelo (las del tramo de encima del mueble empiezan en la 3)
+// - En la balda de abajo del módulo del ventanal (tramo a2), hacia el ventanal
+// - En la balda de abajo del tramo de encima del mueble (a1), en su módulo del lado del fondo
+// shortcut: los libros arrastrados no los esquivan; si se quiere, apartarlos en separateOnShelf como un libro más
+const SHELF_LANTERN_HEIGHT = 0.24
+const SHELF_LANTERN_LIGHT = '#ffb36b'
+const SHELF_LANTERNS = [
+  { wall: SHELF_WALLS[2], x: -0.45, shelf: 0 },
+  { wall: SHELF_WALLS[1], x: 0.72, shelf: CABINET_START_SHELF },
+]
 
 // Colocación inicial: los libros llenan en orden los tramos de la pared a, del fondo hacia el ventanal
 function layoutAllBooks() {
@@ -194,6 +207,39 @@ const bookFootprint = (book: Book, flippedIsbns: Set<string>) => (flippedIsbns.h
 // Colocación inicial con los sitios guardados ({ isbn: sitio }, por ISBN: el id cambia si se añaden libros) encima;
 // los libros sin sitio (recién añadidos desde la consola) van al primer hueco libre (ver placeSavedBooks)
 const loadPlacements = (saved: Record<string, Slot>) => placeSavedBooks(layoutAllBooks(), saved, SHELF_WALLS, DRAG_BOOK_GAP)
+
+/**
+ * Lo que cambia con la hora: niebla, reflejos del entorno, luces y cielo. Va en su propio componente para que el reloj
+ * (que cambia cada minuto) solo vuelva a pintar esto y no toda la sala con sus libros
+ */
+function DayCycle({ settings }: { settings: AppSettings }) {
+  const ambience = useAmbience(settings)
+  const { palette } = ambience
+  return (
+    <>
+      {/* Postprocesado (Bloom, viñeta, color) y niebla ligera; ENABLE_EFFECTS los apaga todos */}
+      <Effects fogColor={palette.fogColor} />
+
+      {/* Reflejos sutiles (cristal, metal, agua): entorno hecho en la propia escena con dos paneles de luz, el cálido del
+          ventanal y el del cielo. Los presets de drei descargan un HDR de internet y, si la conexión falla, la sala no carga.
+          El entorno se pinta una vez: con key se vuelve a pintar cuando cambian sus colores (de un momento del día a otro) */}
+      <Environment key={`${palette.lightColor}${palette.skyTop}`} resolution={64} environmentIntensity={palette.envIntensity}>
+        <Lightformer form="rect" color={palette.lightColor} intensity={2} position={[0, 1, 6]} scale={[6, 3, 1]} />
+        <Lightformer form="rect" color={palette.skyTop} intensity={0.6} position={[0, 6, 0]} scale={[10, 10, 1]} />
+      </Environment>
+
+      {/* Iluminación de la escena: luz ambiental y luz del ventanal */}
+      <Lights palette={palette} />
+
+      {/* Cielo con el sol donde está, colinas, prado y estrellas de noche */}
+      <SunsetSky ambience={ambience} />
+
+      {/* Grillos y viento muy suaves: empiezan al anochecer (con las estrellas) y suenan toda la noche; en Ajustes se
+          pueden silenciar */}
+      <NightSounds level={settings.sound ? palette.stars : 0} />
+    </>
+  )
+}
 
 /** Libro pulsado que aún no se arrastra: el libro, el punto agarrado, los que se moverían con él y cuánto se ha movido */
 interface Press {
@@ -418,21 +464,10 @@ function Experience({ onSelectBook, flippedIsbns, readingStatus, onSetStatus, sa
       {/* Selección de varios libros con Ctrl + arrastrar */}
       <SelectionBox onSelect={addToSelection} />
 
-      {/* Postprocesado (Bloom, viñeta, color) y niebla ligera; ENABLE_EFFECTS los apaga todos */}
-      <Effects />
+      {/* Lo que cambia con la hora de la ciudad de los ajustes: niebla, entorno, luces y cielo */}
+      <DayCycle settings={collection.settings} />
 
-      {/* Reflejos sutiles de entorno ambiental para dar matices al cristal y superficies */}
-      {/* Reflejos sutiles (cristal, metal, agua): entorno hecho en la propia escena con dos paneles de luz, el cálido del
-          ventanal y el del cielo. Los presets de drei descargan un HDR de internet y, si la conexión falla, la sala no carga */}
-      <Environment resolution={64} environmentIntensity={PALETTE.envIntensity}>
-        <Lightformer form="rect" color={PALETTE.lightColor} intensity={2} position={[0, 1, 6]} scale={[6, 3, 1]} />
-        <Lightformer form="rect" color={PALETTE.skyTop} intensity={0.6} position={[0, 6, 0]} scale={[10, 10, 1]} />
-      </Environment>
-
-      {/* Iluminación de la escena: luz ambiental y luz exterior fría del ventanal */}
-      <Lights />
-
-      {/* Entorno exterior: cielo y jardín con arboleda y flores visible tras el cristal del ventanal */}
+      {/* Jardín con arboleda y flores visible tras el cristal del ventanal */}
       <Outside />
 
       {/* Suspense gestiona la carga asíncrona de las texturas del suelo, libros y modelos 3D */}
@@ -479,13 +514,15 @@ function Experience({ onSelectBook, flippedIsbns, readingStatus, onSetStatus, sa
         </Suspense>
         <pointLight {...FLOOR_LAMP_LIGHT} decay={2} />
 
-        {/* Farolillo en la balda de abajo del módulo del ventanal, con una luz cálida tenue */}
-        <group position={SHELF_LANTERN.wall.position} rotation={SHELF_LANTERN.wall.rotation}>
-          <group position={[SHELF_LANTERN.x, -SHELF_HEIGHT / 2 + BOARD_THICKNESS, 0]}>
-            <ModelProp model="paperLanterns" node="paper lantern3" height={SHELF_LANTERN.height} position={[0, 0, 0]} />
-            <pointLight position={[0, SHELF_LANTERN.height * 0.5, 0]} color={SHELF_LANTERN.lightColor} intensity={0.25} distance={0.9} decay={2} />
+        {/* Farolillos en las baldas, con una luz cálida tenue */}
+        {SHELF_LANTERNS.map(({ wall, x, shelf }) => (
+          <group key={`${wall.key}/${x}`} position={wall.position} rotation={wall.rotation}>
+            <group position={[x, -SHELF_HEIGHT / 2 + BOARD_THICKNESS + shelf * SHELF_PITCH, 0]}>
+              <ModelProp model="paperLanterns" node="paper lantern3" height={SHELF_LANTERN_HEIGHT} position={[0, 0, 0]} />
+              <pointLight position={[0, SHELF_LANTERN_HEIGHT * 0.5, 0]} color={SHELF_LANTERN_LIGHT} intensity={0.25} distance={0.9} decay={2} />
+            </group>
           </group>
-        </group>
+        ))}
 
         {/* Pantalla de la biblioteca junto a la puerta */}
         <BookConsole

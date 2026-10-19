@@ -193,7 +193,8 @@ export function readState(db: DatabaseSync): LibraryState {
     readingStatus: {},
     tags: readAppData(db, 'tags', {}),
     wishlist: readAppData(db, 'wishlist', []),
-    settings: readAppData(db, 'settings', DEFAULT_SETTINGS),
+    // Encima de los de por defecto: los ajustes guardados antes de añadir uno nuevo (como sound) lo reciben así
+    settings: { ...DEFAULT_SETTINGS, ...readAppData(db, 'settings', {}) },
   }
   for (const row of db.prepare('SELECT * FROM book_state').all() as BookStateRow[]) {
     // Con pared hay sitio guardado: las cuatro columnas se escriben juntas (writePlacements)
@@ -315,17 +316,18 @@ export function writeWishlist(db: DatabaseSync, wishlist: unknown) {
   writeAppData(db, 'wishlist', wishlist.map(({ isbn, title, author, publisher, pages, coverUrl, format }: WishItem) => ({ isbn, title, author, publisher, pages, coverUrl, format })))
 }
 
-/** Guarda los ajustes de la sala ({ city, latitude, longitude }). */
+/** Guarda los ajustes de la sala ({ city, latitude, longitude, sound }). */
 export function writeSettings(db: DatabaseSync, settings: unknown) {
   if (
     !isPlainObject(settings) ||
     !shortText(settings.city, 100) ||
     typeof settings.latitude !== 'number' || Math.abs(settings.latitude) > 90 ||
-    typeof settings.longitude !== 'number' || Math.abs(settings.longitude) > 180
+    typeof settings.longitude !== 'number' || Math.abs(settings.longitude) > 180 ||
+    typeof settings.sound !== 'boolean'
   ) {
     throw new ValidationError('Ajustes no válidos')
   }
-  const clean: AppSettings = { city: settings.city.trim(), latitude: settings.latitude, longitude: settings.longitude }
+  const clean: AppSettings = { city: settings.city.trim(), latitude: settings.latitude, longitude: settings.longitude, sound: settings.sound }
   writeAppData(db, 'settings', clean)
 }
 
