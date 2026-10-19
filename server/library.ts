@@ -13,7 +13,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http'
 // Tipo de Vite para el plugin que monta la API en el servidor de desarrollo
 import type { Plugin } from 'vite'
 // Tipos compartidos con la sala (la forma de los datos que van y vienen por la API)
-import type { Annotation, AnnotationColor, AppSettings, BookMeta, Bookmark, EbookFormat, LibraryState, ReaderLocation, ReadingStatus, Slot, SoundVolumes, WishItem } from '../src/types.ts'
+import type { Annotation, AnnotationColor, AppSettings, BookMeta, Bookmark, EbookFormat, LibraryState, Reading, ReaderLocation, ReadingStatus, Slot, SoundVolumes, WishItem } from '../src/types.ts'
 import { DEFAULT_SETTINGS, MAX_SOUND_VOLUME, withDefaultSettings } from '../src/types.ts'
 // Búsqueda y alta de libros nuevos desde la consola (usa seedBooks, ValidationError e isPlainObject de aquí, solo dentro
 // de funciones: así la importación circular entre los dos archivos no da problemas)
@@ -79,7 +79,18 @@ const SCHEMA = `
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   );
   CREATE INDEX IF NOT EXISTS bookmarks_isbn ON bookmarks(isbn);
-  -- Datos de la sala que no son de un libro concreto, como JSON: etiquetas, lista de deseos y ajustes
+  -- Diario de lecturas: cada vez que se lee un libro (puede haber varias por libro). Fechas 'AAAA-MM-DD'
+  CREATE TABLE IF NOT EXISTS readings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    isbn TEXT NOT NULL REFERENCES books(isbn) ON DELETE CASCADE,
+    start_date TEXT,
+    end_date TEXT,
+    rating INTEGER CHECK (rating BETWEEN 1 AND 5),
+    comment TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE INDEX IF NOT EXISTS readings_isbn ON readings(isbn);
+  -- Datos de la sala que no son de un libro concreto, como JSON: etiquetas, lista de deseos, ajustes y retos
   CREATE TABLE IF NOT EXISTS app_data (
     key TEXT PRIMARY KEY,
     value TEXT NOT NULL
@@ -102,6 +113,7 @@ type BookStateRow = {
 type AnnotationRow = { id: number; location: string; text: string; note: string | null; color: AnnotationColor; created_at: string }
 type BookmarkRow = { id: number; location: string; label: string; created_at: string }
 type TitleRow = { isbn: string; title: string | null }
+type ReadingRow = { id: number; isbn: string; start_date: string | null; end_date: string | null; rating: number | null; comment: string | null }
 
 // Error de datos recibidos: el servidor responde 400 con su mensaje
 export class ValidationError extends Error {}
@@ -194,6 +206,7 @@ export function readState(db: DatabaseSync): LibraryState {
     tags: readAppData(db, 'tags', {}),
     wishlist: readAppData(db, 'wishlist', []),
     settings: withDefaultSettings(readAppData(db, 'settings', {})),
+    goals: readAppData(db, 'goals', {}),
   }
   for (const row of db.prepare('SELECT * FROM book_state').all() as BookStateRow[]) {
     // Con pared hay sitio guardado: las cuatro columnas se escriben juntas (writePlacements)
@@ -336,6 +349,79 @@ export function writeSettings(db: DatabaseSync, settings: unknown) {
   const volumes = Object.fromEntries(SOUND_NAMES.map((name) => [name, (settings.volumes as SoundVolumes)[name]])) as unknown as SoundVolumes
   const clean: AppSettings = { city: settings.city.trim(), latitude: settings.latitude, longitude: settings.longitude, sound: settings.sound, volumes }
   writeAppData(db, 'settings', clean)
+}
+
+/** Sustituye los retos de lectura por los recibidos ({ 'AAAA': libros }) */
+export function writeGoals(db: DatabaseSync, goals: unknown) {
+  if (!isPlainObject(goals)) throw new ValidationError('Se esperaba un objeto { año: libros }')
+  for (const [year, count] of Object.entries(goals)) {
+    if (!/^\d{4}$/.test(year) || !integerBelow(count, 10000)) throw new ValidationError(`Reto no válido para ${year}`)
+  }
+  writeAppData(db, 'goals', goals)
+}
+
+// --- Diario de lecturas ---
+
+const MAX_READING_COMMENT = 5000
+
+// Fecha 'AAAA-MM-DD' que existe (no vale el 30 de febrero)
+const isDate = (value: unknown): value is string =>
+  typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) && new Date(`${value}T00:00:00Z`).toISOString().startsWith(value)
+
+const rowToReading = (row: ReadingRow): Reading => ({
+  id: row.id,
+  isbn: row.isbn,
+  startDate: row.start_date,
+  endDate: row.end_date,
+  rating: row.rating,
+  comment: row.comment,
+})
+
+// Comprueba los datos de una lectura (los que no llegan, quedan vacíos) y los devuelve limpios
+function cleanReading(reading: unknown) {
+  if (!isPlainObject(reading)) throw new ValidationError('Se esperaba una lectura')
+  const { startDate = null, endDate = null, rating = null, comment = null } = reading
+  if (startDate !== null && !isDate(startDate)) throw new ValidationError('Fecha de inicio no válida')
+  if (endDate !== null && !isDate(endDate)) throw new ValidationError('Fecha de fin no válida')
+  if (startDate && endDate && endDate < startDate) throw new ValidationError('La fecha de fin es anterior a la de inicio')
+  if (rating !== null && !(Number.isInteger(rating) && (rating as number) >= 1 && (rating as number) <= 5)) throw new ValidationError('Puntuación no válida (1 a 5)')
+  if (comment !== null && !(typeof comment === 'string' && comment.length <= MAX_READING_COMMENT)) throw new ValidationError('Comentario no válido')
+  return {
+    startDate: startDate as string | null,
+    endDate: endDate as string | null,
+    rating: rating as number | null,
+    comment: typeof comment === 'string' && comment.trim() ? comment.trim() : null,
+  }
+}
+
+/** Todas las lecturas del diario (de la más reciente a la más antigua: por fecha de fin, de inicio y de alta) */
+export function listReadings(db: DatabaseSync): Reading[] {
+  const rows = db.prepare('SELECT * FROM readings ORDER BY COALESCE(end_date, start_date, created_at) DESC, id DESC').all() as ReadingRow[]
+  return rows.map(rowToReading)
+}
+
+/** Añade una lectura ({ isbn, startDate, endDate, rating, comment }) y la devuelve con su id */
+export function createReading(db: DatabaseSync, reading: unknown): Reading {
+  if (!isPlainObject(reading) || typeof reading.isbn !== 'string') throw new ValidationError('Falta el libro')
+  assertKnownIsbn(db, reading.isbn)
+  const { startDate, endDate, rating, comment } = cleanReading(reading)
+  const { lastInsertRowid } = db
+    .prepare('INSERT INTO readings (isbn, start_date, end_date, rating, comment) VALUES (?, ?, ?, ?, ?)')
+    .run(reading.isbn, startDate, endDate, rating, comment)
+  return rowToReading(db.prepare('SELECT * FROM readings WHERE id = ?').get(lastInsertRowid) as ReadingRow)
+}
+
+/** Sustituye las fechas, la puntuación y el comentario de una lectura */
+export function updateReading(db: DatabaseSync, id: number, reading: unknown): Reading {
+  if (!db.prepare('SELECT 1 FROM readings WHERE id = ?').get(id)) throw new ValidationError(`No existe la lectura ${id}`)
+  const { startDate, endDate, rating, comment } = cleanReading(reading)
+  db.prepare('UPDATE readings SET start_date = ?, end_date = ?, rating = ?, comment = ? WHERE id = ?').run(startDate, endDate, rating, comment, id)
+  return rowToReading(db.prepare('SELECT * FROM readings WHERE id = ?').get(id) as ReadingRow)
+}
+
+/** Borra una lectura */
+export function deleteReading(db: DatabaseSync, id: number) {
+  db.prepare('DELETE FROM readings WHERE id = ?').run(id)
 }
 
 // --- Lector de libros electrónicos ---
@@ -576,6 +662,7 @@ const WRITERS: Partial<Record<string, (db: DatabaseSync, value: unknown) => void
   '/tags': writeTags,
   '/wishlist': writeWishlist,
   '/settings': writeSettings,
+  '/goals': writeGoals,
 }
 
 /** Opciones de la API: carpeta de los libros electrónicos y, para añadir libros desde la consola, el catálogo */
@@ -590,7 +677,8 @@ export interface LibraryApiOptions {
  * - GET /ebooks (qué libros tienen libro electrónico), GET /ebooks/:isbn (el archivo)
  * - GET /reader/:isbn, PUT /reader/:isbn/position, POST /reader/:isbn/annotations, POST /reader/:isbn/bookmarks,
  *   PATCH /annotations/:id, DELETE /annotations/:id, DELETE /bookmarks/:id (el lector)
- * - PUT /tags, PUT /wishlist, PUT /settings (etiquetas, lista de deseos y ajustes de la consola)
+ * - PUT /tags, PUT /wishlist, PUT /settings, PUT /goals (etiquetas, lista de deseos, ajustes y retos de la consola)
+ * - GET /readings, POST /readings, PUT /readings/:id, DELETE /readings/:id (el diario de lecturas)
  * - GET /catalog/search?q=, POST /books, PUT /books/:isbn, DELETE /books/:isbn, PUT /books/:isbn/synopsis (añadir,
  *   editar, quitar y escribir la sinopsis de libros desde la sala; catalog: { booksMetaFile, isbnsFile, coversDir,
  *   googleBooksKey })
@@ -645,6 +733,20 @@ export function createLibraryApi(db: DatabaseSync, { ebooksDir, catalog }: Libra
       if (synopsisMatch && req.method === 'PUT' && catalog) {
         const body = await readJsonBody(req)
         return send(res, 200, setSynopsis(catalog, synopsisMatch[1], isPlainObject(body) ? body.synopsis : undefined))
+      }
+
+      if (route === '/readings') {
+        if (req.method === 'GET') return send(res, 200, listReadings(db))
+        if (req.method === 'POST') return send(res, 201, createReading(db, await readJsonBody(req)))
+      }
+      const readingMatch = /^\/readings\/(\d+)$/.exec(route)
+      if (readingMatch) {
+        const id = Number(readingMatch[1])
+        if (req.method === 'PUT') return send(res, 200, updateReading(db, id, await readJsonBody(req)))
+        if (req.method === 'DELETE') {
+          deleteReading(db, id)
+          return send(res, 200, { ok: true })
+        }
       }
 
       if (req.method === 'GET' && route === '/ebooks') return send(res, 200, listEbooks(ebooksDir, db))

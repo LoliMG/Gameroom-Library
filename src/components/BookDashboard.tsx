@@ -7,6 +7,8 @@ import AddBookPanel from '@/components/AddBookPanel'
 import BookEditForm from '@/components/BookEditForm'
 import WishlistPanel from '@/components/WishlistPanel'
 import SettingsPanel from '@/components/SettingsPanel'
+import DiaryPanel from '@/components/DiaryPanel'
+import { normalize } from '@/utils/normalize'
 import '@/styles/bookDashboard.css'
 
 // Estados de lectura (mismas claves que guarda App): etiqueta para filtros, botones e insignias
@@ -39,13 +41,13 @@ export interface CollectionTools {
   onSetWishlist: Dispatch<SetStateAction<WishItem[]>>
   settings: AppSettings
   onSetSettings: (settings: AppSettings) => void
+  /** Retos de lectura por año */
+  goals: Record<string, number>
+  onSetGoal: (year: string, count: number) => void
 }
 
-// Pantalla de la consola: portadas, añadir libro, lista de deseos o ajustes (editar va aparte: editingIsbn)
-type View = 'books' | 'add' | 'wishlist' | 'settings'
-
-// Búsqueda sin distinguir mayúsculas ni tildes ("idhun" encuentra "Idhún")
-const normalize = (text: string | null | undefined) => (text ?? '').normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase()
+// Pantalla de la consola: portadas, añadir libro, diario, lista de deseos o ajustes (editar va aparte: editingIsbn)
+type View = 'books' | 'add' | 'diary' | 'wishlist' | 'settings'
 
 /**
  * Panel de control de la biblioteca: todas las portadas, búsqueda por título o autor, filtros por estado de lectura
@@ -67,7 +69,7 @@ interface BookDashboardProps {
 }
 
 function BookDashboard({ books, readingStatus, onSetStatus, onOpenBook, onLocateBook, collection }: BookDashboardProps) {
-  const { tags, onSetTags, wishlist, onSetWishlist, settings, onSetSettings } = collection
+  const { tags, onSetTags, wishlist, onSetWishlist, settings, onSetSettings, goals, onSetGoal } = collection
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<StatusFilter>('all')
   const [formatFilter, setFormatFilter] = useState<FormatFilter>('all')
@@ -168,6 +170,16 @@ function BookDashboard({ books, readingStatus, onSetStatus, onOpenBook, onLocate
         <button
           type="button"
           className="dashboard-action is-quiet is-icon"
+          aria-pressed={view === 'diary'}
+          aria-label="Diario de lecturas"
+          title="Diario de lecturas"
+          onClick={() => setView(view === 'diary' ? 'books' : 'diary')}
+        >
+          📖
+        </button>
+        <button
+          type="button"
+          className="dashboard-action is-quiet is-icon"
           aria-pressed={view === 'wishlist'}
           aria-label={`Lista de deseos (${wishlist.length})`}
           title={`Lista de deseos (${wishlist.length})`}
@@ -195,6 +207,7 @@ function BookDashboard({ books, readingStatus, onSetStatus, onOpenBook, onLocate
       )}
       {!editingBook && view === 'wishlist' && <WishlistPanel wishlist={wishlist} onSetWishlist={onSetWishlist} onSearch={() => setView('add')} />}
       {!editingBook && view === 'settings' && <SettingsPanel settings={settings} onSetSettings={onSetSettings} />}
+      {!editingBook && view === 'diary' && <DiaryPanel books={books} onSetStatus={onSetStatus} goals={goals} onSetGoal={onSetGoal} />}
 
       {!editingBook && view === 'books' && (
         <>

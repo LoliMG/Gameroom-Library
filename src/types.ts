@@ -128,6 +128,22 @@ export interface LibraryState {
   wishlist: WishItem[]
   /** Ajustes de la sala */
   settings: AppSettings
+  /** Retos de lectura: libros que se quieren leer cada año ({ '2026': 50 }) */
+  goals: Record<string, number>
+}
+
+/**
+ * Una lectura del diario: un libro leído (o que se está leyendo) con sus fechas, su puntuación y un comentario. Un libro
+ * puede tener varias (relecturas). Las fechas van como 'AAAA-MM-DD'; sin fin, se está leyendo. La guarda la base de datos
+ */
+export interface Reading {
+  id: number
+  isbn: string
+  startDate: string | null
+  endDate: string | null
+  /** Estrellas: 1 a 5 (null = sin puntuar) */
+  rating: number | null
+  comment: string | null
 }
 
 /** Un libro de la lista de deseos: lo necesario para añadirlo a la colección cuando se tenga (sale de la búsqueda) */
