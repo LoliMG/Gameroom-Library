@@ -24,10 +24,10 @@ Cualquier archivo PDF colocado aquí (o en la carpeta `ebooks/`) será detectado
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | `9788415955405` | Apuñálame por la espalda | K. M. Moronova | Autoconclusivo | Tapa blanda / Cartoné | `9788415955405.pdf` |
 | `9788415955313` | Arráncame el corazón | K. M. Moronova | Autoconclusivo | Tapa blanda / Cartoné | `9788415955313.pdf` |
-| `9788445009536` | Assassin's Creed Valhalla | Kirby, Matthew J. | Autoconclusivo | Tapa blanda / Cartoné | `9788445009536.pdf` |
-| `9788445011713` | Assassin's Creed. Black Flag | Oliver Bowden, Noemí Risco Mateo | Autoconclusivo | Tapa blanda / Cartoné | `9788445011713.pdf` |
-| `9788445007792` | Assassin's Creed. The Secret Crusade | Oliver Bowden, Noemí Risco Mateo | Autoconclusivo | Tapa blanda / Cartoné | `9788445007792.pdf` |
-| `9788419988201` | Casa de Los Aleteos | Olivia Wildenstein, Ankara Cabeza | Autoconclusivo | Tapa blanda / Cartoné | `9788419988201.pdf` |
+| `9788445009536` | Assassin's Creed Valhalla | Matthew J. Kirby | Autoconclusivo | Tapa blanda / Cartoné | `9788445009536.pdf` |
+| `9788445011713` | Assassin's Creed. Black Flag | Oliver Bowden | Autoconclusivo | Tapa blanda / Cartoné | `9788445011713.pdf` |
+| `9788445007792` | Assassin's Creed. The Secret Crusade | Oliver Bowden | Autoconclusivo | Tapa blanda / Cartoné | `9788445007792.pdf` |
+| `9788419988201` | Casa de Los Aleteos | Olivia Wildenstein | Autoconclusivo | Tapa blanda / Cartoné | `9788419988201.pdf` |
 | `9788408278771` | Conjuro de noche y estrellas | Nerea Llanes | Autoconclusivo | Tapa blanda / Cartoné | `9788408278771.pdf` |
 | `9788415955214` | Déjame atrás | K.M. Moronova | Autoconclusivo | Tapa blanda / Cartoné | `9788415955214.pdf` |
 | `9788467550030` | Donde los árboles cantan | Laura Gallego | Autoconclusivo | Tapa blanda / Cartoné | `9788467550030.pdf` |
@@ -35,23 +35,23 @@ Cualquier archivo PDF colocado aquí (o en la carpeta `ebooks/`) será detectado
 | `9788418483547` | El ciclo del eterno emperador | Laura Gallego | Autoconclusivo | Tapa blanda / Cartoné | `9788418483547.pdf` |
 | `9788416334711` | El libro de los portales | Laura Gallego | Autoconclusivo | Tapa blanda / Cartoné | `9788416334711.pdf` |
 | `9788484607441` | El sanador de caballos | Gonzalo Giner | Autoconclusivo | Tapa blanda / Cartoné | `9788484607441.pdf` |
-| `9788416858910` | El tercer deseo | Jessica Khoury, Carmen Torres García, Laura Naranjo Gutiérrez | Autoconclusivo | Tapa blanda / Cartoné | `9788416858910.pdf` |
+| `9788416858910` | El tercer deseo | Jessica Khoury | Autoconclusivo | Tapa blanda / Cartoné | `9788416858910.pdf` |
 | `9788466639835` | El trono caído | Helena Curulla | Autoconclusivo | Tapa blanda / Cartoné | `9788466639835.pdf` |
-| `9788408283546` | El último rey dragón | Leia Stone, María Cárcamo Ramos | Autoconclusivo | Tapa blanda / Cartoné | `9788408283546.pdf` |
+| `9788408283546` | El último rey dragón | Leia Stone | Autoconclusivo | Tapa blanda / Cartoné | `9788408283546.pdf` |
 | `9788419939548` | La balada de las tres lunas | Marta Morillo | Autoconclusivo | Tapa blanda / Cartoné | `9788419939548.pdf` |
 | `9788408302667` | La emperatriz | Kristin Cast | Autoconclusivo | Tapa blanda / Cartoné | `9788408302667.pdf` |
 | `9788408269144` | Mírame y bésame | Megan Maxwell | Las guerreras Maxwell (Libro 8) | Tapa blanda / Cartoné | `9788408269144.pdf` |
 | `9788408271956` | Magia de nieve y hielo | Nerea Llanes | Autoconclusivo | Tapa blanda / Cartoné | `9788408271956.pdf` |
-| `9788419988027` | Maldición de Sombras y Espinas | L. J. Andrews, María del Puerto Barruetabeña Diez | Autoconclusivo | Tapa blanda / Cartoné | `9788419988027.pdf` |
+| `9788419988027` | Maldición de Sombras y Espinas | L. J. Andrews | Autoconclusivo | Tapa blanda / Cartoné | `9788419988027.pdf` |
 | `9788491420330` | Mandrágora | Laura Gallego | Autoconclusivo | Tapa blanda / Cartoné | `9788491420330.pdf` |
-| `9788419988126` | Novia | Ali Hazelwood, Patricia Sebastián Hernández | Autoconclusivo | Tapa blanda / Cartoné | `9788419988126.pdf` |
+| `9788419988126` | Novia | Ali Hazelwood | Autoconclusivo | Tapa blanda / Cartoné | `9788419988126.pdf` |
 | `9788401019340` | Nuncanoche | Jay Kristoff | Autoconclusivo | Tapa blanda / Cartoné | `9788401019340.pdf` |
 | `9788419131836` | Oye, diabla | Julia de la Fuente | Autoconclusivo | Tapa blanda / Cartoné | `9788419131836.pdf` |
 | `9788419305169` | Pluscuamperfectos | Núria Solanellas | Autoconclusivo | Tapa blanda / Cartoné | `9788419305169.pdf` |
 | `9788419688361` | Powerless | Lauren Roberts | Autoconclusivo | Tapa blanda / Cartoné | `9788419688361.pdf` |
 | `9788445019528` | Rey entre sombras | Melissa Landers | Autoconclusivo | Tapa blanda / Cartoné | `9788445019528.pdf` |
 | `9788419030368` | Ritos de primavera | Carmen Romero Lorenzo | Autoconclusivo | Tapa blanda / Cartoné | `9788419030368.pdf` |
-| `9788445012956` | Seis grullas | Elizabeth Lim, Alvaro Garat | Seis grullas (Libro 1) | Tapa blanda / Cartoné | `9788445012956.pdf` |
+| `9788445012956` | Seis grullas | Elizabeth Lim | Seis grullas (Libro 1) | Tapa blanda / Cartoné | `9788445012956.pdf` |
 | `9788466376976` | Shogun | James Clavell | Autoconclusivo | Tapa blanda / Cartoné | `9788466376976.pdf` |
 | `9788418949371` | Stravagantia | Laura Gallego | Autoconclusivo | Tapa blanda / Cartoné | `9788418949371.pdf` |
 | `9788408151487` | Un cuento oscuro | Naomi Novik | Autoconclusivo | Tapa blanda / Cartoné | `9788408151487.pdf` |
@@ -204,3 +204,12 @@ Cualquier archivo PDF colocado aquí (o en la carpeta `ebooks/`) será detectado
 | `9788467974027` | Villains Are Destined to Die 4 | SUOL, Gwon Gyeoeul | Villains Are Destined to Die (Tomo 4) | Manga | `9788467974027.pdf` |
 | `9788490602737` | Assassin's Creed: Forsaken | Oliver Bowden | Assassin's Creed (Libro 5) | Tapa blanda / Cartoné | `9788490602737.pdf` |
 | `9788445017296` | La promesa del dragón | Elizabeth Lim | Seis grullas (Libro 2) | Tapa blanda / Cartoné | `9788445017296.pdf` |
+| `9788401037498` | Hasta que caiga la luna | Sarah A. Parker | La caída lunar (Libro 1) | Tapa blanda / Cartoné | `9788401037498.pdf` |
+| `9788410116375` | Humo y cicatriz | Gretchen Powell Fox | Humo y cicatriz (Libro 1) | Tapa blanda / Cartoné | `9788410116375.pdf` |
+| `9788410163539` | El ciclo del roble y el acebo | K. A. Linde | El ciclo del roble y el acebo (Libro 1) | Tapa blanda / Cartoné | `9788410163539.pdf` |
+| `9788410163546` | El trono de roble | K. A. Linde | El ciclo del roble y el acebo (Libro 2) | Tapa blanda / Cartoné | `9788410163546.pdf` |
+| `9788410495937` | Imperio de sombra y tormento | Paula Gallego | Bilogía Hikari (Libro 1) | Tapa blanda / Cartoné | `9788410495937.pdf` |
+| `9788418002083` | Sin corazón | Marissa Meyer | Autoconclusivo | Tapa blanda / Cartoné | `9788418002083.pdf` |
+| `9788427242845` | El libro de Azrael | Amber V. Nicole | Dioses y monstruos (Libro 1) | Tapa blanda / Cartoné | `9788427242845.pdf` |
+| `9789049206154` | Quicksilver | Callie Hart | Alquimia & Fae (Libro 1) | Tapa blanda / Cartoné | `9789049206154.pdf` |
+| `9791388011207` | Imperio de luz y silencio | Paula Gallego | Bilogía Hikari (Libro 2) | Tapa blanda / Cartoné | `9791388011207.pdf` |
