@@ -1,7 +1,7 @@
 // Importación de Suspense y useMemo de React
 import { Suspense, useMemo } from 'react'
 // Hook useGLTF de drei para la carga de modelos 3D GLB
-import { useGLTF } from '@react-three/drei'
+import { Preload, useGLTF } from '@react-three/drei'
 // Repetición de las texturas del césped
 import { RepeatWrapping } from 'three'
 // Importación del manifiesto centralizado de modelos 3D
@@ -269,6 +269,8 @@ function Outside() {
         {GARDEN_TREES.map((tree) => (
           <GardenPlant key={`tree-${tree.position}`} model="treesGarden" {...tree} />
         ))}
+        {/* Sube texturas y compila materiales al cargar, para que no lo haga al entrar cada cosa en la vista (ver Experience) */}
+        <Preload all />
       </Suspense>
     </group>
   )

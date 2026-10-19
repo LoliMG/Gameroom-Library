@@ -1,0 +1,233 @@
+/* El libro en grande (BookViewer): caja 3D con CSS por encima de la sala y del panel del libro */
+.viewer-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1150;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  background: rgba(10, 8, 6, 0.82);
+  backdrop-filter: blur(6px);
+  color: #f3ece0;
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+.viewer-stage {
+  --viewer-h: min(66vh, 640px);
+  padding: 24px;
+  perspective: 1800px;
+  touch-action: none;
+  cursor: grab;
+}
+
+.viewer-stage:active {
+  cursor: grabbing;
+}
+
+/* Alto fijo en pantalla; ancho y grosor según las medidas del libro (variables que pone BookViewer) */
+.viewer-book {
+  --w: calc(var(--viewer-h) * var(--viewer-ratio-w));
+  --t: calc(var(--viewer-h) * var(--viewer-ratio-t));
+  position: relative;
+  width: var(--w);
+  height: var(--viewer-h);
+  transform-style: preserve-3d;
+}
+
+.viewer-face {
+  position: absolute;
+  box-sizing: border-box;
+  backface-visibility: hidden;
+}
+
+.viewer-front,
+.viewer-back {
+  inset: 0;
+}
+
+.viewer-front {
+  transform: translateZ(calc(var(--t) / 2));
+}
+
+.viewer-front img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 2px 4px 4px 2px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  user-select: none;
+}
+
+/* Contraportada: colores de la del libro en la estantería y la sinopsis como texto */
+.viewer-back {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 8% 9% 6%;
+  border-radius: 4px 2px 2px 4px;
+  background: var(--back-bg);
+  color: var(--back-text);
+  transform: rotateY(180deg) translateZ(calc(var(--t) / 2));
+}
+
+.viewer-back-title {
+  margin: 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--back-accent);
+  font-size: clamp(15px, calc(var(--viewer-h) * 0.032), 22px);
+  font-weight: 700;
+  text-align: center;
+}
+
+.viewer-synopsis {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 4px;
+  font-size: clamp(13px, calc(var(--viewer-h) * 0.025), 17px);
+  line-height: 1.55;
+  white-space: pre-wrap;
+  cursor: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--back-accent) transparent;
+}
+
+.viewer-no-synopsis {
+  flex: 1;
+  margin: 0;
+  font-style: italic;
+  opacity: 0.8;
+}
+
+.viewer-back-footer {
+  margin: 0;
+  font-size: 12px;
+  text-align: center;
+  opacity: 0.75;
+}
+
+.viewer-edit {
+  align-self: center;
+  padding: 6px 14px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--back-text);
+  background: transparent;
+  border: 1px solid var(--back-accent);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.viewer-edit-form {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.viewer-edit-form textarea {
+  flex: 1;
+  padding: 8px;
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #2b2118;
+  background: rgba(255, 250, 240, 0.95);
+  border: 1px solid var(--back-accent);
+  border-radius: 6px;
+  resize: none;
+}
+
+.viewer-edit-row {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.viewer-error {
+  margin: 0;
+  font-size: 13px;
+  color: #ffb4b4;
+}
+
+/* Lomo (a la izquierda de la portada) y cantos de las hojas */
+.viewer-spine,
+.viewer-pages-side {
+  top: 0;
+  left: calc(50% - var(--t) / 2);
+  width: var(--t);
+  height: 100%;
+}
+
+.viewer-spine {
+  background: var(--back-bg) center / 100% 100% no-repeat;
+  transform: rotateY(-90deg) translateZ(calc(var(--w) / 2));
+}
+
+.viewer-pages {
+  background-color: #f2eadb;
+}
+
+.viewer-pages-side {
+  background-image: repeating-linear-gradient(90deg, rgba(145, 125, 105, 0.28) 0 1px, transparent 1px 3px);
+  transform: rotateY(90deg) translateZ(calc(var(--w) / 2));
+}
+
+.viewer-pages-top,
+.viewer-pages-bottom {
+  left: 0;
+  top: calc(50% - var(--t) / 2);
+  width: 100%;
+  height: var(--t);
+  background-image: repeating-linear-gradient(0deg, rgba(145, 125, 105, 0.28) 0 1px, transparent 1px 3px);
+}
+
+.viewer-pages-top {
+  transform: rotateX(90deg) translateZ(calc(var(--viewer-h) / 2));
+}
+
+.viewer-pages-bottom {
+  transform: rotateX(-90deg) translateZ(calc(var(--viewer-h) / 2));
+}
+
+.viewer-controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.viewer-controls button {
+  padding: 8px 14px;
+  font: inherit;
+  font-size: 14px;
+  color: #e2c070;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid #e2c070;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.viewer-controls button:hover,
+.viewer-controls button:focus-visible,
+.viewer-edit:focus-visible,
+.viewer-synopsis:focus-visible {
+  outline: 2px solid #e2c070;
+  outline-offset: 2px;
+}
+
+.viewer-hint {
+  margin: 0;
+  font-size: 13px;
+  color: #a99d8c;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .viewer-book {
+    transition: none !important;
+  }
+}

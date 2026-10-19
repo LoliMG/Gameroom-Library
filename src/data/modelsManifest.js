@@ -28,6 +28,7 @@ import elderStonesUrl from '@/assets/models/other/elder_stones.glb?url'
 import warriorUrl from '@/assets/models/other/warrior.glb?url'
 import flowerPotUrl from '@/assets/models/other/flower_pot.glb?url'
 import katanaUrl from '@/assets/models/other/katana.glb?url'
+import floorLampUrl from '@/assets/models/furniture/floor_lamp.glb?url'
 
 // Modelos varios (libros y accesorios de mesa)
 import bookTableUrl from '@/assets/models/other/book_open.glb?url'
@@ -305,6 +306,18 @@ export const modelsManifest = {
       author: 'Ryoce',
       license: 'CC-BY-4.0',
       url: 'https://sketchfab.com/3d-models/flower-pot-ea1e03b01f8d45039d900e379f1f87d0',
+    },
+  },
+
+  // Lámpara de pie entre los dos arcos del ventanal
+  floorLamp: {
+    url: floorLampUrl,
+    file: 'furniture/floor_lamp.glb',
+    credit: {
+      title: 'Floor Lamp',
+      author: 'bilgehan.korkmaz',
+      license: 'CC-BY-4.0',
+      url: 'https://sketchfab.com/3d-models/floor-lamp-33eb258d9873435690254cfbb0ea46ec',
     },
   },
 

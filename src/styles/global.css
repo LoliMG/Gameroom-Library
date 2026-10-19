@@ -14,7 +14,7 @@ body,
   overflow: hidden;
 }
 
-/* Aviso mientras se carga la biblioteca (antes de montar la sala) */
+/* Aviso mientras se carga la biblioteca (antes de montar la sala) o el lector */
 .app-loading {
   margin: 0;
   padding: 24px;
@@ -22,4 +22,19 @@ body,
   background: #171413;
   font-family: Georgia, serif;
   height: 100%;
+}
+
+.reader-loading {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+}
+
+/* Recuadro de selección de libros (Ctrl + arrastrar en la sala) */
+.selection-box {
+  position: fixed;
+  z-index: 950;
+  border: 1px solid #e2c070;
+  background: rgba(226, 192, 112, 0.15);
+  pointer-events: none;
 }

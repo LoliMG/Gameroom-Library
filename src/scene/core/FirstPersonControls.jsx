@@ -93,7 +93,8 @@ function FirstPersonControls({ heldBookRef }) {
   useEffect(() => {
     let dragging = false
     const onPointerDown = (event) => {
-      if (event.button === 0) dragging = true
+      // Con Ctrl, arrastrar dibuja el recuadro de selección de libros (SelectionBox): la vista no gira
+      if (event.button === 0 && !event.ctrlKey) dragging = true
     }
     const onPointerUp = () => {
       dragging = false

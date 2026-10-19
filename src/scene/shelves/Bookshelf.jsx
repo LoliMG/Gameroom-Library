@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 // Importación del componente Book usando el alias "@"
 import Book from '@/scene/books/Book'
 // Madera recortada de la textura del mueble de la pared a, para que las estanterías tengan su mismo tono
@@ -47,6 +48,8 @@ const FRONT_SPINE_Z = BOOKSHELF_DEPTH / 2 - FRONT_MARGIN
 const FLIPPED_BOOK_ROTATION_Y = -Math.PI / 2
 // Cuánto sale de la balda el libro que se está arrastrando
 const HELD_BOOK_PULL = 0.06
+// Lo que sale de la balda un libro seleccionado (selección múltiple), para que se vea cuáles están elegidos
+const SELECTED_BOOK_PULL = 0.025
 
 /**
  * Calcula la cota Y de la superficie de apoyo de una balda según su índice (0 a SHELF_COUNT - 1)
@@ -70,7 +73,8 @@ function getIntermediateBoardY(shelfIndex) {
  *   están volteados (de frente, con la portada hacia la sala)
  * @param {number} width - Ancho exterior del módulo en metros (por defecto BASE_SHELF_WIDTH = 1.2 m)
  * @param {Function} onSelectBook - Callback al pulsar un libro
- * @param {Object} bookDrag - Arrastre de libros: { draggedId, grab(book), hover(slot, x, innerWidth), drop(slot, x, innerWidth) }
+ * @param {Object} bookDrag - Arrastre de libros: { draggedIds, selectedIds, grab(book, offsetX, event), hover(slot, x, innerWidth),
+ *   drop(slot, x, innerWidth) } (draggedIds: los que se arrastran; selectedIds: la selección múltiple)
  * @param {number} startShelf - Balda desde la que empieza el módulo (0 = desde el suelo). Los módulos que empiezan
  *   más arriba van encima de un mueble y sus baldas quedan alineadas con las de los módulos completos.
  */
@@ -186,20 +190,23 @@ function Bookshelf({ slot, placements = [], width = BASE_SHELF_WIDTH, onSelectBo
         const posY = getShelfSurfaceY(shelf + startShelf) + book.height / 2
         // Profundidad Z: lomo al frente (+Z) y cuerpo proyectado hacia el fondo; el libro agarrado sale un poco
         // Volteado, el libro gira 90° y lo que va hacia el fondo es su grosor en vez de su fondo
-        const posZ = FRONT_SPINE_Z - (flipped ? book.width : book.depth) / 2 + (book.id === bookDrag.draggedId ? HELD_BOOK_PULL : 0)
+        const posZ = FRONT_SPINE_Z - (flipped ? book.width : book.depth) / 2 + (bookDrag.draggedIds.has(book.id) ? HELD_BOOK_PULL : bookDrag.selectedIds.has(book.id) ? SELECTED_BOOK_PULL : 0)
 
         return (
-          <Book
-            key={book.id}
-            book={book}
-            onSelect={onSelectBook}
-            onGrab={bookDrag.grab}
-            rotationY={flipped ? FLIPPED_BOOK_ROTATION_Y : 0}
-            position={[x, posY, posZ]}
-            width={book.width}
-            height={book.height}
-            depth={book.depth}
-          />
+          // Cada libro espera a su portada por su cuenta: un libro recién añadido no oculta la sala mientras carga
+          <Suspense key={book.id} fallback={null}>
+            <Book
+              book={book}
+              onSelect={onSelectBook}
+              onGrab={bookDrag.grab}
+              selected={bookDrag.selectedIds.has(book.id)}
+              rotationY={flipped ? FLIPPED_BOOK_ROTATION_Y : 0}
+              position={[x, posY, posZ]}
+              width={book.width}
+              height={book.height}
+              depth={book.depth}
+            />
+          </Suspense>
         )
       })}
     </group>

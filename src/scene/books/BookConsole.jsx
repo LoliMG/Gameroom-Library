@@ -32,6 +32,7 @@ function BookConsole({ position, rotationY, books, readingStatus, onSetStatus, o
         distanceFactor={HTML_DISTANCE_FACTOR}
         position={[0, 0, FRAME_DEPTH / 2 + 0.002]}
         zIndexRange={HTML_Z_INDEX_RANGE}
+        wrapperClass="book-console-layer"
       >
         <BookDashboard books={books} readingStatus={readingStatus} onSetStatus={onSetStatus} onOpenBook={onOpenBook} />
       </Html>

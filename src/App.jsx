@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 // Contenedor Canvas de React Three Fiber y su gestor de eventos de puntero por defecto
 import { Canvas, events as createPointerEvents } from '@react-three/fiber'
 // Importación de la experiencia principal utilizando el alias "@"
@@ -9,6 +9,11 @@ import BookDetailPanel from '@/components/BookDetailPanel'
 import PlayControls from '@/components/PlayControls'
 // Estado de la biblioteca guardado en la base de datos (con copia en el navegador)
 import { loadLibrary, saveLibraryPart } from '@/utils/libraryApi'
+// Qué libros tienen libro electrónico para el lector
+import { fetchEbooks } from '@/utils/readerApi'
+
+// Lector de libros electrónicos: se carga solo al abrir un libro (epub.js y PDF.js pesan bastante)
+const BookReader = lazy(() => import('@/components/reader/BookReader'))
 
 // Campo de visión vertical de la cámara (grados); la posición la fija FirstPersonControls
 const CAMERA_FOV = 60
@@ -35,6 +40,12 @@ function centerPointerWhenLocked(store) {
 function Bookroom({ library }) {
   // useState define el estado selectedBook que guarda el libro pulsado o null si no hay ninguno activo
   const [selectedBook, setSelectedBook] = useState(null)
+  // Libros con libro electrónico ({ isbn: 'epub' | 'pdf' }) y libro que se está leyendo
+  const [ebooks, setEbooks] = useState({})
+  const [readingBook, setReadingBook] = useState(null)
+  useEffect(() => {
+    fetchEbooks().then(setEbooks)
+  }, [])
   // ISBN de los libros puestos de frente (botón de volteo del panel)
   const [flippedIsbns, setFlippedIsbns] = useState(library.flipped)
   const flippedSet = useMemo(() => new Set(flippedIsbns), [flippedIsbns])
@@ -106,12 +117,21 @@ function Bookroom({ library }) {
       {/* BookDetailPanel se coloca fuera del <Canvas> como hermano suyo porque es un componente HTML tradicional; */}
       {/* los elementos HTML (div, img, button) no pueden procesarse dentro del contexto WebGL de Three.js. */}
       {/* Al estar fuera en el árbol DOM, se renderiza por encima del lienzo 3D mediante CSS con position: fixed y z-index. */}
+      {/* Mientras se lee, el panel se oculta (y vuelve al cerrar el lector) */}
       <BookDetailPanel
-        book={selectedBook}
+        book={readingBook ? null : selectedBook}
         onClose={() => setSelectedBook(null)}
         flipped={selectedBook ? flippedSet.has(selectedBook.isbn) : false}
         onToggleFlip={() => toggleFlip(selectedBook.isbn)}
+        ebookFormat={selectedBook ? ebooks[selectedBook.isbn] : undefined}
+        onRead={() => setReadingBook(selectedBook)}
       />
+
+      {readingBook && (
+        <Suspense fallback={<p className="app-loading reader-loading">Abriendo el lector…</p>}>
+          <BookReader book={readingBook} format={ebooks[readingBook.isbn]} onClose={() => setReadingBook(null)} />
+        </Suspense>
+      )}
     </>
   )
 }
