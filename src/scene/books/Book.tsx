@@ -2,8 +2,8 @@ import { useEffect, useMemo } from 'react'
 // Tipo de los eventos de puntero de React Three Fiber (llevan además el punto 3D tocado, el objeto, etc.)
 import type { ThreeEvent } from '@react-three/fiber'
 import type { Book as BookData } from '@/types'
-// Hook useTexture de drei para la carga reactiva de la textura de portada
-import { useTexture } from '@react-three/drei'
+// Hook useTexture de drei para la carga reactiva de la textura de portada; Sparkles para el humillo del libro localizado
+import { Sparkles, useTexture } from '@react-three/drei'
 // Espacio de color de la portada, caja del libro y su material
 import { BoxGeometry, BufferAttribute, MeshStandardMaterial, SRGBColorSpace } from 'three'
 // Importación de los generadores de texturas de lomo, contraportada y cantos de hojas
@@ -18,6 +18,13 @@ import {
 // claros y oscuros; un tinte translúcido por encima apenas se veía en los claros) y, desde Bookshelf, sale un poco de la balda
 const SELECTED_GLOW = '#ffb52e'
 const SELECTED_GLOW_INTENSITY = 0.35
+// Libro localizado desde la consola: brillo azul intenso (el Bloom de Effects le da halo) y chispas que flotan alrededor
+const LOCATED_GLOW = '#3d9bff'
+const LOCATED_GLOW_INTENSITY = 1.1
+const LOCATED_SPARKLES = { count: 45, size: 5, speed: 0.6, opacity: 1, noise: 1.5, color: '#8fd3ff' }
+// Cuánto más grande que el libro es la nube de chispas (metros por cada lado) y cuánto sube por encima
+const LOCATED_SPARKLES_MARGIN = 0.05
+const LOCATED_SPARKLES_RISE = 0.06
 
 // Cantos de las hojas (arriba, abajo y detrás): la misma textura y el mismo material para todos los libros
 let pagesMaterial: MeshStandardMaterial | null = null
@@ -58,10 +65,12 @@ interface BookProps {
   onGrab: (book: BookData, offsetX: number, event: ThreeEvent<PointerEvent>) => void
   book: BookData
   selected?: boolean
+  /** Localizado desde la consola: brilla en azul con chispas hasta que se pulsa */
+  located?: boolean
 }
 
 // En este archivo, "Book" es el componente; el tipo del libro se importa como BookData
-function Book({ position, rotationY = 0, width, height, depth, onSelect, onGrab, book, selected = false }: BookProps) {
+function Book({ position, rotationY = 0, width, height, depth, onSelect, onGrab, book, selected = false, located = false }: BookProps) {
   // Carga reactiva de la textura de la portada con useTexture y espacio de color sRGB
   const coverTexture = useTexture(book.cover, (loadedTexture) => {
     loadedTexture.colorSpace = SRGBColorSpace
@@ -96,10 +105,10 @@ function Book({ position, rotationY = 0, width, height, depth, onSelect, onGrab,
   // Brillo de libro seleccionado en sus materiales propios (el de los cantos es compartido y no se toca)
   useEffect(() => {
     materials.slice(0, 3).forEach((material) => {
-      material.emissive.set(selected ? SELECTED_GLOW : '#000000')
-      material.emissiveIntensity = selected ? SELECTED_GLOW_INTENSITY : 1
+      material.emissive.set(located ? LOCATED_GLOW : selected ? SELECTED_GLOW : '#000000')
+      material.emissiveIntensity = located ? LOCATED_GLOW_INTENSITY : selected ? SELECTED_GLOW_INTENSITY : 1
     })
-  }, [materials, selected])
+  }, [materials, selected, located])
 
   // Manejador del evento de clic sobre el libro
   const handleClick = (event: ThreeEvent<MouseEvent>) => {
@@ -136,6 +145,16 @@ function Book({ position, rotationY = 0, width, height, depth, onSelect, onGrab,
       // receiveShadow: la superficie del libro recibe las sombras de las baldas y del resto de la sala
       receiveShadow
     >
+      {/* Humillo de chispas azules alrededor del libro localizado. No recibe clics (raycast vacío): así los clics y el
+          arrastre siguen siendo del libro */}
+      {located && (
+        <Sparkles
+          {...LOCATED_SPARKLES}
+          position={[0, LOCATED_SPARKLES_RISE, 0]}
+          scale={[width + 2 * LOCATED_SPARKLES_MARGIN, height + 2 * LOCATED_SPARKLES_MARGIN, depth + 2 * LOCATED_SPARKLES_MARGIN]}
+          raycast={() => null}
+        />
+      )}
     </mesh>
   )
 }

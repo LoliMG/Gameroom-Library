@@ -230,9 +230,14 @@ function Experience({ onSelectBook, flippedIsbns, readingStatus, onSetStatus, sa
   // Libro añadido, editado o quitado desde la consola: Vite actualiza la lista de libros sin recargar la página y vuelve a
   // pintar la sala; los nuevos van al primer hueco libre (y se guardan como cualquier cambio de sitio). Al quitar uno, los
   // id (el orden en la lista) cambian: la selección se suelta para no quedarse con libros que no son
+  // Libro localizado desde la consola (brilla en azul hasta que se pulsa)
+  const [locatedId, setLocatedId] = useState<number | null>(null)
   const syncedPlacements = syncShelfBooks(placements, books, SHELF_WALLS, DRAG_BOOK_GAP)
   if (syncedPlacements !== placements) {
-    if (syncedPlacements.length < placements.length) setSelectedIds(NO_BOOKS)
+    if (syncedPlacements.length < placements.length) {
+      setSelectedIds(NO_BOOKS)
+      setLocatedId(null)
+    }
     setPlacements(syncedPlacements)
   }
   // Sitio de los libros al agarrarlos (vuelven ahí si se sueltan fuera de las baldas) y si se han soltado sobre una balda
@@ -364,6 +369,8 @@ function Experience({ onSelectBook, flippedIsbns, readingStatus, onSetStatus, sa
   // event: el clic en el libro de la sala (desde la consola se abre sin evento)
   const selectBook = (book: Book, event?: ThreeEvent<MouseEvent>) => {
     if (justDraggedRef.current) return
+    // Pulsar el libro localizado le quita el brillo azul
+    if (book.id === locatedId) setLocatedId(null)
     if (event?.ctrlKey) {
       if (event.delta > MIN_BOX_SIZE) return
       setSelectedIds((current) => {
@@ -377,13 +384,13 @@ function Experience({ onSelectBook, flippedIsbns, readingStatus, onSetStatus, sa
     onSelectBook(book)
   }
 
-  // "Localizar" en la consola: el libro se ilumina en su estantería (como un libro seleccionado: brilla y sale un poco
-  // de la balda). Al pulsarlo se abre su panel y la selección se suelta, así que deja de brillar (ver selectBook)
-  const locateBook = (book: Book) => setSelectedIds(new Set([book.id]))
+  // "Localizar" en la consola: el libro brilla en azul en su estantería, con un humillo de chispas, hasta que se pulsa
+  const locateBook = (book: Book) => setLocatedId(book.id)
 
   const bookDrag: BookDrag = {
     draggedIds,
     selectedIds,
+    locatedId,
     // Pulsar un libro solo lo prepara para arrastrar: el arrastre empieza si el ratón se mueve (ver arriba).
     // Si es de la selección, se mueven todos los seleccionados (de la balda de arriba a la de abajo y de izquierda a derecha)
     grab: (book, offsetX = 0, event) => {

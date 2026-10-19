@@ -61,7 +61,7 @@ interface BookDashboardProps {
   onSetStatus: (isbns: string[], status: ReadingStatus) => void
   /** Abre el panel de detalle del libro */
   onOpenBook: (book: Book) => void
-  /** Ilumina el libro en su estantería (deja de brillar al pulsarlo) */
+  /** Hace brillar el libro en azul en su estantería (deja de brillar al pulsarlo) */
   onLocateBook: (book: Book) => void
   collection: CollectionTools
 }
