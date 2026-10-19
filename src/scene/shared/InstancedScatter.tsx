@@ -2,20 +2,32 @@
 import { useLayoutEffect, useRef } from 'react'
 // Object3D auxiliar para componer la matriz de cada copia y Color para su tinte
 import { Color, Object3D } from 'three'
+import type { BufferGeometry, InstancedMesh, Material } from 'three'
+// Vector3Tuple: [x, y, z] en metros (el formato que aceptan position y rotation en React Three Fiber)
+import type { Vector3Tuple } from 'three'
+
+/** Una copia: sitio, giro, tamaño (un número o [x, y, z]) y tinte opcional */
+export interface ScatterItem {
+  position: Vector3Tuple
+  rotation?: Vector3Tuple
+  scale?: number | Vector3Tuple
+  color?: string
+}
 
 /**
  * Muchas copias de la misma geometría y material en una sola llamada de dibujo (InstancedMesh).
  * Para flores, piedras del camino, racimos de glicinia o cipreses: cientos de piezas sin coste por pieza.
  *
- * @param {BufferGeometry} geometry - Geometría compartida
- * @param {Material} material - Material compartido (el color de cada copia lo multiplica)
- * @param {{ position: number[], rotation?: number[], scale?: number|number[], color?: string }[]} items - Copias
+ * @param geometry - Geometría compartida
+ * @param material - Material compartido (el color de cada copia lo multiplica)
+ * @param items - Copias
  */
-function InstancedScatter({ geometry, material, items }) {
-  const meshRef = useRef(null)
+function InstancedScatter({ geometry, material, items }: { geometry: BufferGeometry; material: Material | Material[]; items: ScatterItem[] }) {
+  const meshRef = useRef<InstancedMesh>(null)
 
   useLayoutEffect(() => {
     const mesh = meshRef.current
+    if (!mesh) return
     const dummy = new Object3D()
     const color = new Color()
     items.forEach((item, i) => {

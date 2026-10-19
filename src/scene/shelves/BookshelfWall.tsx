@@ -1,20 +1,35 @@
 // Importación del componente de estantería individual y sus constantes de geometría
 import Bookshelf from '@/scene/shelves/Bookshelf'
+import type { BookDrag, ShownPlacement } from '@/scene/shelves/Bookshelf'
+import type { Book } from '@/types'
+import type { ThreeEvent } from '@react-three/fiber'
 
 /**
  * Componente que cubre una pared con múltiples estanterías contiguas
  * dimensionadas para encajar de esquina a esquina sin huecos ni solapes.
  *
- * @param {string} wallKey - Identificador de la pared ('d', 'a0'…), parte del sitio de cada libro
- * @param {Array<Object>} placements - Libros de esta pared con su sitio: { book, module, shelf, x }
- * @param {number} wallLength - Longitud de la pared en metros (por defecto 4.0 m)
- * @param {number} moduleCount - Módulos en que se reparte (los calcula Experience: SHELF_WALLS)
- * @param {Array<number>} position - Posición [x, y, z] del conjunto en la escena
- * @param {Array<number>} rotation - Rotación [x, y, z] del conjunto
- * @param {Function} onSelectBook - Callback disparado al hacer clic en un libro
- * @param {Object} bookDrag - Arrastre y selección de libros (ver Bookshelf)
- * @param {number} startShelf - Balda desde la que empiezan los módulos (0 = desde el suelo; más arriba, sobre un mueble)
  */
+interface BookshelfWallProps {
+  /** Identificador de la pared ('a0', 'a1'…), parte del sitio de cada libro */
+  wallKey: string
+  /** Libros de esta pared con su sitio: { book, module, shelf, x, flipped } */
+  placements?: ShownPlacement[]
+  /** Longitud de la pared en metros (por defecto 4.0 m) */
+  wallLength?: number
+  /** Módulos en que se reparte (los calcula Experience: SHELF_WALLS) */
+  moduleCount: number
+  /** Posición [x, y, z] del conjunto en la escena */
+  position?: [number, number, number]
+  /** Rotación [x, y, z] del conjunto */
+  rotation?: [number, number, number]
+  /** Clic en un libro */
+  onSelectBook: (book: Book, event: ThreeEvent<MouseEvent>) => void
+  /** Arrastre y selección de libros (ver Bookshelf) */
+  bookDrag: BookDrag
+  /** Balda desde la que empiezan los módulos (0 = desde el suelo; más arriba, sobre un mueble) */
+  startShelf?: number
+}
+
 function BookshelfWall({
   wallKey,
   placements = [],
@@ -25,7 +40,7 @@ function BookshelfWall({
   onSelectBook,
   bookDrag,
   startShelf = 0,
-}) {
+}: BookshelfWallProps) {
   // Ancho de cada módulo para cubrir con total precisión la pared
   const moduleWidth = wallLength / moduleCount
   // Coordenada X inicial del primer módulo para centrar el bloque en la pared

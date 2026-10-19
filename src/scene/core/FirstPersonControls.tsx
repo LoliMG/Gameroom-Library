@@ -1,9 +1,12 @@
 // Importación de useEffect y useRef de React para los escuchadores de teclado/ratón y el estado del jugador
 import { useEffect, useRef } from 'react'
+import type { RefObject } from 'react'
 // useFrame mueve la cámara en cada fotograma; useThree da acceso a cámara, lienzo y escena
 import { useFrame, useThree } from '@react-three/fiber'
 // Box3 para las cajas de colisión de los muebles
 import { Box3, MathUtils } from 'three'
+// Vector3Tuple: [x, y, z] en metros (el formato que aceptan position y rotation en React Three Fiber)
+import type { Vector3Tuple } from 'three'
 // Dimensiones de la habitación para limitar el paseo al interior
 import { ROOM_WIDTH, BACK_WALL_Z, FRONT_WALL_INNER_Z, FLOOR_Y } from '@/scene/room/Room'
 // Fondo de las estanterías de las paredes a y d (el jugador no puede meterse en ellas)
@@ -15,7 +18,7 @@ const EYE_HEIGHT = 1.25 // Altura de una persona pequeña
 const CROUCH_KEY = 'KeyZ'
 const CROUCH_EYE_HEIGHT = 0.8
 const CROUCH_DAMPING = 10 // Rapidez de la transición (mayor = más rápida)
-const START_POSITION = [-0.4, FLOOR_Y + EYE_HEIGHT, 3.0]
+const START_POSITION: Vector3Tuple = [-0.4, FLOOR_Y + EYE_HEIGHT, 3.0]
 const START_YAW = 0       // Giro horizontal: 0 = mirando hacia la pared d (-Z)
 const START_PITCH = -0.08 // Ligeramente hacia abajo
 
@@ -36,7 +39,7 @@ const MAX_Z = FRONT_WALL_INNER_Z - PLAYER_RADIUS                 // Muro del ven
 
 // Teclas (código físico, igual en cualquier distribución de teclado): [lateral, adelante/atrás]
 // shortcut: sin controles táctiles para caminar; añadir un joystick virtual si se usa en móvil
-const KEY_DIRECTIONS = {
+const KEY_DIRECTIONS: Partial<Record<string, [number, number]>> = {
   KeyW: [0, -1], ArrowUp: [0, -1],
   KeyS: [0, 1], ArrowDown: [0, 1],
   KeyA: [-1, 0], ArrowLeft: [-1, 0],
@@ -44,7 +47,7 @@ const KEY_DIRECTIONS = {
 }
 
 // ¿El punto (x, z) cae dentro de alguna caja de colisión (ya ampliada con el radio del jugador)?
-function isBlocked(x, z, colliders) {
+function isBlocked(x: number, z: number, colliders: Box3[]) {
   return colliders.some((box) => x > box.min.x && x < box.max.x && z > box.min.z && z < box.max.z)
 }
 
@@ -53,15 +56,16 @@ function isBlocked(x, z, colliders) {
  * o, con el ratón capturado (pointer lock), mover el ratón sin pulsar.
  * La cámara no sale de la habitación y choca con los objetos marcados con userData.collider.
  */
-function FirstPersonControls({ heldBookRef }) {
+// heldBookRef: libro pulsado (o null); solo se mira si hay uno, así que su tipo da igual (unknown)
+function FirstPersonControls({ heldBookRef }: { heldBookRef: RefObject<unknown> }) {
   const camera = useThree((state) => state.camera)
   const canvas = useThree((state) => state.gl.domElement)
   const scene = useThree((state) => state.scene)
   // Orientación actual y teclas pulsadas
   const look = useRef({ yaw: START_YAW, pitch: START_PITCH })
-  const pressedKeys = useRef(new Set())
+  const pressedKeys = useRef(new Set<string>())
   // Cajas de colisión de los muebles (se calculan cuando terminan de cargar los modelos)
-  const colliders = useRef(null)
+  const colliders = useRef<Box3[] | null>(null)
 
   // Posición y orientación iniciales; orden YXZ: primero giro horizontal y luego inclinación, como en un juego
   useEffect(() => {
@@ -71,12 +75,12 @@ function FirstPersonControls({ heldBookRef }) {
 
   // Teclado: guarda qué teclas de movimiento (y la de agacharse) están pulsadas
   useEffect(() => {
-    const onKeyDown = (event) => {
-      if ((!KEY_DIRECTIONS[event.code] && event.code !== CROUCH_KEY) || event.target.closest?.('input, textarea')) return
+    const onKeyDown = (event: KeyboardEvent) => {
+      if ((!KEY_DIRECTIONS[event.code] && event.code !== CROUCH_KEY) || (event.target as Element | null)?.closest?.('input, textarea')) return
       pressedKeys.current.add(event.code)
       event.preventDefault() // Evita que las flechas desplacen la página
     }
-    const onKeyUp = (event) => pressedKeys.current.delete(event.code)
+    const onKeyUp = (event: KeyboardEvent) => pressedKeys.current.delete(event.code)
     // Si la ventana pierde el foco con una tecla pulsada, no seguir caminando (ni agachado) solo
     const onBlur = () => pressedKeys.current.clear()
     window.addEventListener('keydown', onKeyDown)
@@ -92,14 +96,14 @@ function FirstPersonControls({ heldBookRef }) {
   // Ratón: arrastrar para mirar, o mover sin pulsar si el ratón está capturado
   useEffect(() => {
     let dragging = false
-    const onPointerDown = (event) => {
+    const onPointerDown = (event: PointerEvent) => {
       // Con Ctrl, arrastrar dibuja el recuadro de selección de libros (SelectionBox): la vista no gira
       if (event.button === 0 && !event.ctrlKey) dragging = true
     }
     const onPointerUp = () => {
       dragging = false
     }
-    const onPointerMove = (event) => {
+    const onPointerMove = (event: PointerEvent) => {
       const locked = document.pointerLockElement === canvas
       // Arrastrando un libro la vista no gira (con el ratón capturado sí: así se apunta al hueco de destino)
       if (!locked && (!dragging || heldBookRef.current !== null)) return
@@ -122,7 +126,7 @@ function FirstPersonControls({ heldBookRef }) {
   useFrame((_, delta) => {
     // Cajas de colisión: se recogen una vez que los muebles (dentro de Suspense) ya están en la escena
     if (!colliders.current) {
-      const found = []
+      const found: Box3[] = []
       scene.traverse((object) => {
         if (!object.userData.collider) return
         const box = new Box3().setFromObject(object)
@@ -144,9 +148,10 @@ function FirstPersonControls({ heldBookRef }) {
     let inputX = 0
     let inputZ = 0
     pressedKeys.current.forEach((code) => {
-      if (!KEY_DIRECTIONS[code]) return
-      inputX += KEY_DIRECTIONS[code][0]
-      inputZ += KEY_DIRECTIONS[code][1]
+      const direction = KEY_DIRECTIONS[code]
+      if (!direction) return
+      inputX += direction[0]
+      inputZ += direction[1]
     })
     const length = Math.hypot(inputX, inputZ)
     if (length === 0) return

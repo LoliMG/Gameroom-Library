@@ -6,6 +6,9 @@ import { useGLTF } from '@react-three/drei'
 import { modelsManifest } from '@/data/modelsManifest'
 // Importación del nivel del suelo de la estancia
 import { FLOOR_Y } from '@/scene/room/Room'
+import type { Mesh, Object3D } from 'three'
+// Vector3Tuple: [x, y, z] en metros (el formato que aceptan position y rotation en React Three Fiber)
+import type { Vector3Tuple } from 'three'
 
 // Medidas máximas de la alfombra en metros: casi toda la sala (se gira 90° al colocarla, ver SofaCorner)
 export const RUG_WIDTH = 3.9 // Lado largo del modelo
@@ -30,16 +33,16 @@ const RUG_FLOOR_GAP = 0.002
 export const RUG_TOP_HEIGHT = RUG_FLOOR_GAP + ORIGINAL_HEIGHT * RUG_SCALE // 0.002 + 0.0149 ≈ 0.017 m
 
 // Desplazamiento interno del modelo para que su centro quede en el origen del grupo y su base a RUG_FLOOR_GAP
-const MODEL_OFFSET = [
+const MODEL_OFFSET: Vector3Tuple = [
   -ORIGINAL_CENTER_X * RUG_SCALE,
   RUG_FLOOR_GAP - ORIGINAL_MIN_Y * RUG_SCALE,
   -ORIGINAL_CENTER_Z * RUG_SCALE,
 ]
 
 // Helper para habilitar recepción de sombras en la alfombra
-function enableReceiveShadow(scene) {
+function enableReceiveShadow<T extends Object3D>(scene: T): T {
   scene.traverse((node) => {
-    if (node.isMesh) {
+    if ((node as Mesh).isMesh) {
       node.receiveShadow = true
     }
   })
@@ -50,7 +53,7 @@ function enableReceiveShadow(scene) {
  * Componente para renderizar la alfombra estampada con borlas (rug.glb).
  * `position` es el punto del suelo donde se centra la alfombra (Y = cota del suelo).
  */
-function Rug({ position = [0, FLOOR_Y, 0], rotationY = 0 }) {
+function Rug({ position = [0, FLOOR_Y, 0], rotationY = 0 }: { position?: Vector3Tuple; rotationY?: number }) {
   // Carga del modelo GLB desde el manifiesto
   const { scene } = useGLTF(modelsManifest.rug.url)
 

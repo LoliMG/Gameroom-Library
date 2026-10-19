@@ -4,17 +4,36 @@ import { useLayoutEffect, useMemo, useRef } from 'react'
 import { useGLTF } from '@react-three/drei'
 // Matrices para componer el sitio de cada copia con la posición de cada pieza dentro del modelo
 import { Euler, Matrix4, Quaternion, Vector3 } from 'three'
+import type { BufferGeometry, InstancedMesh, Material, Mesh } from 'three'
+// Vector3Tuple: [x, y, z] en metros (el formato que aceptan position y rotation en React Three Fiber)
+import type { Vector3Tuple } from 'three'
 // Manifiesto de modelos 3D
 import { modelsManifest } from '@/data/modelsManifest'
+import type { ModelName } from '@/data/modelsManifest'
 // Centra el modelo con la base en el suelo y da su escala
 import { prepareModel } from '@/utils/prepareModel'
 
+/** Una copia del modelo: sitio de su base, altura y giro sobre Y */
+export interface ModelItem {
+  position: Vector3Tuple
+  height: number
+  rotationY?: number
+}
+
+/** Una malla del modelo con su posición dentro de él */
+interface Part {
+  geometry: BufferGeometry
+  material: Material | Material[]
+  matrix: Matrix4
+}
+
 // Una pieza (malla) del modelo repetida en todos los sitios de items
-function InstancedPart({ part, items }) {
-  const meshRef = useRef(null)
+function InstancedPart({ part, items }: { part: Part; items: ModelItem[] }) {
+  const meshRef = useRef<InstancedMesh>(null)
 
   useLayoutEffect(() => {
     const mesh = meshRef.current
+    if (!mesh) return
     const placement = new Matrix4()
     const rotation = new Quaternion()
     items.forEach((item, i) => {
@@ -35,20 +54,21 @@ function InstancedPart({ part, items }) {
  * Muchas copias de un modelo del manifiesto (o de uno de sus nodos) con una llamada de dibujo por malla del modelo,
  * en vez de una por malla y copia. Para flores: 40 lirios cuestan lo mismo en llamadas que uno.
  *
- * @param {string} model - Clave del manifiesto
- * @param {string} [node] - Nodo concreto del modelo (por ejemplo, un solo tallo de un ramo)
- * @param {{ position: number[], height: number, rotationY?: number }[]} items - Sitio (base), altura y giro de cada copia
+ * @param model - Clave del manifiesto
+ * @param node - Nodo concreto del modelo (por ejemplo, un solo tallo de un ramo)
+ * @param items - Sitio (base), altura y giro de cada copia
  */
-function InstancedModel({ model, node, items }) {
+function InstancedModel({ model, node, items }: { model: ModelName; node?: string; items: ModelItem[] }) {
   const { scene } = useGLTF(modelsManifest[model].url)
   const parts = useMemo(() => {
     // Modelo centrado, con la base en Y = 0 y escalado a 1 m de alto: cada copia lo escala a su altura
     const { wrapper, scale } = prepareModel(scene, node, 1)
     wrapper.scale.setScalar(scale)
     wrapper.updateMatrixWorld(true)
-    const meshes = []
+    const meshes: Part[] = []
     wrapper.traverse((object) => {
-      if (object.isMesh) meshes.push({ geometry: object.geometry, material: object.material, matrix: object.matrixWorld.clone() })
+      const mesh = object as Mesh
+      if (mesh.isMesh) meshes.push({ geometry: mesh.geometry, material: mesh.material, matrix: mesh.matrixWorld.clone() })
     })
     return meshes
   }, [scene, node])

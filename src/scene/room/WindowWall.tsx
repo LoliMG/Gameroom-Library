@@ -4,12 +4,18 @@ import { useMemo } from 'react'
 import { useGLTF } from '@react-three/drei'
 // Clases de Three.js para dibujar el contorno de la pared y extruirlo con grosor
 import { Shape, ExtrudeGeometry } from 'three'
+import type { Material, Mesh, Object3D } from 'three'
+// Vector3Tuple: [x, y, z] en metros (el formato que aceptan position y rotation en React Three Fiber)
+import type { Vector3Tuple } from 'three'
 // Importación del manifiesto centralizado de modelos 3D
 import { modelsManifest } from '@/data/modelsManifest'
 // Papel pintado de las paredes
 import useWallpaper, { WALLPAPER_TILE_SIZE, WALLPAPER_TINT } from '@/hooks/useWallpaper'
 
-// Valores por defecto de la pared en metros (el ancho no tiene: lo marca la habitación, ROOM_WIDTH en Room.jsx)
+// Punto [x, y] de un contorno plano
+type Point = [number, number]
+
+// Valores por defecto de la pared en metros (el ancho no tiene: lo marca la habitación, ROOM_WIDTH en Room.tsx)
 export const DEFAULT_WALL_HEIGHT = 2.8    // Altura de suelo a techo (Y = -1.0 a +1.8)
 export const DEFAULT_FLOOR_Y = -1.0       // Cota del suelo
 
@@ -38,7 +44,7 @@ const ARCH_CENTERS_X = [0, ORIGINAL_CENTER_X * 2] // 0 y 4.3376
 
 // Contorno del cristal de un arco (mitad derecha, de abajo hacia la clave) en unidades originales del modelo,
 // extraído de los vértices de la malla "f_2_glass_0". La mitad izquierda se obtiene por simetría.
-const ARCH_GLASS_HALF_OUTLINE = [
+const ARCH_GLASS_HALF_OUTLINE: Point[] = [
   [1.83254, -2.23504],
   [1.83254, 1.23714],
   [1.58635, 1.54206],
@@ -54,10 +60,10 @@ const ARCH_NODE_OFFSET_Y = 0.07704
 const ARCH_FRAME_BORDER = 0.045
 
 // Calcula el contorno del hueco de un arco (de suelo a suelo pasando por la clave) en coordenadas locales de la pared
-function getArchHolePoints(centerX, localOffsetY, floorY, halfWallWidth) {
+function getArchHolePoints(centerX: number, localOffsetY: number, floorY: number, halfWallWidth: number): Point[] {
   // Desplaza cada vértice de la mitad derecha hacia fuera según la normal media de sus dos tramos vecinos
-  const halfOutline = ARCH_GLASS_HALF_OUTLINE.map(([x, y], i, pts) => {
-    const segmentNormal = (a, b) => {
+  const halfOutline = ARCH_GLASS_HALF_OUTLINE.map(([x, y], i, pts): Point => {
+    const segmentNormal = (a: Point, b: Point): Point => {
       const dx = b[0] - a[0]
       const dy = b[1] - a[1]
       const len = Math.hypot(dx, dy)
@@ -65,19 +71,19 @@ function getArchHolePoints(centerX, localOffsetY, floorY, halfWallWidth) {
     }
     const prev = i > 0 ? segmentNormal(pts[i - 1], pts[i]) : null
     const next = i < pts.length - 1 ? segmentNormal(pts[i], pts[i + 1]) : null
-    // En la clave la normal apunta hacia arriba por simetría
+    // En la clave la normal apunta hacia arriba por simetría. Fuera de la clave siempre hay tramo siguiente (next!)
     const [nx, ny] =
-      i === pts.length - 1 ? [0, 1] : prev ? [(prev[0] + next[0]) / 2, (prev[1] + next[1]) / 2] : next
+      i === pts.length - 1 ? [0, 1] : prev ? [(prev[0] + next![0]) / 2, (prev[1] + next![1]) / 2] : next!
     const nLen = Math.hypot(nx, ny)
     return [x + (nx / nLen) * ARCH_FRAME_BORDER, y + (ny / nLen) * ARCH_FRAME_BORDER]
   })
 
   // Recorrido completo: lado izquierdo de abajo arriba, clave y lado derecho de arriba abajo
-  const leftSide = halfOutline.slice(0, -1).map(([x, y]) => [-x, y])
+  const leftSide = halfOutline.slice(0, -1).map(([x, y]): Point => [-x, y])
   const rightSide = [...halfOutline].reverse()
   const fullOutline = [...leftSide, ...rightSide]
 
-  return fullOutline.map(([x, y], i) => {
+  return fullOutline.map(([x, y], i): Point => {
     // Paso de unidades del modelo a coordenadas locales de la pared (escala + centrado del ventanal)
     const wallX = LOCAL_OFFSET_X + (centerX + x) * WINDOW_SCALE
     const wallY = localOffsetY + (y + ARCH_NODE_OFFSET_Y) * WINDOW_SCALE
@@ -92,22 +98,22 @@ function getArchHolePoints(centerX, localOffsetY, floorY, halfWallWidth) {
 }
 
 // Construye la geometría de la pared c: un rectángulo de suelo a techo con los dos arcos recortados
-function createWallGeometry(width, height, floorY, localOffsetY) {
+function createWallGeometry(width: number, height: number, floorY: number, localOffsetY: number) {
   const halfWidth = width / 2
   const ceilingY = floorY + height
 
   // Contorno inferior de la pared recorriendo ambos huecos de izquierda a derecha
-  let points = ARCH_CENTERS_X.flatMap((centerX) =>
+  let points: Point[] = ARCH_CENTERS_X.flatMap((centerX) =>
     getArchHolePoints(centerX, localOffsetY, floorY, halfWidth)
   )
 
   // Si el arco llega al borde de la pared, se descartan los puntos repetidos sobre ese borde
   // (solo se conserva el más alto a la izquierda y el más alto a la derecha) para no crear tramos solapados
   while (points.length > 1 && points[0][0] === -halfWidth && points[1][0] === -halfWidth) points.shift()
-  while (points.length > 1 && points.at(-1)[0] === halfWidth && points.at(-2)[0] === halfWidth) points.pop()
+  while (points.length > 1 && points.at(-1)![0] === halfWidth && points.at(-2)![0] === halfWidth) points.pop()
   // Si no llega al borde, se añaden las esquinas inferiores de la pared
   if (points[0][0] > -halfWidth) points = [[-halfWidth, floorY], ...points]
-  if (points.at(-1)[0] < halfWidth) points = [...points, [halfWidth, floorY]]
+  if (points.at(-1)![0] < halfWidth) points = [...points, [halfWidth, floorY]]
 
   // Cierre por las esquinas superiores (techo)
   points = [...points, [halfWidth, ceilingY], [-halfWidth, ceilingY]]
@@ -123,19 +129,22 @@ function createWallGeometry(width, height, floorY, localOffsetY) {
 }
 
 // Helper para configurar sombras y transparencia del cristal
-function setupWindowMeshes(scene) {
+// (traverse da Object3D: con isMesh se sabe que es una malla y se trata como Mesh, con un solo material)
+function setupWindowMeshes<T extends Object3D>(scene: T): T {
   scene.traverse((node) => {
-    if (node.isMesh) {
-      if (node.material && node.material.name === 'glass') {
+    const mesh = node as Mesh
+    if (mesh.isMesh) {
+      const material = mesh.material as Material
+      if (material && material.name === 'glass') {
         // Material del cristal: aseguramos profundidad de escritura falsa para que el jardín exterior sea visible
-        node.material.depthWrite = false
-        node.material.transparent = true
-        node.castShadow = false
-        node.receiveShadow = false
+        material.depthWrite = false
+        material.transparent = true
+        mesh.castShadow = false
+        mesh.receiveShadow = false
       } else {
         // Marcos y perfiles metálicos: proyectan y reciben sombras
-        node.castShadow = true
-        node.receiveShadow = true
+        mesh.castShadow = true
+        mesh.receiveShadow = true
       }
     }
   })
@@ -148,13 +157,22 @@ function setupWindowMeshes(scene) {
  * Alrededor de los dos arcos se levanta una pared opaca de suelo a techo con los huecos recortados,
  * de modo que solo el cristal de los arcos es translúcido.
  */
+interface WindowWallProps {
+  /** Obligatorio: ancho de la habitación (ventanal + fondo de estantería a cada lado) */
+  width: number
+  height?: number
+  floorY?: number
+  position?: Vector3Tuple
+  rotation?: Vector3Tuple
+}
+
 function WindowWall({
-  width, // Obligatorio: ancho de la habitación (ventanal + fondo de estantería a cada lado)
+  width,
   height = DEFAULT_WALL_HEIGHT,
   floorY = DEFAULT_FLOOR_Y,
   position = [0, 0, 0],
   rotation = [0, 0, 0],
-}) {
+}: WindowWallProps) {
   // Carga del modelo GLB desde el manifiesto
   const { scene } = useGLTF(modelsManifest.window.url)
 

@@ -4,12 +4,15 @@ import { useMemo } from 'react'
 import { useGLTF } from '@react-three/drei'
 // Importación del manifiesto centralizado de modelos 3D
 import { modelsManifest } from '@/data/modelsManifest'
+import type { Mesh, Object3D } from 'three'
+// Vector3Tuple: [x, y, z] en metros (el formato que aceptan position y rotation en React Three Fiber)
+import type { Vector3Tuple } from 'three'
 
 // Escala por defecto para convertir unidades cm del modelo original a metros (~2.21 m de altura)
 const DEFAULT_SCALE = modelsManifest.door.scale // 0.009
 
 // Helper para aislar la puerta principal (nodo '01') y habilitar sombras en sus mallas
-function setupDoorScene(scene) {
+function setupDoorScene<T extends Object3D>(scene: T): T {
   // El archivo door.glb contiene dos puertas adyacentes: '01' (cerrada) y '01_1' (abierta de muestra).
   // Eliminamos '01_1' para conservar únicamente la puerta de entrada principal limpia.
   const duplicateDoorNode = scene.getObjectByName('01_1')
@@ -19,7 +22,7 @@ function setupDoorScene(scene) {
 
   // Habilitamos sombras en la hoja de la puerta, marco y manilla
   scene.traverse((node) => {
-    if (node.isMesh) {
+    if ((node as Mesh).isMesh) {
       node.castShadow = true
       node.receiveShadow = true
     }
@@ -36,7 +39,7 @@ function Door({
   position = [2.17, -1.0, -0.30],
   rotation = [0, -Math.PI / 2, 0],
   scale = DEFAULT_SCALE,
-}) {
+}: { position?: Vector3Tuple; rotation?: Vector3Tuple; scale?: number }) {
   // Carga del modelo GLB desde el manifiesto
   const { scene } = useGLTF(modelsManifest.door.url)
 

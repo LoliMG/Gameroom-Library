@@ -22,7 +22,7 @@ export const CABINET_LENGTH_PER_HEIGHT = 3.0024
  * `position` es el punto del suelo junto a la pared, en el centro del mueble; el frente mira hacia +X
  * (hacia el interior desde la pared a). Lleva userData.collider para que la cámara no lo atraviese.
  */
-function StorageCabinet({ position, height, depth }) {
+function StorageCabinet({ position, height, depth }: { position: [number, number, number]; height: number; depth: number }) {
   const { scene } = useGLTF(modelsManifest.cabinet.url)
   const cabinet = useMemo(() => enableShadows(scene.clone()), [scene])
   // Escala del frente (alto y largo) y escala del fondo, que solo encoge la profundidad

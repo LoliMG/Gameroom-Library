@@ -4,8 +4,12 @@ import { Suspense, useMemo } from 'react'
 import { Preload, useGLTF } from '@react-three/drei'
 // Repetición de las texturas del césped
 import { RepeatWrapping } from 'three'
+import type { MeshStandardMaterial } from 'three'
+// Vector3Tuple: [x, y, z] en metros (el formato que aceptan position y rotation en React Three Fiber)
+import type { Vector3Tuple } from 'three'
 // Importación del manifiesto centralizado de modelos 3D
 import { modelsManifest } from '@/data/modelsManifest'
+import type { ModelName } from '@/data/modelsManifest'
 // Generador pseudoaleatorio con semilla: el jardín sale siempre igual
 import { createRandom } from '@/utils/random'
 // Cota del suelo de la habitación (el jardín está al mismo nivel)
@@ -14,30 +18,38 @@ import { FLOOR_Y } from '@/scene/room/Room'
 import SunsetSky from '@/scene/garden/SunsetSky'
 // Fuente, muro, banco, losas y faroles
 import { Bench, Fountain, Lantern, ModelProp, PathStones, StoneWall, Warrior, WALL_SEGMENT_LENGTH } from '@/scene/garden/GardenProps'
+import type { PathStone } from '@/scene/garden/GardenProps'
 // Muchas copias de un modelo en una sola llamada de dibujo (por malla)
 import InstancedModel from '@/scene/shared/InstancedModel'
+import type { ModelItem } from '@/scene/shared/InstancedModel'
+
+// Generador de números al azar entre 0 y 1 (createRandom, con semilla)
+type Random = () => number
+// Rango [mínimo, máximo]
+type Range = [number, number]
 
 // --- Suelo ---
 const GROUND_Y = FLOOR_Y - 0.02 // Un poco por debajo del suelo interior para no parpadear con él
 // Césped alrededor de toda la casa y más allá del muro, para que por los lados no se acabe el suelo
-const GROUND_POSITION = [0, GROUND_Y, 4.0]
-const GROUND_SIZE = [40, 30]
+const GROUND_POSITION: Vector3Tuple = [0, GROUND_Y, 4.0]
+const GROUND_SIZE: [number, number] = [40, 30]
 // El césped de grass_texture.glb es un plano de 4 × 4 m: sus mapas se repiten cada 4 m sobre todo el suelo del jardín
 const GRASS_TILE_SIZE = 4
 // Mapas del material que hay que repetir
-const GRASS_MAP_KEYS = ['map', 'normalMap', 'roughnessMap', 'metalnessMap', 'aoMap']
+// (as const: la lista es de esos nombres exactos, que son propiedades de MeshStandardMaterial)
+const GRASS_MAP_KEYS = ['map', 'normalMap', 'roughnessMap', 'metalnessMap', 'aoMap'] as const
 
 // --- Composición (como la foto de referencia): ventanal en Z = 4 m mirando a +Z ---
 // Ojo: mirando desde la sala hacia +Z, la X positiva queda a la IZQUIERDA de la pantalla
 // Camino de losas desde la ventana hasta la fuente, que queda frente a la ventana derecha
-const FOUNTAIN_POSITION = [-1.5, GROUND_Y, 8.8]
+const FOUNTAIN_POSITION: Vector3Tuple = [-1.5, GROUND_Y, 8.8]
 const FOUNTAIN_PATH_RING = 1.42 // Radio del anillo de losas alrededor de la fuente
 // Muro de piedra que rodea la casa y el jardín (rectángulo de 4 × 3 tramos: los pilares coinciden en las esquinas);
 // fuera, arboleda y, al fondo, las colinas
 const WALL_HALF_WIDTH = 2 * WALL_SEGMENT_LENGTH // ≈ 9.9 m a cada lado
 const WALL_BACK_Z = 11.3                         // Fondo del jardín, tras el macizo de flores
 const WALL_HOUSE_Z = WALL_BACK_Z - 3 * WALL_SEGMENT_LENGTH // ≈ -3.55 m, detrás de la casa
-const WALL_PATH = [
+const WALL_PATH: [number, number][] = [
   [-WALL_HALF_WIDTH, WALL_HOUSE_Z],
   [-WALL_HALF_WIDTH, WALL_BACK_Z],
   [WALL_HALF_WIDTH, WALL_BACK_Z],
@@ -45,12 +57,12 @@ const WALL_PATH = [
   [-WALL_HALF_WIDTH, WALL_HOUSE_Z],
 ]
 // Rincón de la izquierda: banco con peluches, guerrero y macetero con flores
-const BENCH_POSITION = [1.9, GROUND_Y, 7.7] // El banco japonés mide 1.8 m: separado del macetero y del farol
+const BENCH_POSITION: Vector3Tuple = [1.9, GROUND_Y, 7.7] // El banco japonés mide 1.8 m: separado del macetero y del farol
 const BENCH_ROTATION_Y = -2.7 // Mirando hacia la casa y el camino
-const FLOWER_POT_POSITION = [3.1, GROUND_Y, 6.6]
+const FLOWER_POT_POSITION: Vector3Tuple = [3.1, GROUND_Y, 6.6]
 // Guerrero de pie entre el macetero y el banco. El modelo mira a +Z; de frente a la ventana izquierda (desde donde se ve)
 // sería WARRIOR_FACING_WINDOW, y se gira 40° hacia el camino para que se vea a tres cuartos de perfil
-const WARRIOR_POSITION = [3.0, GROUND_Y, 8.1]
+const WARRIOR_POSITION: Vector3Tuple = [3.0, GROUND_Y, 8.1]
 const WARRIOR_HEIGHT = 1.8
 const WARRIOR_FACING_WINDOW = Math.atan2(1.2 - WARRIOR_POSITION[0], 3.5 - WARRIOR_POSITION[2])
 const WARRIOR_ROTATION_Y = WARRIOR_FACING_WINDOW + 0.7
@@ -60,11 +72,11 @@ const WARRIOR_HEAD_TURN = -0.4
 const FLOWER_POT_HEIGHT = 1.0
 const FLOWER_POT_TOP_Y = GROUND_Y + 0.98 // Boca del macetero, donde asoman los lirios
 // Farolillos de papel a lo largo del camino y junto a la fuente: cada uno es uno de los cuatro modelos distintos
-const LANTERNS = [[0.45, 5.2], [-1.0, 6.4], [0.6, 7.7], [-2.9, 8.0]]
+const LANTERNS: [number, number][] = [[0.45, 5.2], [-1.0, 6.4], [0.6, 7.7], [-2.9, 8.0]]
 
 // Arbusto de trees.glb (ligero, ~16 000 triángulos): matas verdes entre las flores. position: [x, z]
-const BUSH = { model: 'treesGarden', node: 'Tree EZTree1.Bush006' }
-const SHRUBS = [
+const BUSH: { model: ModelName; node: string } = { model: 'treesGarden', node: 'Tree EZTree1.Bush006' }
+const SHRUBS: { position: [number, number]; height: number }[] = [
   { position: [3.0, 5.0], height: 1.0 },
   { position: [1.2, 5.5], height: 0.8 },
   { position: [-2.4, 5.0], height: 1.1 },
@@ -82,9 +94,10 @@ const SHRUBS = [
 // y cada tallo del ramo de lirios morados (purple_lilies.glb tiene 7 tallos sueltos) ~33 000.
 // El rosal en maceta (~100 000 por rosa) y la azucena asiática (1,3 millones) son demasiado pesados para repetirlos.
 const PURPLE_LILY_STEMS = ['Object_8', 'Object_10', 'Object_12', 'Object_14', 'Object_16', 'Object_18', 'Object_20']
-const FLOWER_HEIGHTS = { white: [0.45, 0.7], red: [0.4, 0.55], purple: [0.6, 0.85] }
+type FlowerKind = 'white' | 'red' | 'purple'
+const FLOWER_HEIGHTS: Record<FlowerKind, Range> = { white: [0.45, 0.7], red: [0.4, 0.55], purple: [0.6, 0.85] }
 // Macizos (x, z: rangos) con cuántas flores de cada tipo. Dejan libre el camino del centro
-const FLOWER_BEDS = [
+const FLOWER_BEDS: ({ x: Range; z: Range } & Record<FlowerKind, number>)[] = [
   { x: [0.5, 3.4], z: [4.4, 6.6], purple: 10, white: 10, red: 0 },
   { x: [-3.6, -1.4], z: [4.4, 7.0], purple: 8, white: 6, red: 3 },
   { x: [-6, 6], z: [9.9, 10.6], purple: 0, white: 18, red: 7 },
@@ -94,7 +107,7 @@ const FLOWER_POT_LILIES = 5 // Lirios blancos asomando del macetero
 // Árboles de trees.glb (sus seis árboles, alternados): dos grandes a los lados de la casa (su copa enmarca las ventanas
 // sin que el tronco tape el centro) y una arboleda tras el muro. Los del centro y los del lado del sol (X negativa)
 // son bajos para que se vea el cielo del atardecer por encima; los altos quedan en los extremos
-const GARDEN_TREES = [
+const GARDEN_TREES: { node: string; position: [number, number]; height: number; rotationY: number }[] = [
   { node: 'Tree EZTree0.Large', position: [5.4, 6.4], height: 7.5, rotationY: 0.3 },
   { node: 'Tree EZTree0.Medium010', position: [-5.6, 6.0], height: 6.0, rotationY: 1.3 },
   { node: 'Tree EZTree1.Large009', position: [-1.8, 16.0], height: 3.8, rotationY: 0.2 },
@@ -116,20 +129,21 @@ const SIDE_TREE_NODES = [
   'Tree EZTree0.Large', 'Tree EZTree0.Medium010', 'Tree EZTree0.Medium011',
   'Tree EZTree1.Large001', 'Tree EZTree1.Large009', 'Tree EZTree1.Medium002',
 ]
-const SIDE_GROVES = [
+const SIDE_GROVES: { x: Range; z: Range; height: Range; countPerSide: number }[] = [
   { x: [6.4, 8.8], z: [4.6, 10.4], height: [4.5, 6.5], countPerSide: 6 },
   { x: [11, 19], z: [-6, 24], height: [5, 9], countPerSide: 16 },
 ]
 
 
-const between = (random, [min, max]) => min + random() * (max - min)
-const pick = (random, list) => list[Math.floor(random() * list.length)]
+const between = (random: Random, [min, max]: Range) => min + random() * (max - min)
+// <T>: devuelve un elemento del mismo tipo que los de la lista
+const pick = <T,>(random: Random, list: readonly T[]): T => list[Math.floor(random() * list.length)]
 
 // Losas del camino (dos por fila a lo largo de una curva suave) y anillo alrededor de la fuente
-function buildPathStones(random) {
-  const stones = []
+function buildPathStones(random: Random) {
+  const stones: PathStone[] = []
   // Largo de cada losa (m) y giro al azar; el modelo de cada una lo elige PathStones alternando
-  const addStone = (x, z) => {
+  const addStone = (x: number, z: number) => {
     stones.push({ x, z, size: between(random, [0.38, 0.55]), rotationY: random() * Math.PI * 2 })
   }
   for (let t = 0; t <= 1; t += 0.075) {
@@ -146,10 +160,14 @@ function buildPathStones(random) {
 }
 
 // Flores de los macizos y del macetero, agrupadas por modelo (y por tallo, en los lirios morados)
-function buildFlowers(random) {
-  const flowers = { white: [], red: [], purple: Object.fromEntries(PURPLE_LILY_STEMS.map((stem) => [stem, []])) }
+function buildFlowers(random: Random) {
+  const flowers: { white: ModelItem[]; red: ModelItem[]; purple: Record<string, ModelItem[]> } = {
+    white: [],
+    red: [],
+    purple: Object.fromEntries(PURPLE_LILY_STEMS.map((stem) => [stem, []])),
+  }
   FLOWER_BEDS.forEach((bed) => {
-    for (const kind of ['white', 'red', 'purple']) {
+    for (const kind of ['white', 'red', 'purple'] as const) {
       for (let i = 0; i < bed[kind]; i++) {
         const list = kind === 'purple' ? flowers.purple[pick(random, PURPLE_LILY_STEMS)] : flowers[kind]
         list.push({
@@ -172,8 +190,8 @@ function buildFlowers(random) {
 }
 
 // Árboles de las arboledas laterales, agrupados por tipo de árbol (una InstancedModel por tipo)
-function buildSideTrees(random) {
-  const trees = Object.fromEntries(SIDE_TREE_NODES.map((node) => [node, []]))
+function buildSideTrees(random: Random) {
+  const trees: Record<string, ModelItem[]> = Object.fromEntries(SIDE_TREE_NODES.map((node) => [node, []]))
   SIDE_GROVES.forEach((grove) => {
     for (const side of [-1, 1]) {
       for (let i = 0; i < grove.countPerSide; i++) {
@@ -192,7 +210,8 @@ function buildSideTrees(random) {
 function GardenGround() {
   const { materials } = useGLTF(modelsManifest.grassGround.url)
   const material = useMemo(() => {
-    const ground = Object.values(materials)[0].clone()
+    // El modelo trae un solo material: el del césped
+    const ground = (Object.values(materials)[0] as MeshStandardMaterial).clone()
     GRASS_MAP_KEYS.forEach((key) => {
       if (!ground[key]) return
       const texture = ground[key].clone()
@@ -215,7 +234,7 @@ function GardenGround() {
 
 // Una planta del jardín: carga el modelo del manifiesto, lo escala a su medida y lo apoya en el suelo
 // (position: [x, z]). Los elementos del jardín no proyectan sombras (presupuesto de rendimiento del plan)
-function GardenPlant({ model, node, height, position, rotationY = 0 }) {
+function GardenPlant({ model, node, height, position, rotationY = 0 }: { model: ModelName; node?: string; height: number; position: [number, number]; rotationY?: number }) {
   return <ModelProp model={model} node={node} height={height} position={[position[0], GROUND_Y, position[1]]} rotation={[0, rotationY, 0]} />
 }
 

@@ -1,4 +1,6 @@
 import { Suspense } from 'react'
+import type { ThreeEvent } from '@react-three/fiber'
+import type { Book as BookData, Placement } from '@/types'
 // Importación del componente Book usando el alias "@"
 import Book from '@/scene/books/Book'
 // Madera recortada de la textura del mueble de la pared a, para que las estanterías tengan su mismo tono
@@ -51,34 +53,61 @@ const HELD_BOOK_PULL = 0.06
 // Lo que sale de la balda un libro seleccionado (selección múltiple), para que se vea cuáles están elegidos
 const SELECTED_BOOK_PULL = 0.025
 
+/** Libro tal como se pinta: su sitio y si está de frente (los volteados ocupan su fondo en vez de su grosor) */
+export type ShownPlacement = Placement & { flipped: boolean }
+
+/** Balda concreta: pared, módulo y balda (el sitio de un libro sin la X) */
+export type ShelfSlot = { wall: string; module: number; shelf: number }
+
+/**
+ * Arrastre y selección de libros (lo crea Experience y lo reparte a cada estantería):
+ * - draggedIds: los libros que se están arrastrando; selectedIds: la selección múltiple
+ * - grab: botón pulsado sobre un libro (offsetX: punto agarrado respecto a su centro)
+ * - hover / drop: el puntero pasa o se suelta sobre una balda, en el punto x (coordenadas de la estantería)
+ */
+export interface BookDrag {
+  draggedIds: Set<number>
+  selectedIds: Set<number>
+  grab: (book: BookData, offsetX: number, event: ThreeEvent<PointerEvent>) => void
+  hover: (slot: ShelfSlot, x: number, innerWidth: number) => void
+  drop: (slot: ShelfSlot, x: number, innerWidth: number) => void
+}
+
 /**
  * Calcula la cota Y de la superficie de apoyo de una balda según su índice (0 a SHELF_COUNT - 1)
  */
-function getShelfSurfaceY(shelfIndex) {
+function getShelfSurfaceY(shelfIndex: number) {
   return SHELF_SURFACE_0_Y + shelfIndex * (COMPARTMENT_HEIGHT + BOARD_THICKNESS)
 }
 
 /**
  * Calcula la cota Y del centro del tablón intermedio correspondiente a una balda (1 a SHELF_COUNT - 1)
  */
-function getIntermediateBoardY(shelfIndex) {
+function getIntermediateBoardY(shelfIndex: number) {
   return getShelfSurfaceY(shelfIndex) - BOARD_THICKNESS / 2
 }
 
 /**
  * Componente de estantería individual paramétrica en ancho
  *
- * @param {{ wall: string, module: number }} slot - Pared y módulo de esta estantería (parte del sitio de sus libros)
- * @param {Array<Object>} placements - Libros de este módulo con su balda (contada desde startShelf), su centro X y si
- *   están volteados (de frente, con la portada hacia la sala)
- * @param {number} width - Ancho exterior del módulo en metros (por defecto BASE_SHELF_WIDTH = 1.2 m)
- * @param {Function} onSelectBook - Callback al pulsar un libro
- * @param {Object} bookDrag - Arrastre de libros: { draggedIds, selectedIds, grab(book, offsetX, event), hover(slot, x, innerWidth),
- *   drop(slot, x, innerWidth) } (draggedIds: los que se arrastran; selectedIds: la selección múltiple)
- * @param {number} startShelf - Balda desde la que empieza el módulo (0 = desde el suelo). Los módulos que empiezan
- *   más arriba van encima de un mueble y sus baldas quedan alineadas con las de los módulos completos.
  */
-function Bookshelf({ slot, placements = [], width = BASE_SHELF_WIDTH, onSelectBook, bookDrag, startShelf = 0 }) {
+interface BookshelfProps {
+  /** Pared y módulo de esta estantería (parte del sitio de sus libros) */
+  slot: { wall: string; module: number }
+  /** Libros de este módulo con su balda (contada desde startShelf), su centro X y si están volteados */
+  placements?: ShownPlacement[]
+  /** Ancho exterior del módulo en metros (por defecto BASE_SHELF_WIDTH = 1.2 m) */
+  width?: number
+  onSelectBook: (book: BookData, event: ThreeEvent<MouseEvent>) => void
+  bookDrag: BookDrag
+  /**
+   * Balda desde la que empieza el módulo (0 = desde el suelo). Los módulos que empiezan más arriba van encima de un
+   * mueble y sus baldas quedan alineadas con las de los módulos completos.
+   */
+  startShelf?: number
+}
+
+function Bookshelf({ slot, placements = [], width = BASE_SHELF_WIDTH, onSelectBook, bookDrag, startShelf = 0 }: BookshelfProps) {
   // Texturas de madera compartidas (veta vertical para laterales, a lo largo para tablones), con el tono del mueble
   const wood = useShelfWood('cabinet')
   // Ancho interior útil entre los paneles laterales para este ancho concreto

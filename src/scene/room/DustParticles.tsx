@@ -2,6 +2,8 @@
 import { Sparkles } from '@react-three/drei'
 // Importación de las dimensiones de la habitación para situar el polvo en la luz del ventanal
 import { ROOM_WIDTH, FRONT_WALL_INNER_Z, FLOOR_Y } from '@/scene/room/Room'
+// Vector3Tuple: [x, y, z] en metros (el formato que aceptan position y rotation en React Three Fiber)
+import type { Vector3Tuple } from 'three'
 
 // Constantes del polvo flotante
 const DUST_COUNT = 70                 // Pocas partículas para no recargar
@@ -13,9 +15,9 @@ const DUST_COLOR = '#f3e6cf'          // Blanco cálido
 // Volumen de la zona iluminada junto al ventanal: casi todo el ancho, de 0.2 a 2.2 m de altura y 2 m hacia dentro
 const DUST_VOLUME_DEPTH = 2.0
 const DUST_VOLUME_HEIGHT = 2.0
-const DUST_VOLUME = [ROOM_WIDTH * 0.8, DUST_VOLUME_HEIGHT, DUST_VOLUME_DEPTH]
+const DUST_VOLUME: Vector3Tuple = [ROOM_WIDTH * 0.8, DUST_VOLUME_HEIGHT, DUST_VOLUME_DEPTH]
 // Centro del volumen: delante del cristal (cara interior del muro del ventanal)
-const DUST_CENTER = [0, FLOOR_Y + 0.2 + DUST_VOLUME_HEIGHT / 2, FRONT_WALL_INNER_Z - DUST_VOLUME_DEPTH / 2 - 0.1]
+const DUST_CENTER: Vector3Tuple = [0, FLOOR_Y + 0.2 + DUST_VOLUME_HEIGHT / 2, FRONT_WALL_INNER_Z - DUST_VOLUME_DEPTH / 2 - 0.1]
 
 /**
  * Polvo flotando en la luz que entra por el ventanal.

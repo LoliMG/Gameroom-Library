@@ -6,6 +6,8 @@ import { useGLTF } from '@react-three/drei'
 import { modelsManifest } from '@/data/modelsManifest'
 // Activa sombras en todas las mallas de un modelo clonado
 import { enableShadows } from '@/utils/shadows'
+// Vector3Tuple: [x, y, z] en metros (el formato que aceptan position y rotation en React Three Fiber)
+import type { Vector3Tuple } from 'three'
 
 // Escala por defecto definida a partir del manifiesto para rosal de interior (~1.4 m de altura)
 const DEFAULT_SCALE = modelsManifest.roseInAPot.scale
@@ -14,7 +16,7 @@ const DEFAULT_SCALE = modelsManifest.roseInAPot.scale
  * Componente reutilizable para macetas con plantas decorativas de interior.
  * Utiliza el modelo 3D rose_in_a_pot.glb con sombras habilitadas.
  */
-function PlantPot({ position = [0, -1.0, 0], scale = DEFAULT_SCALE, rotationY = 0 }) {
+function PlantPot({ position = [0, -1.0, 0], scale = DEFAULT_SCALE, rotationY = 0 }: { position?: Vector3Tuple; scale?: number; rotationY?: number }) {
   // Carga del modelo GLB a través de la URL gestionada por Vite en modelsManifest
   const { scene } = useGLTF(modelsManifest.roseInAPot.url)
 

@@ -2,6 +2,9 @@
 import { useMemo, useLayoutEffect, useRef } from 'react'
 // Clases de Three.js para construir las matrices de cada hoja instanciada
 import { Object3D } from 'three'
+import type { InstancedMesh } from 'three'
+// Vector3Tuple: [x, y, z] en metros (el formato que aceptan position y rotation en React Three Fiber)
+import type { Vector3Tuple } from 'three'
 // Importación de las dimensiones de la habitación
 import { ROOM_HEIGHT, FRONT_WALL_INNER_Z, FLOOR_Y } from '@/scene/room/Room'
 // Generador pseudoaleatorio con semilla para que las hojas salgan siempre igual
@@ -38,10 +41,17 @@ const STEM_RADIUS = 0.004
 const STEM_COLOR = '#3a3222'
 const RANDOM_SEED = 7                 // Semilla fija: las hojas salen siempre igual
 
+/** Una hoja: posición, giro y tamaño (factor sobre LEAF_WIDTH y LEAF_LENGTH) */
+interface Leaf {
+  position: Vector3Tuple
+  rotation: Vector3Tuple
+  scale: number
+}
+
 // Calcula posición, giro y tamaño de todas las hojas, agrupadas por color
 function buildLeaves() {
   const random = createRandom(RANDOM_SEED)
-  const groups = LEAF_COLORS.map(() => [])
+  const groups: Leaf[][] = LEAF_COLORS.map(() => [])
   VINE_STRANDS.forEach(({ x, length }) => {
     const count = Math.round(length * LEAVES_PER_METER)
     for (let i = 0; i < count; i++) {
@@ -50,13 +60,13 @@ function buildLeaves() {
       const y = VINE_TOP_Y - t * length
       // Las hojas se abren a ambos lados del tallo y ligeramente hacia la sala (-Z)
       const side = i % 2 === 0 ? 1 : -1
-      const position = [
+      const position: Vector3Tuple = [
         x + side * random() * LEAF_SPREAD,
         y,
         VINE_Z - random() * LEAF_SPREAD * 0.6,
       ]
       // Giro: inclinadas hacia abajo y orientadas al azar alrededor del tallo
-      const rotation = [0.6 + random() * 0.6, random() * Math.PI * 2, side * (0.3 + random() * 0.5)]
+      const rotation: Vector3Tuple = [0.6 + random() * 0.6, random() * Math.PI * 2, side * (0.3 + random() * 0.5)]
       // Las hojas del extremo inferior son más pequeñas
       const scale = 0.6 + (1 - t) * 0.4 + random() * 0.2
       groups[Math.floor(random() * LEAF_COLORS.length)].push({ position, rotation, scale })
@@ -66,25 +76,27 @@ function buildLeaves() {
 }
 
 // Malla instanciada con todas las hojas de un mismo color (una sola llamada de dibujo por color)
-function LeafInstances({ leaves, color }) {
-  const meshRef = useRef()
+function LeafInstances({ leaves, color }: { leaves: Leaf[]; color: string }) {
+  const meshRef = useRef<InstancedMesh>(null)
 
   // useLayoutEffect: escribe la matriz de cada instancia antes del primer render
   useLayoutEffect(() => {
+    const mesh = meshRef.current
+    if (!mesh) return
     const helper = new Object3D()
     leaves.forEach(({ position, rotation, scale }, i) => {
       helper.position.set(...position)
       helper.rotation.set(...rotation)
       helper.scale.set(LEAF_WIDTH * scale, LEAF_LENGTH * scale, LEAF_THICKNESS)
       helper.updateMatrix()
-      meshRef.current.setMatrixAt(i, helper.matrix)
+      mesh.setMatrixAt(i, helper.matrix)
     })
-    meshRef.current.instanceMatrix.needsUpdate = true
+    mesh.instanceMatrix.needsUpdate = true
   }, [leaves])
 
   return (
     // args: [geometría, material, número de instancias]; la geometría y el material se pasan como hijos
-    <instancedMesh ref={meshRef} args={[null, null, leaves.length]} castShadow receiveShadow>
+    <instancedMesh ref={meshRef} args={[undefined, undefined, leaves.length]} castShadow receiveShadow>
       {/* Esfera unitaria: escalada queda como una hoja ovalada y plana */}
       <sphereGeometry args={[0.5, 8, 6]} />
       <meshStandardMaterial color={color} roughness={0.75} />
