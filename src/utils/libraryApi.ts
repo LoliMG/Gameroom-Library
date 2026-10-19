@@ -18,6 +18,7 @@ const PARTS: Record<LibraryPart, { key: string; route: string }> = {
   tags: { key: 'fantasy-bookroom:tags', route: '/api/tags' },
   wishlist: { key: 'fantasy-bookroom:wishlist', route: '/api/wishlist' },
   settings: { key: 'fantasy-bookroom:settings', route: '/api/settings' },
+  goals: { key: 'fantasy-bookroom:goals', route: '/api/goals' },
 }
 
 const isPlainObject = (value: unknown): value is Record<string, unknown> =>
@@ -45,7 +46,10 @@ function sanitize(library: Partial<Record<LibraryPart, unknown>> | null | undefi
     isPlainObject(library?.settings) && typeof library.settings.city === 'string' && typeof library.settings.latitude === 'number' && typeof library.settings.longitude === 'number'
       ? withDefaultSettings(library.settings as Partial<AppSettings>)
       : DEFAULT_SETTINGS
-  return { placements, flipped, readingStatus, tags, wishlist, settings }
+  const goals = isPlainObject(library?.goals)
+    ? (Object.fromEntries(Object.entries(library.goals).filter(([, count]) => Number.isInteger(count))) as LibraryState['goals'])
+    : {}
+  return { placements, flipped, readingStatus, tags, wishlist, settings, goals }
 }
 
 function readLocal(): LibraryState {

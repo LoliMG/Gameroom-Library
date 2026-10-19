@@ -74,6 +74,7 @@ function Bookroom({ library }: { library: LibraryState }) {
   const [tags, setTags] = useState(library.tags)
   const [wishlist, setWishlist] = useState(library.wishlist)
   const [settings, setSettings] = useState(library.settings)
+  const [goals, setGoals] = useState(library.goals)
   useEffect(() => {
     saveLibraryPart('tags', tags)
   }, [tags])
@@ -83,6 +84,9 @@ function Bookroom({ library }: { library: LibraryState }) {
   useEffect(() => {
     saveLibraryPart('settings', settings)
   }, [settings])
+  useEffect(() => {
+    saveLibraryPart('goals', goals)
+  }, [goals])
   const collection: CollectionTools = {
     tags,
     onSetTags: (isbn, list) =>
@@ -96,6 +100,8 @@ function Bookroom({ library }: { library: LibraryState }) {
     onSetWishlist: setWishlist,
     settings,
     onSetSettings: setSettings,
+    goals,
+    onSetGoal: (year, count) => setGoals((all) => ({ ...all, [year]: count })),
   }
 
   // Lienzo WebGL, necesario para capturar el ratón desde el botón HTML

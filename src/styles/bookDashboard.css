@@ -594,3 +594,181 @@
   flex-direction: column;
   gap: 8px;
 }
+
+/* Diario de lecturas: año y botón, reto, calendario y lecturas */
+.diary {
+  overflow-y: auto;
+}
+
+.diary-top,
+.diary-year,
+.diary-goal {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.diary-top {
+  justify-content: space-between;
+}
+
+.diary-year strong {
+  min-width: 64px;
+  font-size: 24px;
+  text-align: center;
+  color: var(--dash-accent);
+}
+
+.diary-goal {
+  flex-wrap: wrap;
+  color: var(--dash-muted);
+}
+
+.diary-goal input {
+  width: 80px;
+  padding: 6px 8px;
+  font: inherit;
+  color: var(--dash-text);
+  background: var(--dash-surface);
+  border: 1px solid var(--dash-border);
+  border-radius: 8px;
+}
+
+.diary-progress {
+  flex: 1 1 100%;
+  height: 12px;
+  accent-color: var(--dash-accent);
+}
+
+/* Calendario: 7 filas (lunes a domingo) y una columna por semana */
+.diary-calendar {
+  display: grid;
+  grid-template-rows: repeat(7, 11px);
+  grid-auto-flow: column;
+  grid-auto-columns: 11px;
+  gap: 2px;
+  padding: 8px;
+  overflow-x: auto;
+  background: var(--dash-surface);
+  border-radius: 10px;
+}
+
+.diary-day {
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.diary-day.is-empty {
+  background: transparent;
+}
+
+.diary-day.level-1 {
+  background: rgba(226, 192, 112, 0.4);
+}
+
+.diary-day.level-2 {
+  background: rgba(226, 192, 112, 0.7);
+}
+
+.diary-day.level-3 {
+  background: var(--dash-accent);
+}
+
+.diary-rating {
+  color: var(--dash-accent);
+  letter-spacing: 2px;
+}
+
+.diary-comment {
+  font-size: 14px;
+  font-style: italic;
+  color: var(--dash-muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Estrellas del formulario */
+.diary-stars {
+  display: flex;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.diary-stars legend {
+  margin-bottom: 4px;
+  font-size: 15px;
+  color: var(--dash-muted);
+}
+
+.diary-stars button {
+  padding: 0 2px;
+  font-size: 28px;
+  line-height: 1;
+  color: var(--dash-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.diary-stars button.is-on {
+  color: var(--dash-accent);
+}
+
+/* Elegir el libro de una lectura: buscador y lista de libros que coinciden */
+.diary-chosen {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+}
+
+.diary-matches {
+  max-height: 260px;
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+  overflow-y: auto;
+  background: var(--dash-surface);
+  border: 1px solid var(--dash-border);
+  border-radius: 10px;
+}
+
+.diary-matches button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 6px 10px;
+  font: inherit;
+  text-align: left;
+  color: var(--dash-text);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.diary-matches button:hover,
+.diary-matches button:focus-visible {
+  background: rgba(226, 192, 112, 0.14);
+}
+
+.diary-matches img {
+  width: 30px;
+  height: 45px;
+  object-fit: cover;
+  border-radius: 3px;
+}
+
+.diary-matches span {
+  display: flex;
+  flex-direction: column;
+}
+
+.diary-matches small {
+  font-size: 13px;
+  color: var(--dash-muted);
+}

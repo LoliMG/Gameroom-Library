@@ -15,6 +15,11 @@ import {
   writeTags,
   writeWishlist,
   writeSettings,
+  writeGoals,
+  listReadings,
+  createReading,
+  updateReading,
+  deleteReading,
   listEbooks,
   readReader,
   writePosition,
@@ -38,6 +43,7 @@ assert.deepEqual(readState(db), {
   tags: {},
   wishlist: [],
   settings: { city: 'Málaga', latitude: 36.7213, longitude: -4.4214, sound: true, volumes: { wind: 1, rain: 1, thunder: 1, crickets: 1 } },
+  goals: {},
 })
 
 // Guardar y leer: los ISBN que no existen se ignoran
@@ -86,6 +92,28 @@ assert.throws(() => writeSettings(db, { city: 'X', latitude: 200, longitude: 0, 
 assert.throws(() => writeSettings(db, { city: 'X', latitude: 0, longitude: 0, sound: 'sí', volumes }), ValidationError)
 assert.throws(() => writeSettings(db, { city: 'X', latitude: 0, longitude: 0, sound: true, volumes: { ...volumes, rain: 2 } }), ValidationError)
 assert.throws(() => writeSettings(db, { city: 'X', latitude: 0, longitude: 0, sound: true, volumes: { wind: 1 } }), ValidationError)
+
+// Retos de lectura: { año: libros }
+writeGoals(db, { 2026: 50 })
+assert.deepEqual(readState(db).goals, { 2026: 50 })
+assert.throws(() => writeGoals(db, { año: 5 }), ValidationError)
+assert.throws(() => writeGoals(db, { 2026: -1 }), ValidationError)
+
+// Diario: varias lecturas por libro, de la más reciente a la más antigua; fechas y puntuación comprobadas
+const diaryIsbn = '9780000000002'
+seedBooks(db, [{ isbn: diaryIsbn, title: 'Diario' }])
+const first = createReading(db, { isbn: diaryIsbn, startDate: '2026-01-02', endDate: '2026-01-20', rating: 4, comment: '  Muy bueno  ' })
+assert.deepEqual(first, { id: first.id, isbn: diaryIsbn, startDate: '2026-01-02', endDate: '2026-01-20', rating: 4, comment: 'Muy bueno' })
+const reread = createReading(db, { isbn: diaryIsbn, startDate: '2026-09-01' }) // Relectura en curso
+assert.deepEqual(listReadings(db).map((r) => r.id), [reread.id, first.id])
+assert.equal(updateReading(db, reread.id, { startDate: '2026-09-01', endDate: '2026-09-15', rating: 5 }).endDate, '2026-09-15')
+assert.throws(() => createReading(db, { isbn: '999' }), ValidationError) // Libro que no existe
+assert.throws(() => createReading(db, { isbn: diaryIsbn, startDate: '2026-02-30' }), ValidationError) // Fecha que no existe
+assert.throws(() => createReading(db, { isbn: diaryIsbn, startDate: '2026-05-10', endDate: '2026-05-01' }), ValidationError)
+assert.throws(() => createReading(db, { isbn: diaryIsbn, rating: 6 }), ValidationError)
+assert.throws(() => updateReading(db, 9999, {}), ValidationError)
+deleteReading(db, first.id)
+assert.deepEqual(listReadings(db).map((r) => r.id), [reread.id])
 
 // --- Lector ---
 // Carpeta de libros electrónicos: solo cuentan los nombres que son un ISBN (nada de rutas ni otros archivos)
