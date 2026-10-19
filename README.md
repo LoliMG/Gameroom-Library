@@ -1,6 +1,6 @@
 # Rincón de Lectura
 
-Proyecto interactivo 3D desarrollado con **React**, **Vite** y **React Three Fiber (R3F)**. Proporciona una base limpia y modular para construir una experiencia de lectura inmersiva en tres dimensiones con Three.js.
+Proyecto interactivo 3D desarrollado con **React**, **Vite**, **React Three Fiber (R3F)** y **TypeScript**. Proporciona una base limpia y modular para construir una experiencia de lectura inmersiva en tres dimensiones con Three.js.
 
 ## Instalación
 
@@ -22,6 +22,13 @@ Para compilar la aplicación para producción:
 
 ```bash
 npm run build
+```
+
+Para comprobar los tipos de TypeScript (Vite y Node ejecutan el código sin revisarlos) y lanzar las pruebas:
+
+```bash
+npm run typecheck
+npm run check
 ```
 
 Para previsualizar la compilación de producción localmente:
@@ -48,8 +55,9 @@ src/
 │   └── shared/         # Piezas reutilizables para repetir modelos y geometrías (instanciado)
 ├── styles/             # Estilos CSS globales
 │   └── global.css      # Reset mínimo para visualización a pantalla completa
-├── App.jsx             # Montaje del <Canvas> y la escena
-└── main.jsx            # Punto de entrada de la aplicación
+├── types.ts            # Tipos compartidos (libro, sitio en la estantería, subrayados…)
+├── App.tsx             # Montaje del <Canvas> y la escena
+└── main.tsx            # Punto de entrada de la aplicación
 ```
 
 ## 📜 Documentación y Créditos

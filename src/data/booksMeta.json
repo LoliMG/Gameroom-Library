@@ -2649,7 +2649,7 @@
   {
     "isbn": "9788445011713",
     "title": "Assassin's Creed. Black Flag",
-    "author": "Oliver Bowden, Noemí Risco Mateo",
+    "author": "Oliver Bowden",
     "pages": 392,
     "publisher": "Minotauro",
     "format": "book",
@@ -2729,7 +2729,7 @@
   {
     "isbn": "9788408283546",
     "title": "El último rey dragón",
-    "author": "Leia Stone, María Cárcamo Ramos",
+    "author": "Leia Stone",
     "pages": 272,
     "publisher": "Crossbooks",
     "format": "book",
@@ -2761,7 +2761,7 @@
   {
     "isbn": "9788419988201",
     "title": "Casa de Los Aleteos",
-    "author": "Olivia Wildenstein, Ankara Cabeza",
+    "author": "Olivia Wildenstein",
     "pages": 504,
     "publisher": "Grupo Anaya, S.A.",
     "format": "book",
@@ -2776,7 +2776,7 @@
   {
     "isbn": "9788419988027",
     "title": "Maldición de Sombras y Espinas",
-    "author": "L. J. Andrews, María del Puerto Barruetabeña Diez",
+    "author": "L. J. Andrews",
     "pages": 412,
     "publisher": "Grupo Anaya, S.A.",
     "format": "book",
@@ -2837,7 +2837,7 @@
   {
     "isbn": "9788416858910",
     "title": "El tercer deseo",
-    "author": "Jessica Khoury, Carmen Torres García, Laura Naranjo Gutiérrez",
+    "author": "Jessica Khoury",
     "pages": 408,
     "publisher": "Nocturna Ediciones",
     "format": "book",
@@ -2853,7 +2853,7 @@
   {
     "isbn": "9788419988126",
     "title": "Novia",
-    "author": "Ali Hazelwood, Patricia Sebastián Hernández",
+    "author": "Ali Hazelwood",
     "pages": 432,
     "publisher": "Grupo Anaya, S.A.",
     "format": "book",
@@ -2869,7 +2869,7 @@
   {
     "isbn": "9788445009536",
     "title": "Assassin's Creed Valhalla",
-    "author": "Kirby, Matthew J.",
+    "author": "Matthew J. Kirby",
     "pages": 416,
     "publisher": "MINOTAURO",
     "format": "book",
@@ -2885,7 +2885,7 @@
   {
     "isbn": "9788445007792",
     "title": "Assassin's Creed. The Secret Crusade",
-    "author": "Oliver Bowden, Noemí Risco Mateo",
+    "author": "Oliver Bowden",
     "pages": 352,
     "publisher": "Minotauro",
     "format": "book",
@@ -2901,7 +2901,7 @@
   {
     "isbn": "9788445012956",
     "title": "Seis grullas",
-    "author": "Elizabeth Lim, Alvaro Garat",
+    "author": "Elizabeth Lim",
     "pages": 496,
     "publisher": "Minotauro",
     "format": "book",
@@ -3195,5 +3195,149 @@
       "from": "Amazon"
     },
     "complete": true
+  },
+  {
+    "isbn": "9789049206154",
+    "title": "Quicksilver",
+    "author": "Callie Hart",
+    "pages": 604,
+    "publisher": "Boekerij",
+    "format": "book",
+    "saga": "Alquimia & Fae",
+    "saga_index": 1,
+    "source": {
+      "added": "consola",
+      "from": "Open Library"
+    },
+    "complete": true,
+    "synopsis": "Saeris Fane lleva toda la vida guardando sus poderes en secreto mientras sobrevive robando agua en los depósitos de la Reina Inmortal. Al verse cara a cara con la Muerte, abre sin querer un portal a Yvelia, una tierra helada donde los fae libran una guerra milenaria. Allí queda unida a Kingfisher, un letal guerrero fae lleno de sombras. Primera entrega de la saga Alquimia & Fae."
+  },
+  {
+    "isbn": "9788418002083",
+    "title": "Sin corazón",
+    "author": "Marissa Meyer",
+    "pages": 512,
+    "publisher": "Editorial Hidra",
+    "format": "book",
+    "saga": null,
+    "saga_index": null,
+    "source": {
+      "added": "consola",
+      "from": "Open Library"
+    },
+    "complete": true,
+    "synopsis": "Catherine es la joven más codiciada del País de las Maravillas y la favorita del Rey de Corazones, pero su verdadero sueño es abrir una pastelería. En un baile conoce a Jest, el misterioso y apuesto bufón real, iniciando un romance prohibido que cambiará su destino para siempre. La inolvidable historia de cómo nació la temida Reina de Corazones."
+  },
+  {
+    "isbn": "9788427242845",
+    "title": "El libro de Azrael",
+    "author": "Amber V. Nicole",
+    "pages": 832,
+    "publisher": "Molino",
+    "format": "book",
+    "saga": "Dioses y monstruos",
+    "saga_index": 1,
+    "source": {
+      "added": "consola",
+      "from": "Google Books"
+    },
+    "complete": true,
+    "synopsis": "Hace mil años, Dianna entregó su vida a cambio de salvar a su hermana y fue convertida en una implacable asesina. Cuando su amo le encarga robar una reliquia divina, se encuentra con Samkiel, el mítico Destructor de Mundos retirado de la guerra, forzando una peligrosa alianza entre enemigos ancestrales. Primera entrega de Dioses y monstruos."
+  },
+  {
+    "isbn": "9791388011207",
+    "title": "Imperio de luz y silencio",
+    "author": "Paula Gallego",
+    "pages": 576,
+    "publisher": "Umbriel",
+    "format": "book",
+    "saga": "Bilogía Hikari",
+    "saga_index": 2,
+    "source": {
+      "added": "consola",
+      "from": "Open Library"
+    },
+    "complete": true,
+    "synopsis": "La noche del solsticio de verano, Japón corre el riesgo de ser destruido. Los oni acechan las calles de Tokio mientras la emperatriz Echo Akiyama enfrenta una traición inminente, y Markel, Kiera y el capitán Neal Kellum deben pactar con aliados inesperados y afrontar el precio de la verdad y el sacrificio. Segunda parte y conclusión de la Bilogía Hikari."
+  },
+  {
+    "isbn": "9788410495937",
+    "title": "Imperio de sombra y tormento",
+    "author": "Paula Gallego",
+    "pages": 576,
+    "publisher": "Umbriel",
+    "format": "book",
+    "saga": "Bilogía Hikari",
+    "saga_index": 1,
+    "source": {
+      "added": "consola",
+      "from": "Google Books"
+    },
+    "complete": true,
+    "synopsis": "Hace medio siglo que Japón quedó aislado del mundo y sumido en la oscuridad, rodeado por criaturas monstruosas que solo los soldados del Skytree enfrentan. El capitán Neal Kellum y la indómita recluta Kiera Amell deberán sortear secretos, traiciones y pasiones prohibidas mientras el Imperio se desmorona. Primera entrega de la Bilogía Hikari."
+  },
+  {
+    "isbn": "9788410116375",
+    "title": "Humo y cicatriz",
+    "author": "Gretchen Powell Fox",
+    "pages": 576,
+    "publisher": "SM",
+    "format": "book",
+    "saga": "Humo y cicatriz",
+    "saga_index": 1,
+    "source": {
+      "added": "consola",
+      "from": "Google Books"
+    },
+    "complete": true,
+    "synopsis": "En un reino dividido por el odio entre humanos y razas mágicas, una guerrera fae atormentada por la oscuridad y un caballero humano sediento de venganza cruzan sus caminos. Ambos se verán arrastrados hacia el Crisol, una prueba mortal que promete un poder inimaginable. Primera entrega de la saga Humo y cicatriz."
+  },
+  {
+    "isbn": "9788410163546",
+    "title": "El trono de roble",
+    "author": "K. A. Linde",
+    "pages": 744,
+    "publisher": "Editorial Hidra",
+    "format": "book",
+    "saga": "El ciclo del roble y el acebo",
+    "saga_index": 2,
+    "source": {
+      "added": "consola",
+      "from": "Google Books"
+    },
+    "complete": true,
+    "synopsis": "Kierse vuelve a quebrar el Tratado de los Monstruos tras intentar robar el brazalete de la reina de las ninfas a cambio de respuestas sobre su pasado. Para sobrevivir deberá confiar de nuevo en Graves, un poderoso y oscuro hechicero con sus propios motivos ocultos frente al temido rey Roble. Segunda entrega de El ciclo del roble y el acebo."
+  },
+  {
+    "isbn": "9788410163539",
+    "title": "El ciclo del roble y el acebo",
+    "author": "K. A. Linde",
+    "pages": 480,
+    "publisher": "Editorial Hidra",
+    "format": "book",
+    "saga": "El ciclo del roble y el acebo",
+    "saga_index": 1,
+    "source": {
+      "added": "consola",
+      "from": "Google Books"
+    },
+    "complete": true,
+    "synopsis": "Los monstruos son reales y alcanzaron una frágil tregua tras años de sangrientos enfrentamientos. Pero cuando Kierse, una audaz ladrona, se infiltra en una misteriosa mansión de Nueva York, rompe el pacto sin saberlo y queda a merced de un temible y seductor hechicero. Primera entrega de El ciclo del roble y el acebo."
+  },
+  {
+    "isbn": "9788401037498",
+    "title": "Hasta que caiga la luna",
+    "author": "Sarah A. Parker",
+    "pages": 672,
+    "publisher": "Plaza & Janés",
+    "format": "book",
+    "saga": "La caída lunar",
+    "saga_index": 1,
+    "source": {
+      "added": "consola",
+      "from": "Open Library"
+    },
+    "complete": true,
+    "synopsis": "Como asesina rebelde, Raeve solo busca cumplir sus misiones sin ser capturada. Pero al caer presa del despiadado Gremio de Nobles, su destino se cruza en las mazmorras con Kaan Vaegor, un jinete de dragón devastado por la pérdida que busca reunir los fragmentos de las lunas caídas. Juntos descubrirán una verdad oculta que amenaza con derrumbar su mundo. Primera entrega de la saga La caída lunar."
   }
 ]

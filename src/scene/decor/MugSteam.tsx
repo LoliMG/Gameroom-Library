@@ -4,6 +4,9 @@ import { useRef, useMemo } from 'react'
 import { useFrame } from '@react-three/fiber'
 // CanvasTexture para generar la textura difusa del vapor sin archivos externos
 import { CanvasTexture } from 'three'
+import type { Mesh, MeshBasicMaterial } from 'three'
+// Vector3Tuple: [x, y, z] en metros (el formato que aceptan position y rotation en React Three Fiber)
+import type { Vector3Tuple } from 'three'
 
 // Constantes del vapor
 const PUFF_COUNT = 4            // Número de planos semitransparentes
@@ -20,16 +23,17 @@ const TEXTURE_SIZE = 64         // Resolución de la textura radial generada (px
  * Vapor sutil que sube de una taza: varios planos que miran a la cámara, suben, crecen y se desvanecen.
  * `position` es el borde superior de la taza.
  */
-function MugSteam({ position = [0, 0, 0] }) {
+function MugSteam({ position = [0, 0, 0] }: { position?: Vector3Tuple }) {
   // Referencias a cada plano del vapor
-  const puffRefs = useRef([])
+  const puffRefs = useRef<(Mesh | null)[]>([])
 
   // Textura radial difusa (blanco en el centro, transparente en el borde) generada una sola vez
   const texture = useMemo(() => {
     const canvas = document.createElement('canvas')
     canvas.width = TEXTURE_SIZE
     canvas.height = TEXTURE_SIZE
-    const ctx = canvas.getContext('2d')
+    // Lienzo nuevo: getContext('2d') no puede devolver null
+    const ctx = canvas.getContext('2d')!
     const half = TEXTURE_SIZE / 2
     const gradient = ctx.createRadialGradient(half, half, 0, half, half, half)
     gradient.addColorStop(0, 'rgba(255,255,255,1)')
@@ -55,7 +59,7 @@ function MugSteam({ position = [0, 0, 0] }) {
       const scale = PUFF_SIZE * (1 + progress * (PUFF_GROWTH - 1))
       puff.scale.set(scale, scale, scale)
       // Aparece y se desvanece (curva seno: 0 al principio y al final)
-      puff.material.opacity = Math.sin(progress * Math.PI) * MAX_OPACITY
+      ;(puff.material as MeshBasicMaterial).opacity = Math.sin(progress * Math.PI) * MAX_OPACITY
       // Siempre de cara a la cámara (billboard)
       puff.quaternion.copy(camera.quaternion)
     })
@@ -64,7 +68,13 @@ function MugSteam({ position = [0, 0, 0] }) {
   return (
     <group position={position}>
       {Array.from({ length: PUFF_COUNT }, (_, i) => (
-        <mesh key={i} ref={(el) => (puffRefs.current[i] = el)} renderOrder={2}>
+        <mesh
+          key={i}
+          ref={(el) => {
+            puffRefs.current[i] = el
+          }}
+          renderOrder={2}
+        >
           <planeGeometry args={[1, 1]} />
           {/* Material sin iluminación, transparente y sin escribir profundidad para no tapar lo que hay detrás */}
           <meshBasicMaterial

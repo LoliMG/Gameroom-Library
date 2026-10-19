@@ -1,5 +1,7 @@
 // Importación de la paleta ambiental activa para coordinar la luz exterior
 import { PALETTE } from '@/scene/core/ambiencePalette'
+// Vector3Tuple: [x, y, z] en metros (el formato que aceptan position y rotation en React Three Fiber)
+import type { Vector3Tuple } from 'three'
 
 // Constantes de configuración de la luz ambiental interior difusa
 // Se eleva la intensidad ambiental suavemente para mantener visibilidad acogedora sin luces artificiales interiores
@@ -11,7 +13,7 @@ const WINDOW_LIGHT_COLOR = PALETTE.lightColor         // Color de luz exterior s
 const WINDOW_LIGHT_INTENSITY = PALETTE.lightIntensity // Intensidad según la paleta activa
 // Sol bajo del atardecer: del mismo lado que el sol del cielo (SunsetSky, al fondo a la derecha) pero algo más alto,
 // para que entre por el ventanal y estire las sombras de los parteluces por el suelo
-const WINDOW_LIGHT_POSITION = [-2.4, 2.2, 10]
+const WINDOW_LIGHT_POSITION: Vector3Tuple = [-2.4, 2.2, 10]
 
 // Constantes de configuración de sombras proyectadas por la luz del ventanal
 const SHADOW_MAP_SIZE = 1024 // Resolución en píxeles del mapa de sombras

@@ -10,6 +10,8 @@ import {
 } from '@/scene/room/Room'
 // Color de la madera de las estanterías
 import { WOOD_COLOR } from '@/scene/shelves/Bookshelf'
+// Vector3Tuple: [x, y, z] en metros (el formato que aceptan position y rotation en React Three Fiber)
+import type { Vector3Tuple } from 'three'
 
 // Color oscuro y cálido del techo
 const CEILING_COLOR = '#3b2f27'
@@ -33,7 +35,7 @@ const INNER_FRONT_Z = FRONT_WALL_INNER_Z                         // Pared c (car
 // Tramos de moldura: [posición, tamaño] de cada caja fina, calculados a partir de las caras interiores.
 // Las molduras de las paredes largas (a, b) van completas; las de d y c encajan entre ellas para no solaparse.
 const INNER_DEPTH = INNER_FRONT_Z - INNER_BACK_Z
-const MOLDING_SEGMENTS = [
+const MOLDING_SEGMENTS: { position: Vector3Tuple; size: Vector3Tuple }[] = [
   // Pared d (fondo)
   {
     position: [0, MOLDING_Y, INNER_BACK_Z + MOLDING_DEPTH / 2],

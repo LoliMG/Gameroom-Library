@@ -20,6 +20,7 @@ import { useMemo } from 'react'
 import { useTexture } from '@react-three/drei'
 // Importación de constantes de Three.js para repetición y espacio de color
 import { RepeatWrapping, SRGBColorSpace, Shape, ShapeGeometry } from 'three'
+import type { ColorSpace, Texture } from 'three'
 // Importación de las texturas de suelo de madera oscura (Poly Haven, CC0)
 import woodDiffUrl from '@/assets/textures/floor/wood_diff_1k.jpg'
 import woodNorUrl from '@/assets/textures/floor/wood_nor_1k.jpg'
@@ -51,9 +52,16 @@ const FLOOR_WIDTH = ROOM_WIDTH + FLOOR_DOORWAY_EXTENSION
 const FLOOR_REPEAT_X = FLOOR_WIDTH / FLOOR_TEXTURE_TILE_SIZE // Una repetición por metro, también en el trozo bajo la puerta
 const FLOOR_REPEAT_Y = ROOM_DEPTH / FLOOR_TEXTURE_TILE_SIZE // 6.0 / 1.0 = 6.0 repeticiones a lo largo
 
+/** Hueco de la puerta en la pared b: de minZ a maxZ (Z del mundo) y desde el suelo hasta height (m) */
+export interface DoorOpening {
+  minZ: number
+  maxZ: number
+  height: number
+}
+
 // Pared b con el hueco de la puerta recortado desde el suelo (contorno en U, sin agujeros interiores).
 // Coordenadas locales del plano: X a lo largo de la pared (= Z del mundo - ROOM_CENTER_Z), Y en altura desde su centro.
-function createDoorWallGeometry({ minZ, maxZ, height }) {
+function createDoorWallGeometry({ minZ, maxZ, height }: DoorOpening) {
   const halfDepth = ROOM_DEPTH / 2
   const halfHeight = ROOM_HEIGHT / 2
   const holeStart = minZ - ROOM_CENTER_Z
@@ -73,9 +81,9 @@ function createDoorWallGeometry({ minZ, maxZ, height }) {
 }
 
 /**
- * @param {{ minZ: number, maxZ: number, height: number }} doorOpening - Hueco de la puerta en la pared b (m)
+ * @param doorOpening - Hueco de la puerta en la pared b (m)
  */
-function Room({ doorOpening }) {
+function Room({ doorOpening }: { doorOpening: DoorOpening }) {
   // Carga asíncrona de mapas PBR de madera oscura para el suelo (useTexture suspende hasta que están listos)
   const loadedTextures = useTexture({
     map: woodDiffUrl,
@@ -86,7 +94,7 @@ function Room({ doorOpening }) {
   // Copias configuradas de las texturas: repetición continua y sRGB solo en el mapa de color
   // (se clonan para no modificar los objetos que devuelve el hook, que la caché de drei comparte)
   const floorTextures = useMemo(() => {
-    const setupTexture = (tex, colorSpace) => {
+    const setupTexture = (tex: Texture, colorSpace?: ColorSpace) => {
       const copy = tex.clone()
       copy.wrapS = RepeatWrapping
       copy.wrapT = RepeatWrapping

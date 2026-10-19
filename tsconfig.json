@@ -1,0 +1,39 @@
+{
+  // Configuración de TypeScript del proyecto. Solo comprueba tipos (npm run typecheck): quien convierte el código es
+  // Vite en el navegador y Node 24 en el servidor y los scripts (Node ejecuta .ts quitando los tipos, sin compilar).
+  "compilerOptions": {
+    // JavaScript moderno: el que entienden los navegadores actuales y Node 24
+    "target": "ES2022",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    // Módulos import/export resueltos como lo hace Vite (alias @, extensiones, ?url…)
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    // JSX de React 17+: no hace falta importar React en cada componente
+    "jsx": "react-jsx",
+
+    // Comprobaciones estrictas: null/undefined, parámetros sin tipo, etc. Es lo que evita la mayoría de errores
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+
+    // Solo revisar: Vite y Node se encargan de ejecutar
+    "noEmit": true,
+    // Imports con extensión .ts: los necesita Node para ejecutar TypeScript directamente (servidor y scripts)
+    "allowImportingTsExtensions": true,
+    // Solo sintaxis que se pueda borrar sin más (nada de enum ni namespace): así Node puede quitar los tipos y ejecutar
+    "erasableSyntaxOnly": true,
+    // Los imports de solo tipos se marcan con "import type": Vite y Node los quitan sin tener que analizar nada
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "resolveJsonModule": true,
+    // No revisar los tipos de las librerías de node_modules (son suyos, y ralentiza mucho)
+    "skipLibCheck": true,
+
+    // Tipos globales: los de Vite (import.meta.glob, imports ?url de modelos y portadas) y los de Node (servidor)
+    "types": ["vite/client", "node"],
+    // El alias @ apunta a src (el mismo que vite.config.ts)
+    "paths": { "@/*": ["./src/*"] }
+  },
+  "include": ["src", "server", "scripts", "vite.config.*"]
+}

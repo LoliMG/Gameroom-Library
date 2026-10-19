@@ -1,4 +1,10 @@
 import { CanvasTexture, SRGBColorSpace } from 'three'
+import type { Book, BookPalette } from '@/types'
+
+/** Lo que necesita el lomo: título, autor, editorial y sus colores (un Book de la sala vale, con o sin paleta) */
+export type SpineSource = Pick<Book, 'title' | 'author' | 'publisher' | 'spineTitle'> & BookPalette
+/** Lo que necesita la contraportada: además, la sinopsis y el ISBN */
+export type BackCoverSource = Pick<Book, 'title' | 'author' | 'publisher' | 'synopsis' | 'isbn'> & BookPalette
 
 /**
  * Genera la textura del lomo del libro (Spine) con Canvas 2D
@@ -7,7 +13,7 @@ import { CanvasTexture, SRGBColorSpace } from 'three'
  * - Título grande en vertical en el centro (rotado 90º, solo título del libro sin la saga)
  * - Editorial abajo con marco decorativo
  */
-export function generateSpineTexture(book) {
+export function generateSpineTexture(book: SpineSource): CanvasTexture | null {
   const canvas = document.createElement('canvas')
   canvas.width = 256
   canvas.height = 1024
@@ -22,7 +28,7 @@ export function generateSpineTexture(book) {
     bgGrad.addColorStop(1, book.spineGradient.bottom)
     ctx.fillStyle = bgGrad
   } else {
-    ctx.fillStyle = book.spineColor || '#1a1a1a'
+    ctx.fillStyle = '#1a1a1a'
   }
   ctx.fillRect(0, 0, canvas.width, canvas.height)
 
@@ -138,7 +144,7 @@ export function generateSpineTexture(book) {
 /**
  * Genera la textura de la contraportada (Back Cover) calibrada con la paleta del libro
  */
-export function generateBackCoverTexture(book) {
+export function generateBackCoverTexture(book: BackCoverSource): CanvasTexture | null {
   const canvas = document.createElement('canvas')
   canvas.width = 768
   canvas.height = 1152
@@ -237,7 +243,7 @@ export function generateBackCoverTexture(book) {
  * Genera la textura de las hojas / cantos del libro con Canvas 2D
  * Con finas líneas VERTICALES que simulan el corte real de las páginas individuales.
  */
-export function generatePagesTexture() {
+export function generatePagesTexture(): CanvasTexture | null {
   const canvas = document.createElement('canvas')
   canvas.width = 512
   canvas.height = 512
@@ -275,22 +281,23 @@ export function generatePagesTexture() {
  * El degradado del lomo sale de la franja izquierda de la portada (la que toca el lomo), por tercios de altura;
  * el adorno, del color más saturado de la portada, y el texto, blanco o negro según lo claro que sea el fondo.
  *
- * @param {HTMLImageElement} image - Imagen de la portada ya cargada
- * @returns {Object} Campos de color que entienden generateSpineTexture y generateBackCoverTexture
+ * @param image - Imagen de la portada ya cargada
+ * @returns Campos de color que entienden generateSpineTexture y generateBackCoverTexture
  */
-export function paletteFromCover(image) {
+export function paletteFromCover(image: CanvasImageSource): BookPalette {
   // Portada reducida: drawImage promedia los píxeles y basta con pocos para sacar colores
   const width = 24
   const height = 36
   const canvas = document.createElement('canvas')
   canvas.width = width
   canvas.height = height
-  const ctx = canvas.getContext('2d', { willReadFrequently: true })
+  // Lienzo nuevo: getContext('2d') no puede devolver null
+  const ctx = canvas.getContext('2d', { willReadFrequently: true })!
   ctx.drawImage(image, 0, 0, width, height)
   const { data } = ctx.getImageData(0, 0, width, height)
 
   // Color medio de la cuarta parte izquierda de la portada entre dos filas
-  const stripAverage = (fromRow, toRow) => {
+  const stripAverage = (fromRow: number, toRow: number) => {
     const sum = [0, 0, 0]
     let count = 0
     for (let y = fromRow; y < toRow; y++) {
@@ -316,7 +323,7 @@ export function paletteFromCover(image) {
     }
   }
 
-  const toCss = ([r, g, b]) => `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`
+  const toCss = ([r, g, b]: number[]) => `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`
   const top = stripAverage(0, height / 3)
   const mid = stripAverage(height / 3, (2 * height) / 3)
   const bottom = stripAverage((2 * height) / 3, height)

@@ -2,17 +2,23 @@
 import { useLayoutEffect, useMemo, useRef } from 'react'
 // Medir las losas del camino y girar la cabeza del guerrero
 import { Box3, MathUtils, Vector3 } from 'three'
+import type { Mesh, MeshStandardMaterial, Object3D, Texture } from 'three'
+// Vector3Tuple: [x, y, z] en metros (el formato que aceptan position y rotation en React Three Fiber)
+import type { Vector3Tuple } from 'three'
 // useGLTF de drei para los modelos; Sparkles para el rocío de la fuente
 import { Sparkles, useGLTF } from '@react-three/drei'
 // useFrame mueve el agua de la fuente en cada fotograma
 import { useFrame } from '@react-three/fiber'
 // Muchas copias de un modelo, o de una geometría, con una llamada de dibujo por malla (muro y losas del camino)
 import InstancedModel from '@/scene/shared/InstancedModel'
+import type { ModelItem } from '@/scene/shared/InstancedModel'
 import InstancedScatter from '@/scene/shared/InstancedScatter'
+import type { ScatterItem } from '@/scene/shared/InstancedScatter'
 // Separa las losas sueltas de elder_stones.glb, que vienen todas en una malla
 import { splitIslands } from '@/utils/splitIslands'
 // Manifiesto de modelos y preparación (base en el suelo, escala a la altura pedida)
 import { modelsManifest } from '@/data/modelsManifest'
+import type { ModelName } from '@/data/modelsManifest'
 import { prepareModel } from '@/utils/prepareModel'
 import { withSpecularGlossiness } from '@/utils/specularGlossiness'
 
@@ -28,10 +34,10 @@ const BENCH_HEIGHT = 0.95
 const BENCH_SEAT_Y = BENCH_HEIGHT * (0.469 / 1.101)
 // Peluches sobre el asiento, en coordenadas del banco: el cojín pez apoyado en el respaldo y el tiburón mirándolo
 // (en plushie_shark.glb la cabeza va hacia +Z: el giro lleva +Z hacia el pez)
-const FISH_POSITION = [-0.4, BENCH_SEAT_Y, -0.12]
-const SHARK_POSITION = [0.5, BENCH_SEAT_Y, 0.02]
+const FISH_POSITION: Vector3Tuple = [-0.4, BENCH_SEAT_Y, -0.12]
+const SHARK_POSITION: Vector3Tuple = [0.5, BENCH_SEAT_Y, 0.02]
 const SHARK_ROTATION_Y = Math.atan2(FISH_POSITION[0] - SHARK_POSITION[0], FISH_POSITION[2] - SHARK_POSITION[2])
-const BENCH_PLUSHIES = [
+const BENCH_PLUSHIES: { model: ModelName; height: number; position: Vector3Tuple; rotation: Vector3Tuple }[] = [
   { model: 'plushieShark', height: 0.28, position: SHARK_POSITION, rotation: [0, SHARK_ROTATION_Y, 0] },
   { model: 'pillowFish', height: 0.27, position: FISH_POSITION, rotation: [-0.25, 0.2, 0] },
 ]
@@ -47,7 +53,7 @@ const FOUNTAIN_BASIN_SPIN = 0.12
 const FOUNTAIN_SPLASH_RATE = 5
 const FOUNTAIN_SPLASH_SWAY = 0.025
 // Gotas de rocío alrededor de la parte alta de la fuente (Sparkles de drei, en metros)
-const FOUNTAIN_SPRAY = { count: 40, scale: [0.9, 0.7, 0.9], y: 0.85, size: 1.6, speed: 0.8, opacity: 0.7, color: '#e6f4ff' }
+const FOUNTAIN_SPRAY = { count: 40, scale: [0.9, 0.7, 0.9] as Vector3Tuple, y: 0.85, size: 1.6, speed: 0.8, opacity: 0.7, color: '#e6f4ff' }
 // Muro (stone_wall.glb): un tramo a lo largo de Z con un pilar en cada extremo; los pilares se hunden 0.755 bajo su base.
 // Con esta escala: tramo de 5.9 m, muro de unos 0.83 m de alto y pilares de 1.76 m sobre el suelo
 const WALL_MODEL_SCALE = 0.42
@@ -62,7 +68,18 @@ const STONE_VISIBLE_HEIGHT = 0.03
  * Un modelo del manifiesto colocado con su base en position y escalado a height.
  * alphaCutout: false para materiales con transparencia de verdad (el agua de la fuente).
  */
-export function ModelProp({ model, node, height, position, rotation = [0, 0, 0], alphaCutout = true }) {
+interface ModelPropProps {
+  /** Clave del manifiesto */
+  model: ModelName
+  /** Nodo concreto del modelo (sin él, el modelo entero) */
+  node?: string
+  height: number
+  position: Vector3Tuple
+  rotation?: Vector3Tuple
+  alphaCutout?: boolean
+}
+
+export function ModelProp({ model, node, height, position, rotation = [0, 0, 0], alphaCutout = true }: ModelPropProps) {
   // Con el plugin de specular-glossiness: el cojín pez y la fuente usan esa extensión y sin él salen blancos, sin texturas
   const { scene } = useGLTF(modelsManifest[model].url, true, true, withSpecularGlossiness)
   const { wrapper, scale } = useMemo(
@@ -76,19 +93,19 @@ export function ModelProp({ model, node, height, position, rotation = [0, 0, 0],
  * Gira la cabeza de una figura sin esqueleto retorciendo los vértices por encima del cuello alrededor del eje vertical
  * de la cabeza (los normales giran igual). Solo se copian las mallas que llegan al cuello: el resto se comparte.
  *
- * @param {Object3D} root - Figura ya preparada (prepareModel), sin escalar
- * @param {number} angle - Giro de la cabeza en radianes (positivo: hacia la izquierda de la figura)
- * @param {{ start: number, end: number }} neck - Alturas del cuello en fracción de la altura de la figura
+ * @param root - Figura ya preparada (prepareModel), sin escalar
+ * @param angle - Giro de la cabeza en radianes (positivo: hacia la izquierda de la figura)
+ * @param neck - Alturas del cuello en fracción de la altura de la figura
  */
-function turnHead(root, angle, neck) {
+function turnHead(root: Object3D, angle: number, neck: { start: number; end: number }) {
   root.updateMatrixWorld(true)
   const box = new Box3().setFromObject(root)
   const height = box.max.y - box.min.y
   const neckStart = box.min.y + neck.start * height
   const neckEnd = box.min.y + neck.end * height
-  const meshes = []
+  const meshes: Mesh[] = []
   root.traverse((object) => {
-    if (object.isMesh && new Box3().setFromObject(object).max.y > neckStart) meshes.push(object)
+    if ((object as Mesh).isMesh && new Box3().setFromObject(object).max.y > neckStart) meshes.push(object as Mesh)
   })
 
   // Eje de giro: centro de la cabeza (media de los vértices por encima del cuello)
@@ -140,7 +157,7 @@ function turnHead(root, angle, neck) {
 /**
  * Guerrero de pie (warrior.glb), con la cabeza girada headTurn radianes respecto al cuerpo.
  */
-export function Warrior({ position, height, rotationY, headTurn }) {
+export function Warrior({ position, height, rotationY, headTurn }: { position: Vector3Tuple; height: number; rotationY: number; headTurn: number }) {
   const { scene } = useGLTF(modelsManifest.warrior.url)
   const { wrapper, scale } = useMemo(() => {
     const prepared = prepareModel(scene, undefined, height)
@@ -157,18 +174,21 @@ export function Warrior({ position, height, rotationY, headTurn }) {
  * - Material_50: salpicaduras al pie de los chorros (se mecen).
  * Encima, unas gotas de rocío flotando alrededor de la parte alta.
  */
-export function Fountain({ position }) {
+export function Fountain({ position }: { position: Vector3Tuple }) {
   const { scene } = useGLTF(modelsManifest.fountain.url, true, true, withSpecularGlossiness)
   const { wrapper, scale } = useMemo(
     () => prepareModel(scene, undefined, FOUNTAIN_HEIGHT, { alphaCutout: false }),
     [scene]
   )
   // Texturas del agua por nombre de material (en una ref: se modifican en cada fotograma)
-  const waterMapsRef = useRef({})
+  const waterMapsRef = useRef<Partial<Record<string, Texture>>>({})
   useLayoutEffect(() => {
-    const maps = {}
+    const maps: Partial<Record<string, Texture>> = {}
     wrapper.traverse((object) => {
-      if (object.isMesh && object.material.map) maps[object.material.name] = object.material.map
+      const mesh = object as Mesh
+      if (!mesh.isMesh) return
+      const material = mesh.material as MeshStandardMaterial
+      if (material.map) maps[material.name] = material.map
     })
     // La lámina de la taza gira sobre su centro
     maps.Material_3?.center.set(0.5, 0.5)
@@ -200,25 +220,35 @@ export function Fountain({ position }) {
   )
 }
 
+/** Una losa del camino: centro [x, z], largo y giro */
+export interface PathStone {
+  x: number
+  z: number
+  size: number
+  rotationY: number
+}
+
 /**
  * Losas del camino con las piedras de elder_stones.glb (siete losas distintas en una sola malla, de pie en el plano XY):
  * se separan, se tumban y se van alternando, una por losa del camino.
  *
- * @param {{ x: number, z: number, size: number, rotationY: number }[]} stones - Centro, largo y giro de cada losa
+ * @param stones - Centro, largo y giro de cada losa
  */
-export function PathStones({ stones, groundY }) {
+export function PathStones({ stones, groundY }: { stones: PathStone[]; groundY: number }) {
   const { scene } = useGLTF(modelsManifest.elderStones.url)
   const { types, material } = useMemo(() => {
-    let mesh = null
+    // "null as …": con "= null", TypeScript creería que sigue siendo null tras el traverse
+    let mesh = null as Mesh | null
     scene.traverse((object) => {
-      if (object.isMesh) mesh = object
+      if ((object as Mesh).isMesh) mesh = object as Mesh
     })
+    if (!mesh) throw new Error('[PathStones] elder_stones.glb no tiene ninguna malla')
     scene.updateMatrixWorld(true)
     // Tumbadas: el grosor (Z) pasa a ser la altura y la cara que miraba a +Z queda arriba
     const geometry = mesh.geometry.clone().applyMatrix4(mesh.matrixWorld).rotateX(-Math.PI / 2)
     const pieces = splitIslands(geometry).map((piece) => {
       piece.computeBoundingBox()
-      const box = piece.boundingBox
+      const box = piece.boundingBox!
       const size = box.getSize(new Vector3())
       const center = box.getCenter(new Vector3())
       // Cada losa centrada y con la base en Y = 0
@@ -234,7 +264,7 @@ export function PathStones({ stones, groundY }) {
       types.map((type, t) =>
         stones
           .filter((_, i) => i % types.length === t)
-          .map((stone) => {
+          .map((stone): ScatterItem => {
             const scale = stone.size / type.length
             return {
               position: [stone.x, groundY - Math.max(0, type.height * scale - STONE_VISIBLE_HEIGHT), stone.z],
@@ -253,7 +283,7 @@ export function PathStones({ stones, groundY }) {
  * Muro de piedra (stone_wall.glb) a lo largo de un recorrido de puntos [x, z], tramo a tramo.
  * Cada lado debe medir un número entero de WALL_SEGMENT_LENGTH para que los pilares coincidan en las esquinas.
  */
-export function StoneWall({ path, groundY }) {
+export function StoneWall({ path, groundY }: { path: [number, number][]; groundY: number }) {
   const items = useMemo(
     () =>
       path.slice(1).flatMap((to, i) => {
@@ -262,7 +292,7 @@ export function StoneWall({ path, groundY }) {
         const dz = to[1] - from[1]
         const count = Math.max(1, Math.round(Math.hypot(dx, dz) / WALL_SEGMENT_LENGTH))
         // El modelo va a lo largo de Z: se gira para seguir el lado
-        return Array.from({ length: count }, (_, k) => {
+        return Array.from({ length: count }, (_, k): ModelItem => {
           const t = (k + 0.5) / count
           return {
             position: [from[0] + dx * t, groundY - WALL_BURIED_DEPTH, from[1] + dz * t],
@@ -279,7 +309,7 @@ export function StoneWall({ path, groundY }) {
 /**
  * Banco japonés de madera (jap_bench.glb) con un tiburón de peluche y un cojín pez encima.
  */
-export function Bench({ position, rotationY = 0 }) {
+export function Bench({ position, rotationY = 0 }: { position: Vector3Tuple; rotationY?: number }) {
   return (
     <group position={position} rotation={[0, rotationY, 0]}>
       <ModelProp model="gardenBench" height={BENCH_HEIGHT} position={[0, 0, 0]} />
@@ -294,9 +324,9 @@ export function Bench({ position, rotationY = 0 }) {
  * Farolillo japonés de papel encendido (japanese_paper_lanterns.glb trae cuatro distintos, con brillo propio)
  * y una luz pequeña que alumbra a su alrededor.
  *
- * @param {number} variant - Cuál de los cuatro farolillos (0 a 3)
+ * @param variant - Cuál de los cuatro farolillos (0 a 3)
  */
-export function Lantern({ position, variant, rotationY = 0 }) {
+export function Lantern({ position, variant, rotationY = 0 }: { position: Vector3Tuple; variant: number; rotationY?: number }) {
   const height = PAPER_LANTERN_HEIGHTS[variant]
   return (
     <group position={position}>

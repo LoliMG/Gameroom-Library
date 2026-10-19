@@ -24,6 +24,9 @@ import ShelfFigure from '@/scene/decor/ShelfFigure'
 // Postura relajada para personajes en postura en T
 import { relaxArms, spreadLegs } from '@/utils/pose'
 import { Vector3 } from 'three'
+import type { Object3D } from 'three'
+// Vector3Tuple: [x, y, z] en metros (el formato que aceptan position y rotation en React Three Fiber)
+import type { Vector3Tuple } from 'three'
 
 // Constantes de dimensiones y separación del conjunto del rincón de lectura
 const WALL_B_X = ROOM_WIDTH / 2 // Cota X de la pared derecha b (+2.60 m)
@@ -52,11 +55,11 @@ const TABLE_TOP_Y = TABLE_Y + modelsManifest.coffeeTable.targetDimensions.height
 // Posiciones de los objetos sobre el tablero (respecto al centro de la mesa) y holgura para no atravesarlo
 const TABLE_ITEM_CLEARANCE = 0.003
 const ITEMS_Y = TABLE_TOP_Y + TABLE_ITEM_CLEARANCE
-const MUG_POSITION = [TABLE_X - 0.12, ITEMS_Y, TABLE_Z + 0.14] // Taza hacia el frente izquierdo
-const CANDLESTICK_POSITION = [TABLE_X - 0.12, ITEMS_Y, TABLE_Z - 0.14] // Candelabro hacia el fondo izquierdo
+const MUG_POSITION: Vector3Tuple = [TABLE_X - 0.12, ITEMS_Y, TABLE_Z + 0.14] // Taza hacia el frente izquierdo
+const CANDLESTICK_POSITION: Vector3Tuple = [TABLE_X - 0.12, ITEMS_Y, TABLE_Z - 0.14] // Candelabro hacia el fondo izquierdo
 // La taza de coffee.glb mide ~3.8 cm de alto: el vapor nace justo encima del borde
 const MUG_RIM_HEIGHT = 0.038 * (modelsManifest.coffee.scale / 0.001)
-const STEAM_POSITION = [MUG_POSITION[0], ITEMS_Y + MUG_RIM_HEIGHT, MUG_POSITION[2]]
+const STEAM_POSITION: Vector3Tuple = [MUG_POSITION[0], ITEMS_Y + MUG_RIM_HEIGHT, MUG_POSITION[2]]
 
 // Repisas de pared sobre el sofá (pared b), colocadas según el boceto: la del lado de la puerta más alta,
 // la del lado del ventanal más baja y con un candelabro encima. y: cara superior de la tabla; z: centro de la repisa.
@@ -68,7 +71,7 @@ const WALL_SHELVES = [
 ]
 // Candelabro sobre la repisa derecha: centrado en el fondo de la tabla y desplazado hacia su extremo del ventanal
 const WALL_SHELF_DEPTH = WALL_SHELF_DEPTH_PER_LENGTH * WALL_SHELF_LENGTH // ≈ 0.21 m
-const SHELF_CANDLE_POSITION = [WALL_B_X - WALL_SHELF_DEPTH / 2, WALL_SHELVES[1].y, WALL_SHELVES[1].z + 0.25]
+const SHELF_CANDLE_POSITION: Vector3Tuple = [WALL_B_X - WALL_SHELF_DEPTH / 2, WALL_SHELVES[1].y, WALL_SHELVES[1].z + 0.25]
 // Línea central de las repisas (mitad de su fondo): ahí se apoyan las figuras
 const SHELF_ITEMS_X = WALL_B_X - WALL_SHELF_DEPTH / 2
 
@@ -76,15 +79,15 @@ const SHELF_ITEMS_X = WALL_B_X - WALL_SHELF_DEPTH / 2
 // En ivy.glb la base de la maceta está al 64.5 % de la altura total (las ramas cuelgan 41 de sus 63.6 unidades)
 const IVY_HEIGHT = 0.83                 // Altura total con ramas (maceta ≈ 0.13 m de ancho)
 const IVY_VASE_BASE_FRACTION = 0.645
-const IVY_POSITION = [SHELF_ITEMS_X, WALL_SHELVES[0].y - IVY_VASE_BASE_FRACTION * IVY_HEIGHT, WALL_SHELVES[0].z - 0.37]
+const IVY_POSITION: Vector3Tuple = [SHELF_ITEMS_X, WALL_SHELVES[0].y - IVY_VASE_BASE_FRACTION * IVY_HEIGHT, WALL_SHELVES[0].z - 0.37]
 // Ponyta de perfil sobre la repisa de arriba (la cabeza mira hacia el ventanal, +Z, como en el modelo)
 const PONYTA_HEIGHT = 0.22
-const PONYTA_POSITION = [SHELF_ITEMS_X, WALL_SHELVES[0].y, WALL_SHELVES[0].z + 0.11]
+const PONYTA_POSITION: Vector3Tuple = [SHELF_ITEMS_X, WALL_SHELVES[0].y, WALL_SHELVES[0].z + 0.11]
 // Crin y cola (material "Hair") brillando como fuego; intensidad > 1 para que el Bloom las haga resplandecer
 const PONYTA_GLOW = { material: 'Hair', color: '#ff7a1f', intensity: 1.6 }
 // Figura de Bakugo en la parte izquierda de la repisa de abajo (el candelabro queda a su derecha)
 const BAKUGO_HEIGHT = 0.32
-const BAKUGO_POSITION = [SHELF_ITEMS_X, WALL_SHELVES[1].y, WALL_SHELVES[1].z - 0.23]
+const BAKUGO_POSITION: Vector3Tuple = [SHELF_ITEMS_X, WALL_SHELVES[1].y, WALL_SHELVES[1].z - 0.23]
 const BAKUGO_ROTATION_Y = -Math.PI / 2 // El modelo mira hacia +Z; girado mira a la sala (-X)
 // Postura alerta desde la postura en T: huesos de brazos y piernas de bakugo.glb y hacia dónde mira el modelo
 const BAKUGO_ARMS = [
@@ -100,7 +103,7 @@ const BAKUGO_FORWARD = new Vector3(0, 0, 1)
 const BAKUGO_ARM_SPREAD = 0.45
 const BAKUGO_ELBOW_BEND = 0.6
 const BAKUGO_LEG_SPREAD = 0.14
-const poseBakugo = (root) => {
+const poseBakugo = (root: Object3D) => {
   relaxArms(root, BAKUGO_ARMS, BAKUGO_FORWARD, { armSpread: BAKUGO_ARM_SPREAD, elbowBend: BAKUGO_ELBOW_BEND })
   spreadLegs(root, BAKUGO_LEGS, BAKUGO_LEG_SPREAD)
 }

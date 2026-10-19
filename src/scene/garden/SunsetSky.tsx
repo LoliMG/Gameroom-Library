@@ -12,14 +12,23 @@ import { createRandom } from '@/utils/random'
 // Cúpula del cielo: esfera vista desde dentro que rodea todo el jardín
 const SKY_RADIUS = 180
 // Dirección del sol: al fondo (+Z), algo a la derecha vista desde la sala (X negativa) y justo sobre las colinas.
-// La luz del ventanal (Lights.jsx) viene del mismo lado, un poco más alta para que entre en la sala.
+// La luz del ventanal (Lights.tsx) viene del mismo lado, un poco más alta para que entre en la sala.
 const SUN_DIRECTION = new Vector3(-0.22, 0.055, 1).normalize()
 // Color del disco del sol (por encima de 1 para que lo recoja el bloom)
 const SUN_COLOR = new Color(1.6, 1.15, 0.6)
 
 // Capas de colinas, de lejos a cerca: distancia, altura de las crestas sobre el suelo y color.
 // Cuanto más lejos, más clara y rosada (se funden con la bruma del horizonte), como en un atardecer real
-const HILL_LAYERS = [
+/** Capa de colinas: distancia a la casa, altura de las crestas, color y semilla de su forma */
+interface HillLayer {
+  distance: number
+  minHeight: number
+  maxHeight: number
+  color: string
+  seed: number
+}
+
+const HILL_LAYERS: HillLayer[] = [
   { distance: 120, minHeight: 6, maxHeight: 14, color: '#d49a8e', seed: 3 },
   { distance: 80, minHeight: 3, maxHeight: 9, color: '#a0768a', seed: 7 },
   { distance: 48, minHeight: 1.5, maxHeight: 5, color: '#5d546b', seed: 13 },
@@ -62,7 +71,7 @@ const skyFragmentShader = /* glsl */ `
 `
 
 // Silueta de una capa de colinas: crestas suaves (suma de senos con fase al azar) y base muy por debajo del horizonte
-function createHillGeometry({ distance, minHeight, maxHeight, seed }) {
+function createHillGeometry({ distance, minHeight, maxHeight, seed }: HillLayer) {
   const random = createRandom(seed)
   const width = distance * 3
   const waves = [0, 1, 2].map((i) => ({ frequency: (1.5 + random() * 2) * (i + 1), phase: random() * Math.PI * 2 }))
@@ -85,7 +94,8 @@ function createMeadowTexture() {
   const canvas = document.createElement('canvas')
   canvas.width = 4
   canvas.height = 256
-  const ctx = canvas.getContext('2d')
+  // Lienzo nuevo: getContext('2d') no puede devolver null
+  const ctx = canvas.getContext('2d')!
   const gradient = ctx.createLinearGradient(0, 0, 0, 256)
   gradient.addColorStop(0, MEADOW_NEAR_COLOR)
   gradient.addColorStop(1, MEADOW_FAR_COLOR)

@@ -1,4 +1,7 @@
 import { useEffect, useMemo } from 'react'
+// Tipo de los eventos de puntero de React Three Fiber (llevan además el punto 3D tocado, el objeto, etc.)
+import type { ThreeEvent } from '@react-three/fiber'
+import type { Book as BookData } from '@/types'
 // Hook useTexture de drei para la carga reactiva de la textura de portada
 import { useTexture } from '@react-three/drei'
 // Espacio de color de la portada, caja del libro y su material
@@ -17,7 +20,7 @@ const SELECTED_GLOW = '#ffb52e'
 const SELECTED_GLOW_INTENSITY = 0.35
 
 // Cantos de las hojas (arriba, abajo y detrás): la misma textura y el mismo material para todos los libros
-let pagesMaterial = null
+let pagesMaterial: MeshStandardMaterial | null = null
 const getPagesMaterial = () => (pagesMaterial ??= new MeshStandardMaterial({ map: generatePagesTexture() }))
 
 // Caras de BoxGeometry, en su orden: +X portada, -X contraportada, +Y canto de arriba, -Y canto de abajo, +Z lomo,
@@ -26,10 +29,11 @@ const getPagesMaterial = () => (pagesMaterial ??= new MeshStandardMaterial({ map
 const FACE_ORDER = [0, 1, 4, 2, 3, 5]
 const INDICES_PER_FACE = 6 // Dos triángulos por cara
 
-function bookGeometry(width, height, depth) {
+function bookGeometry(width: number, height: number, depth: number) {
   const geometry = new BoxGeometry(width, height, depth)
-  const source = geometry.index.array
-  const reordered = new source.constructor(source.length)
+  // BoxGeometry siempre tiene índice. slice() da una copia del mismo tipo (Uint16Array…) que se rellena reordenada
+  const source = geometry.index!.array
+  const reordered = source.slice()
   FACE_ORDER.forEach((face, i) => reordered.set(source.subarray(face * INDICES_PER_FACE, (face + 1) * INDICES_PER_FACE), i * INDICES_PER_FACE))
   geometry.setIndex(new BufferAttribute(reordered, 1))
   geometry.clearGroups()
@@ -40,7 +44,24 @@ function bookGeometry(width, height, depth) {
   return geometry
 }
 
-function Book({ position, rotationY = 0, width, height, depth, onSelect, onGrab, book, selected = false }) {
+interface BookProps {
+  /** Centro del libro en la balda [x, y, z] */
+  position: [number, number, number]
+  /** Giro sobre Y: 0 de canto (lomo a la vista), -90° de frente (portada a la vista) */
+  rotationY?: number
+  width: number
+  height: number
+  depth: number
+  /** Clic en el libro (con el evento: Ctrl lo suma a la selección) */
+  onSelect: (book: BookData, event: ThreeEvent<MouseEvent>) => void
+  /** Botón pulsado sobre el libro: offsetX es el punto agarrado respecto a su centro, a lo largo de la balda */
+  onGrab: (book: BookData, offsetX: number, event: ThreeEvent<PointerEvent>) => void
+  book: BookData
+  selected?: boolean
+}
+
+// En este archivo, "Book" es el componente; el tipo del libro se importa como BookData
+function Book({ position, rotationY = 0, width, height, depth, onSelect, onGrab, book, selected = false }: BookProps) {
   // Carga reactiva de la textura de la portada con useTexture y espacio de color sRGB
   const coverTexture = useTexture(book.cover, (loadedTexture) => {
     loadedTexture.colorSpace = SRGBColorSpace
@@ -48,7 +69,8 @@ function Book({ position, rotationY = 0, width, height, depth, onSelect, onGrab,
 
   // Libros sin paleta calibrada a mano: los colores del lomo y la contraportada salen de su portada
   const styledBook = useMemo(
-    () => (book.spineGradient ? book : { ...book, ...paletteFromCover(coverTexture.image) }),
+    // (la imagen de una textura cargada con useTexture es un <img>)
+    () => (book.spineGradient ? book : { ...book, ...paletteFromCover(coverTexture.image as HTMLImageElement) }),
     [book, coverTexture]
   )
 
@@ -80,7 +102,7 @@ function Book({ position, rotationY = 0, width, height, depth, onSelect, onGrab,
   }, [materials, selected])
 
   // Manejador del evento de clic sobre el libro
-  const handleClick = (event) => {
+  const handleClick = (event: ThreeEvent<MouseEvent>) => {
     // event.stopPropagation() detiene la propagación del raycasting de React Three Fiber;
     // evita que el clic atraviese hacia otros objetos 3D que se encuentren detrás
     event.stopPropagation()

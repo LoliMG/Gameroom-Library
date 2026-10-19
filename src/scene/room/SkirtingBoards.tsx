@@ -4,6 +4,7 @@ import { useMemo } from 'react'
 import { useGLTF } from '@react-three/drei'
 // BufferAttribute para añadir las coordenadas de textura que el modelo no trae
 import { BufferAttribute } from 'three'
+import type { Mesh, Object3D } from 'three'
 // Manifiesto de modelos 3D
 import { modelsManifest } from '@/data/modelsManifest'
 // Madera de la repisa (mismo tono que repisas y estanterías)
@@ -26,9 +27,10 @@ const PROFILE_SCALE = SKIRTING_HEIGHT / ORIGINAL_HEIGHT
 const PIECE_LENGTH = ORIGINAL_LENGTH * PROFILE_SCALE
 
 // Geometría del perfil en el espacio del modelo con UV planas (u a lo largo, v en altura) para poder texturizarla
-function createProfileGeometry(scene) {
+function createProfileGeometry(scene: Object3D) {
   scene.updateMatrixWorld(true)
-  const mesh = scene.getObjectByProperty('isMesh', true)
+  // El modelo es una sola malla (el perfil)
+  const mesh = scene.getObjectByProperty('isMesh', true) as Mesh
   const geometry = mesh.geometry.clone().applyMatrix4(mesh.matrixWorld)
   const positions = geometry.attributes.position
   const uvs = new Float32Array(positions.count * 2)
@@ -45,7 +47,13 @@ function createProfileGeometry(scene) {
  * Cada tramo es { start: [x, z], end: [x, z] } sobre la cara interior de la pared, recorrido con la pared a la derecha
  * (así la cara plana del perfil queda contra la pared y la moldura mira a la sala).
  */
-function SkirtingBoards({ segments }) {
+/** Tramo de rodapié: de start a end, puntos [x, z] del suelo */
+export interface SkirtingSegment {
+  start: [number, number]
+  end: [number, number]
+}
+
+function SkirtingBoards({ segments }: { segments: SkirtingSegment[] }) {
   const { scene } = useGLTF(modelsManifest.skirting.url)
   const geometry = useMemo(() => createProfileGeometry(scene), [scene])
   const wood = useShelfWood('shelf')

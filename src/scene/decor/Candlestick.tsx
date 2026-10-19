@@ -8,6 +8,8 @@ import { modelsManifest } from '@/data/modelsManifest'
 import { enableShadows } from '@/utils/shadows'
 // Llama titilante (Fase 7)
 import CandleLight from '@/scene/decor/CandleLight'
+// Vector3Tuple: [x, y, z] en metros (el formato que aceptan position y rotation en React Three Fiber)
+import type { Vector3Tuple } from 'three'
 
 // Escala del candelabro según el manifiesto
 const CANDLE_SCALE = modelsManifest.candle.scale
@@ -21,7 +23,7 @@ const MODEL_FLAME_NODE = 'Flame_4'
  * `position` es el punto de apoyo de la base; `withLight` añade el halo de luz tenue
  * (el plan limita a 4 las luces de vela, así que no todas lo llevan).
  */
-function Candlestick({ position, rotationY = 0, withLight = true }) {
+function Candlestick({ position, rotationY = 0, withLight = true }: { position: Vector3Tuple; rotationY?: number; withLight?: boolean }) {
   const { scene } = useGLTF(modelsManifest.candle.url)
   const candle = useMemo(() => {
     const clone = enableShadows(scene.clone())

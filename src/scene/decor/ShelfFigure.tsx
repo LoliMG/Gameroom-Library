@@ -5,6 +5,10 @@ import { useFrame } from '@react-three/fiber'
 import { useGLTF } from '@react-three/drei'
 // Manifiesto de modelos 3D
 import { modelsManifest } from '@/data/modelsManifest'
+import type { ModelName } from '@/data/modelsManifest'
+import type { Material, Mesh, MeshStandardMaterial, Object3D } from 'three'
+// Vector3Tuple: [x, y, z] en metros (el formato que aceptan position y rotation en React Three Fiber)
+import type { Vector3Tuple } from 'three'
 // Mide, centra y escala el modelo a su altura objetivo
 import { prepareModel } from '@/utils/prepareModel'
 // Soporte de la extensión antigua de materiales (si no, bakugo.glb sale sin colores)
@@ -25,7 +29,19 @@ const GLOW_FLICKER = 0.25 // ±25 % de intensidad
  * `alphaCutout = false` conserva la transparencia mezclada (para cristal).
  * `pose` es una función que recibe el clon (con su propio esqueleto) para colocarlo en una postura, p. ej. relaxArms.
  */
-function ShelfFigure({ model, height, position, rotationY = 0, glow, alphaCutout = true, pose }) {
+interface ShelfFigureProps {
+  model: ModelName
+  height: number
+  position: Vector3Tuple
+  rotationY?: number
+  /** Material del modelo que brilla, su color y su intensidad */
+  glow?: { material: string; color: string; intensity: number }
+  alphaCutout?: boolean
+  /** Coloca el clon en una postura (recibe el modelo con su propio esqueleto) */
+  pose?: (root: Object3D) => void
+}
+
+function ShelfFigure({ model, height, position, rotationY = 0, glow, alphaCutout = true, pose }: ShelfFigureProps) {
   // Draco y Meshopt como en el resto de cargas (valores por defecto de drei) más el plugin de materiales antiguos
   const { scene } = useGLTF(modelsManifest[model].url, true, true, withSpecularGlossiness)
   const { wrapper, scale, glowMaterial } = useMemo(() => {
@@ -34,10 +50,12 @@ function ShelfFigure({ model, height, position, rotationY = 0, glow, alphaCutout
     if (pose) pose(prepared.wrapper)
     enableShadows(prepared.wrapper)
     // Material que brilla: usa su propia textura como mapa de emisión para que el brillo siga el dibujo
-    let material = null
+    // "null as …": si se escribiera "= null", TypeScript creería que sigue siendo null tras el traverse
+    let material = null as MeshStandardMaterial | null
     if (glow) {
       prepared.wrapper.traverse((node) => {
-        if (node.isMesh && node.material.name === glow.material) material = node.material
+        const mesh = node as Mesh
+        if (mesh.isMesh && (mesh.material as Material).name === glow.material) material = mesh.material as MeshStandardMaterial
       })
       if (!material) throw new Error(`[ShelfFigure] El modelo "${model}" no tiene el material "${glow.material}"`)
       material.emissive.set(glow.color)
@@ -48,14 +66,14 @@ function ShelfFigure({ model, height, position, rotationY = 0, glow, alphaCutout
   }, [scene, height, alphaCutout, glow, model, pose])
 
   // Referencia al material que brilla para animarlo en cada fotograma
-  const glowRef = useRef(null)
+  const glowRef = useRef<MeshStandardMaterial | null>(null)
   useEffect(() => {
     glowRef.current = glowMaterial
   }, [glowMaterial])
 
   // useFrame: parpadeo del brillo como una llama
   useFrame(({ clock }) => {
-    if (!glowRef.current) return
+    if (!glowRef.current || !glow) return
     const t = clock.elapsedTime
     const flicker = Math.sin(t * GLOW_SPEED_A) * 0.6 + Math.sin(t * GLOW_SPEED_B) * 0.4
     glowRef.current.emissiveIntensity = glow.intensity * (1 + flicker * GLOW_FLICKER)

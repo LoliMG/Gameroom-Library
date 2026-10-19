@@ -1,0 +1,205 @@
+// Búsqueda, filtro y selección del panel de la biblioteca
+import { useMemo, useState } from 'react'
+import type { Book, ReadingStatus } from '@/types'
+import AddBookPanel from '@/components/AddBookPanel'
+import '@/styles/bookDashboard.css'
+
+// Estados de lectura (mismas claves que guarda App): etiqueta para filtros, botones e insignias
+const READING_LABELS: Record<ReadingStatus, string> = { finished: 'Acabado', reading: 'Leyendo', unread: 'Sin leer' }
+// Filtros: todos o uno de los estados
+type StatusFilter = ReadingStatus | 'all'
+const FILTERS: { value: StatusFilter; label: string }[] = [
+  { value: 'all', label: 'Todos' },
+  { value: 'finished', label: 'Acabados' },
+  { value: 'reading', label: 'Leyendo' },
+  { value: 'unread', label: 'Sin leer' },
+]
+// Filtro por tipo: manga o novela (las de bolsillo cuentan como novelas)
+type FormatGroup = 'manga' | 'novel'
+type FormatFilter = FormatGroup | 'all'
+const FORMAT_FILTERS: { value: FormatFilter; label: string }[] = [
+  { value: 'all', label: 'Todos' },
+  { value: 'manga', label: 'Mangas' },
+  { value: 'novel', label: 'Novelas' },
+]
+const formatGroup = (book: Book): FormatGroup => (book.format === 'manga' ? 'manga' : 'novel')
+
+// Búsqueda sin distinguir mayúsculas ni tildes ("idhun" encuentra "Idhún")
+const normalize = (text: string | null | undefined) => (text ?? '').normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase()
+
+/**
+ * Panel de control de la biblioteca: todas las portadas, búsqueda por título o autor, filtros por estado de lectura
+ * y por tipo (manga o novela), selección de varios libros para cambiarles el estado de una vez y alta de libros nuevos.
+ * Pulsar una portada abre el panel del libro.
+ *
+ */
+interface BookDashboardProps {
+  books: Book[]
+  /** Estado por ISBN ('finished' | 'reading'; sin entrada = sin leer) */
+  readingStatus: Record<string, ReadingStatus>
+  /** Cambia el estado de esos libros */
+  onSetStatus: (isbns: string[], status: ReadingStatus) => void
+  /** Abre el panel de detalle del libro */
+  onOpenBook: (book: Book) => void
+}
+
+function BookDashboard({ books, readingStatus, onSetStatus, onOpenBook }: BookDashboardProps) {
+  const [query, setQuery] = useState('')
+  const [filter, setFilter] = useState<StatusFilter>('all')
+  const [formatFilter, setFormatFilter] = useState<FormatFilter>('all')
+  const [addingBook, setAddingBook] = useState(false) // ¿Se está buscando un libro para añadirlo?
+  const [selected, setSelected] = useState(() => new Set<string>())
+
+  const statusOf = (book: Book) => readingStatus[book.isbn] ?? 'unread'
+
+  // Cuántos libros hay en cada estado (para las pestañas)
+  const counts = useMemo(() => {
+    const result = { all: books.length, finished: 0, reading: 0, unread: 0 }
+    books.forEach((book) => result[readingStatus[book.isbn] ?? 'unread']++)
+    return result
+  }, [books, readingStatus])
+  const formatCounts = useMemo(() => {
+    const result = { all: books.length, manga: 0, novel: 0 }
+    books.forEach((book) => result[formatGroup(book)]++)
+    return result
+  }, [books])
+  const ownedIsbns = useMemo(() => new Set(books.map((book) => book.isbn)), [books])
+
+  const visibleBooks = useMemo(() => {
+    const words = normalize(query).split(/\s+/).filter(Boolean)
+    return books.filter((book) => {
+      if (filter !== 'all' && (readingStatus[book.isbn] ?? 'unread') !== filter) return false
+      if (formatFilter !== 'all' && formatGroup(book) !== formatFilter) return false
+      const text = normalize(`${book.title} ${book.author} ${book.publisher} ${book.saga ?? ''}`)
+      return words.every((word) => text.includes(word))
+    })
+  }, [books, readingStatus, query, filter, formatFilter])
+
+  const toggleSelected = (isbn: string) =>
+    setSelected((current) => {
+      const next = new Set(current)
+      if (next.has(isbn)) next.delete(isbn)
+      else next.add(isbn)
+      return next
+    })
+  const allVisibleSelected = visibleBooks.length > 0 && visibleBooks.every((book) => selected.has(book.isbn))
+  const toggleAllVisible = () =>
+    setSelected((current) => {
+      const next = new Set(current)
+      visibleBooks.forEach((book) => (allVisibleSelected ? next.delete(book.isbn) : next.add(book.isbn)))
+      return next
+    })
+  const applyStatus = (status: ReadingStatus) => {
+    onSetStatus([...selected], status)
+    setSelected(new Set())
+  }
+
+  return (
+    <div className="dashboard">
+      <header className="dashboard-header">
+        <h2 className="dashboard-title">Mi biblioteca</h2>
+        <input
+          type="search"
+          className="dashboard-search"
+          placeholder="Buscar por título, autor o editorial…"
+          aria-label="Buscar libros"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+        />
+        <button
+          type="button"
+          className="dashboard-action"
+          aria-pressed={addingBook}
+          onClick={() => setAddingBook((open) => !open)}
+        >
+          Añadir libro
+        </button>
+      </header>
+
+      {addingBook && <AddBookPanel ownedIsbns={ownedIsbns} onClose={() => setAddingBook(false)} />}
+
+      {!addingBook && (
+        <>
+          <div className="dashboard-filters" role="group" aria-label="Filtrar por estado de lectura">
+            {FILTERS.map(({ value, label }) => (
+              <button
+                key={value}
+                type="button"
+                className="dashboard-filter"
+                aria-pressed={filter === value}
+                onClick={() => setFilter(value)}
+              >
+                {label} <span className="dashboard-count">{counts[value]}</span>
+              </button>
+            ))}
+          </div>
+
+          <div className="dashboard-filters is-format" role="group" aria-label="Filtrar por tipo de libro">
+            {FORMAT_FILTERS.map(({ value, label }) => (
+              <button
+                key={value}
+                type="button"
+                className="dashboard-filter"
+                aria-pressed={formatFilter === value}
+                onClick={() => setFormatFilter(value)}
+              >
+                {label} <span className="dashboard-count">{formatCounts[value]}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Barra de selección: marcar todos los visibles y cambiar el estado de los seleccionados */}
+          <div className="dashboard-toolbar">
+            <label className="dashboard-select-all">
+              <input type="checkbox" checked={allVisibleSelected} onChange={toggleAllVisible} />
+              Seleccionar visibles
+            </label>
+            {selected.size > 0 && (
+              <div className="dashboard-bulk" role="group" aria-label="Cambiar estado de los seleccionados">
+                <span>{selected.size} seleccionados →</span>
+                {/* Object.entries pierde el tipo de las claves (las da como string): se recupera con "as" */}
+                {(Object.entries(READING_LABELS) as [ReadingStatus, string][]).map(([value, label]) => (
+                  <button key={value} type="button" className={`dashboard-bulk-btn status-${value}`} onClick={() => applyStatus(value)}>
+                    {label}
+                  </button>
+                ))}
+                <button type="button" className="dashboard-bulk-clear" onClick={() => setSelected(new Set())}>
+                  Quitar selección
+                </button>
+              </div>
+            )}
+          </div>
+
+          {visibleBooks.length === 0 ? (
+            <p className="dashboard-empty">Ningún libro coincide con la búsqueda.</p>
+          ) : (
+            <ul className="dashboard-grid">
+              {visibleBooks.map((book) => {
+                const status = statusOf(book)
+                const isSelected = selected.has(book.isbn)
+                return (
+                  <li key={book.isbn} className={`dashboard-card${isSelected ? ' is-selected' : ''}`}>
+                    <input
+                      type="checkbox"
+                      className="dashboard-card-check"
+                      aria-label={`Seleccionar ${book.title}`}
+                      checked={isSelected}
+                      onChange={() => toggleSelected(book.isbn)}
+                    />
+                    <button type="button" className="dashboard-card-open" onClick={() => onOpenBook(book)}>
+                      <img src={book.cover} alt="" className="dashboard-cover" />
+                      <span className="dashboard-card-title">{book.title}</span>
+                      <span className={`dashboard-badge status-${status}`}>{READING_LABELS[status]}</span>
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+        </>
+      )}
+    </div>
+  )
+}
+
+export default BookDashboard

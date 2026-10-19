@@ -6,6 +6,8 @@ import { useGLTF } from '@react-three/drei'
 import { modelsManifest } from '@/data/modelsManifest'
 // Activa sombras en todas las mallas de un modelo clonado
 import { enableShadows } from '@/utils/shadows'
+// Vector3Tuple: [x, y, z] en metros (el formato que aceptan position y rotation en React Three Fiber)
+import type { Vector3Tuple } from 'three'
 
 // Caja original de repisalarga.glb (unidades del modelo)
 const ORIGINAL_LENGTH = 200     // Largo de la tabla (eje X)
@@ -20,7 +22,7 @@ export const WALL_SHELF_DEPTH_PER_LENGTH = 0.2283
  * `position` es el punto de la pared en el centro de la repisa, a la altura de su cara superior;
  * `rotationY` orienta la cara de las escuadras (+Z del modelo) hacia la pared.
  */
-function WallShelf({ position, rotationY = 0, length }) {
+function WallShelf({ position, rotationY = 0, length }: { position: Vector3Tuple; rotationY?: number; length: number }) {
   const { scene } = useGLTF(modelsManifest.shelf.url)
   const shelf = useMemo(() => {
     const clone = enableShadows(scene.clone())
