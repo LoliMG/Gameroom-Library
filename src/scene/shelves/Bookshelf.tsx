@@ -61,13 +61,15 @@ export type ShelfSlot = { wall: string; module: number; shelf: number }
 
 /**
  * Arrastre y selección de libros (lo crea Experience y lo reparte a cada estantería):
- * - draggedIds: los libros que se están arrastrando; selectedIds: la selección múltiple
+ * - draggedIds: los libros que se están arrastrando; selectedIds: la selección múltiple; locatedId: el libro
+ *   localizado desde la consola (brilla en azul)
  * - grab: botón pulsado sobre un libro (offsetX: punto agarrado respecto a su centro)
  * - hover / drop: el puntero pasa o se suelta sobre una balda, en el punto x (coordenadas de la estantería)
  */
 export interface BookDrag {
   draggedIds: Set<number>
   selectedIds: Set<number>
+  locatedId: number | null
   grab: (book: BookData, offsetX: number, event: ThreeEvent<PointerEvent>) => void
   hover: (slot: ShelfSlot, x: number, innerWidth: number) => void
   drop: (slot: ShelfSlot, x: number, innerWidth: number) => void
@@ -229,6 +231,7 @@ function Bookshelf({ slot, placements = [], width = BASE_SHELF_WIDTH, onSelectBo
               onSelect={onSelectBook}
               onGrab={bookDrag.grab}
               selected={bookDrag.selectedIds.has(book.id)}
+              located={bookDrag.locatedId === book.id}
               rotationY={flipped ? FLIPPED_BOOK_ROTATION_Y : 0}
               position={[x, posY, posZ]}
               width={book.width}
