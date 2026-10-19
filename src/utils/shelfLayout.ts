@@ -274,19 +274,25 @@ export function placeSavedBooks<B extends ShelfBook>(
 }
 
 /**
- * Añade al primer hueco libre los libros de la lista que aún no están en las estanterías (los recién añadidos desde la
- * consola). Si no falta ninguno devuelve la misma lista, así quien la usa como estado de React no vuelve a pintar.
+ * Pone las estanterías al día con la lista de libros (que cambia sin recargar al añadir, editar o quitar libros desde la
+ * consola): quita los que ya no están, cambia por la versión nueva los editados (mismo sitio) y añade los nuevos al
+ * primer hueco libre. Si no cambia nada devuelve la misma lista, así quien la usa como estado de React no vuelve a pintar.
  *
  * @param placements - Libros ya colocados
  * @param books - Todos los libros de la colección
  * @param walls - Tramos de estanterías
  * @param gap - Separación entre libros
  */
-export function placeNewBooks<B extends ShelfBook>(placements: Placement<B>[], books: B[], walls: ShelfWall[], gap = 0): Placement<B>[] {
-  const placedIsbns = new Set(placements.map((p) => p.book.isbn))
+export function syncShelfBooks<B extends ShelfBook>(placements: Placement<B>[], books: B[], walls: ShelfWall[], gap = 0): Placement<B>[] {
+  const byIsbn = new Map(books.map((book) => [book.isbn, book]))
+  const kept = placements.filter((p) => byIsbn.has(p.book.isbn))
+  const current = kept.some((p) => byIsbn.get(p.book.isbn) !== p.book)
+    ? kept.map((p) => ({ ...p, book: byIsbn.get(p.book.isbn)! }))
+    : kept
+  const placedIsbns = new Set(current.map((p) => p.book.isbn))
   const added = books.filter((book) => !placedIsbns.has(book.isbn))
-  if (added.length === 0) return placements
-  const next = [...placements]
+  if (added.length === 0) return current.length === placements.length && current === kept ? placements : current
+  const next = [...current]
   for (const book of added) {
     const free = firstFreeSlot(walls, next, book.width, gap)
     if (free) next.push({ book, ...free })

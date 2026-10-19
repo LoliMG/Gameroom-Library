@@ -19,14 +19,14 @@ const HTML_Z_INDEX_RANGE: [number, number] = [100, 0]
  * Es HTML encima del lienzo: se usa con el ratón libre (con la cámara bloqueada, C la suelta).
  * El grupo mira hacia su +Z local: se gira para que dé a la sala.
  */
-// Las propiedades del panel (books, readingStatus, onSetStatus, onOpenBook) son las mismas que las de BookDashboard:
+// Las propiedades del panel (books, readingStatus, onSetStatus, onOpenBook…) son las mismas que las de BookDashboard:
 // ComponentProps<typeof BookDashboard> las toma de allí en vez de repetirlas
 type BookConsoleProps = ComponentProps<typeof BookDashboard> & {
   position: [number, number, number]
   rotationY: number
 }
 
-function BookConsole({ position, rotationY, books, readingStatus, onSetStatus, onOpenBook }: BookConsoleProps) {
+function BookConsole({ position, rotationY, ...dashboard }: BookConsoleProps) {
   return (
     <group position={position} rotation={[0, rotationY, 0]}>
       {/* Marco */}
@@ -42,7 +42,7 @@ function BookConsole({ position, rotationY, books, readingStatus, onSetStatus, o
         zIndexRange={HTML_Z_INDEX_RANGE}
         wrapperClass="book-console-layer"
       >
-        <BookDashboard books={books} readingStatus={readingStatus} onSetStatus={onSetStatus} onOpenBook={onOpenBook} />
+        <BookDashboard {...dashboard} />
       </Html>
     </group>
   )

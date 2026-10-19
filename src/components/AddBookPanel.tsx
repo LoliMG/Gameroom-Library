@@ -7,11 +7,18 @@ import type { BookFormat, CatalogBook } from '@/types'
 import { searchCatalog, addBookToCollection, addedMessage, FORMAT_LABELS } from '@/utils/catalogApi'
 import ManualBookForm from '@/components/ManualBookForm'
 
-/**
- * @param ownedIsbns - ISBN de los libros que ya están en la colección
- * @param onClose - Vuelve a las portadas de la colección
- */
-function AddBookPanel({ ownedIsbns, onClose }: { ownedIsbns: Set<string>; onClose: () => void }) {
+interface AddBookPanelProps {
+  /** ISBN de los libros que ya están en la colección */
+  ownedIsbns: Set<string>
+  /** ISBN de los libros de la lista de deseos */
+  wishedIsbns: Set<string>
+  /** Añade un resultado a la lista de deseos (con el formato elegido) */
+  onWish: (book: CatalogBook) => void
+  /** Vuelve a las portadas de la colección */
+  onClose: () => void
+}
+
+function AddBookPanel({ ownedIsbns, wishedIsbns, onWish, onClose }: AddBookPanelProps) {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<CatalogBook[] | null>(null) // null = aún no se ha buscado
   const [searching, setSearching] = useState(false)
@@ -138,6 +145,16 @@ function AddBookPanel({ ownedIsbns, onClose }: { ownedIsbns: Set<string>; onClos
                   <button type="button" className="dashboard-action" disabled={owned || state === 'adding'} onClick={() => add(book)}>
                     {owned ? 'En tu colección' : state === 'adding' ? 'Añadiendo…' : 'Añadir'}
                   </button>
+                  {!owned && (
+                    <button
+                      type="button"
+                      className="dashboard-action is-quiet"
+                      disabled={wishedIsbns.has(book.isbn)}
+                      onClick={() => onWish({ ...book, format: formats[book.isbn] ?? book.format })}
+                    >
+                      {wishedIsbns.has(book.isbn) ? '♥ En deseos' : '♡ Lo quiero'}
+                    </button>
+                  )}
                 </div>
               </li>
             )

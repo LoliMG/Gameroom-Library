@@ -122,7 +122,37 @@ export interface LibraryState {
   flipped: string[]
   /** Estado de lectura por ISBN (los que no aparecen están sin leer) */
   readingStatus: Record<string, ReadingStatus>
+  /** Etiquetas de cada libro por ISBN (FAVORITE_TAG marca los favoritos) */
+  tags: Record<string, string[]>
+  /** Libros que se quieren tener (aún no están en la colección) */
+  wishlist: WishItem[]
+  /** Ajustes de la sala */
+  settings: AppSettings
 }
+
+/** Un libro de la lista de deseos: lo necesario para añadirlo a la colección cuando se tenga (sale de la búsqueda) */
+export interface WishItem {
+  isbn: string
+  title: string
+  author: string | null
+  publisher: string | null
+  pages: number | null
+  coverUrl: string
+  format: BookFormat
+}
+
+/** Ajustes de la sala: ciudad del tiempo (con sus coordenadas, para pedir el clima a Open-Meteo) */
+export interface AppSettings {
+  city: string
+  latitude: number
+  longitude: number
+}
+
+/** Etiqueta de los libros favoritos (la estrella de la consola) */
+export const FAVORITE_TAG = 'Favorito'
+
+/** Ajustes por defecto (los que hay hasta que se cambian en la consola) */
+export const DEFAULT_SETTINGS: AppSettings = { city: 'Málaga', latitude: 36.7213, longitude: -4.4214 }
 
 /** Colores de subrayado del lector (los mismos que acepta el servidor) */
 export type AnnotationColor = 'yellow' | 'pink' | 'green' | 'blue'

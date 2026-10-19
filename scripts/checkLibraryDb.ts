@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import { guessSaga, addBook, CatalogConflictError, isbn10Of, matchWords, hasValidCheckDigit, cleanSynopsis, looksSpanish, setSynopsis } from '../server/bookCatalog.ts'
+import { guessSaga, addBook, CatalogConflictError, isbn10Of, matchWords, hasValidCheckDigit, cleanSynopsis, looksSpanish, setSynopsis, updateBook, deleteBook } from '../server/bookCatalog.ts'
 import {
   openLibraryDb,
   seedBooks,
@@ -12,6 +12,9 @@ import {
   writeFlipped,
   writeReadingStatus,
   ValidationError,
+  writeTags,
+  writeWishlist,
+  writeSettings,
   listEbooks,
   readReader,
   writePosition,
@@ -28,13 +31,21 @@ seedBooks(db, [
   { isbn: '222', title: 'Dos', author: 'B', pages: 200 },
   { isbn: '333', title: null }, // sin título: no entra
 ])
-assert.deepEqual(readState(db), { placements: {}, flipped: [], readingStatus: {} })
+assert.deepEqual(readState(db), {
+  placements: {},
+  flipped: [],
+  readingStatus: {},
+  tags: {},
+  wishlist: [],
+  settings: { city: 'Málaga', latitude: 36.7213, longitude: -4.4214 },
+})
 
 // Guardar y leer: los ISBN que no existen se ignoran
 writePlacements(db, { 111: { wall: 'a0', module: 1, shelf: 2, x: 0.25 }, 999: { wall: 'a0', module: 0, shelf: 0, x: 0 } })
 writeFlipped(db, ['222', '999'])
 writeReadingStatus(db, { 111: 'finished', 222: 'reading' })
-assert.deepEqual(readState(db), {
+const { placements: savedSlots, flipped: savedFlipped, readingStatus: savedStatus } = readState(db)
+assert.deepEqual({ placements: savedSlots, flipped: savedFlipped, readingStatus: savedStatus }, {
   placements: { 111: { wall: 'a0', module: 1, shelf: 2, x: 0.25 } },
   flipped: ['222'],
   readingStatus: { 111: 'finished', 222: 'reading' },
@@ -53,6 +64,24 @@ assert.throws(() => writeReadingStatus(db, { 111: 'quemado' }), ValidationError)
 assert.throws(() => writePlacements(db, { 111: { wall: 'a0', module: -1, shelf: 0, x: 0 } }), ValidationError)
 assert.throws(() => writeFlipped(db, 'no es lista'), ValidationError)
 assert.equal(readState(db).readingStatus[111], 'finished')
+
+// Etiquetas: las de libros que no existen se descartan; vacías o demasiado largas, error
+writeTags(db, { 111: ['Favorito', ' Para releer ', 'Favorito'], 999: ['x'] })
+assert.deepEqual(readState(db).tags, { 111: ['Favorito', 'Para releer'] })
+assert.throws(() => writeTags(db, { 111: [''] }), ValidationError)
+assert.throws(() => writeTags(db, { 111: ['x'.repeat(41)] }), ValidationError)
+
+// Lista de deseos: solo libros con ISBN-13, título y portada https; los campos de más no se guardan
+const wish = { isbn: '9788467945850', title: 'Solo Leveling 1', author: null, publisher: 'Norma', pages: 300, coverUrl: 'https://covers.openlibrary.org/b/id/1-L.jpg', format: 'manga' }
+writeWishlist(db, [{ ...wish, extra: 'no' }])
+assert.deepEqual(readState(db).wishlist, [wish])
+assert.throws(() => writeWishlist(db, [{ ...wish, isbn: '123' }]), ValidationError)
+assert.throws(() => writeWishlist(db, [{ ...wish, coverUrl: 'http://localhost/x.jpg' }]), ValidationError)
+
+// Ajustes: ciudad con coordenadas válidas
+writeSettings(db, { city: ' Granada ', latitude: 37.18, longitude: -3.6 })
+assert.deepEqual(readState(db).settings, { city: 'Granada', latitude: 37.18, longitude: -3.6 })
+assert.throws(() => writeSettings(db, { city: 'X', latitude: 200, longitude: 0 }), ValidationError)
 
 // --- Lector ---
 // Carpeta de libros electrónicos: solo cuentan los nombres que son un ISBN (nada de rutas ni otros archivos)
@@ -160,6 +189,20 @@ assert.equal(JSON.parse(fs.readFileSync(catalogFiles.booksMetaFile, 'utf8'))[0].
 setSynopsis(catalogFiles, '9788410140462', '')
 assert.equal('synopsis' in JSON.parse(fs.readFileSync(catalogFiles.booksMetaFile, 'utf8'))[0], false)
 assert.throws(() => setSynopsis(catalogFiles, '9780000000002', 'x'), ValidationError)
+// Editar: solo los campos que llegan; sin saga no hay tomo; datos no válidos, error
+const editedEntry = updateBook(db, catalogFiles, '9788467945850', { title: 'Solo Leveling, Vol. 1', format: 'bolsillo', saga: '', saga_index: 3 })
+assert.deepEqual([editedEntry.title, editedEntry.format, editedEntry.saga, editedEntry.saga_index, editedEntry.synopsis], ['Solo Leveling, Vol. 1', 'bolsillo', null, null, 'Sung Jinwoo es el cazador más débil del mundo.'])
+assert.equal(JSON.parse(fs.readFileSync(catalogFiles.booksMetaFile, 'utf8'))[1].format, 'bolsillo')
+assert.throws(() => updateBook(db, catalogFiles, '9788467945850', { title: '  ' }), ValidationError)
+assert.throws(() => updateBook(db, catalogFiles, '9788467945850', { format: 'revista' }), ValidationError)
+assert.throws(() => updateBook(db, catalogFiles, '9780000000002', { title: 'x' }), ValidationError)
+// Quitar: sale de booksMeta.json, de isbns.json y de la base de datos (con sus subrayados)
+createAnnotation(db, '9788467945850', { location: { page: 1, rects: [[0, 0, 1, 1]] }, text: 'x', color: 'yellow' })
+deleteBook(db, catalogFiles, '9788467945850')
+assert.deepEqual(JSON.parse(fs.readFileSync(catalogFiles.booksMetaFile, 'utf8')).map((b: { isbn: string }) => b.isbn), ['9788410140462'])
+assert.deepEqual(JSON.parse(fs.readFileSync(catalogFiles.isbnsFile, 'utf8')), ['9788410140462'])
+assert.throws(() => readReader(db, '9788467945850'), ValidationError)
+assert.throws(() => deleteBook(db, catalogFiles, '9788467945850'), ValidationError)
 fs.rmSync(catalogDir, { recursive: true })
 
 // Sinopsis de los catálogos: sin HTML, enlaces ni el apartado tras los guiones de Open Library; solo si es español

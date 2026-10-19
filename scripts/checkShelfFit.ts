@@ -1,7 +1,7 @@
 // Comprobación rápida de fitOnShelf (dónde cae un libro soltado en una balda) y separateOnShelf (separar libros que
 // se pisan): node scripts/checkShelfFit.ts
 import assert from 'node:assert/strict'
-import { fitOnShelf, separateOnShelf, fitGroupOnShelf, isValidSlot, placeSavedBooks, placeNewBooks } from '../src/utils/shelfLayout.ts'
+import { fitOnShelf, separateOnShelf, fitGroupOnShelf, isValidSlot, placeSavedBooks, syncShelfBooks } from '../src/utils/shelfLayout.ts'
 
 const book = (width: number, x: number) => ({ width, x })
 // actual puede ser null (fitOnShelf sin sitio): entonces la comprobación falla
@@ -67,12 +67,19 @@ const upstairs = placeSavedBooks(wide, full, walls, 0.01)
 assert.equal(upstairs[2].shelf, 1)
 near(upstairs[2].x, -0.45)
 
-// Libro añadido sin recargar: entra en el primer hueco libre; si no falta ninguno, la misma lista (React no repinta)
+// Libro añadido sin recargar: entra en el primer hueco libre; si no cambia nada, la misma lista (React no repinta)
 const shelfNow = [at('A', 0.45, 0, -0.27), at('B', 0.3, 0, 0.2)]
-assert.equal(placeNewBooks(shelfNow, [{ isbn: 'A', width: 0.45 }, { isbn: 'B', width: 0.3 }], walls, 0.01), shelfNow)
-const withNew = placeNewBooks(shelfNow, [{ isbn: 'A', width: 0.45 }, { isbn: 'B', width: 0.3 }, { isbn: 'N', width: 0.1 }], walls, 0.01)
+const [bookA, bookB] = shelfNow.map((p) => p.book)
+assert.equal(syncShelfBooks(shelfNow, [bookA, bookB], walls, 0.01), shelfNow)
+const withNew = syncShelfBooks(shelfNow, [bookA, bookB, { isbn: 'N', width: 0.1 }], walls, 0.01)
 assert.equal(withNew.length, 3)
 assert.deepEqual([withNew[2].book.isbn, withNew[2].shelf], ['N', 0])
 near(withNew[2].x, 0.41) // Entre A y B no cabe: va tras B (borde derecho 0.35) con la separación (0.01): 0.36 + 0.05
+// Libro quitado: desaparece; libro editado (otro objeto con el mismo ISBN): se queda en su sitio con los datos nuevos
+assert.deepEqual(syncShelfBooks(shelfNow, [bookB], walls, 0.01).map((p) => p.book.isbn), ['B'])
+const editedA = { isbn: 'A', width: 0.5 }
+const edited = syncShelfBooks(shelfNow, [editedA, bookB], walls, 0.01)
+assert.equal(edited[0].book, editedA)
+near(edited[0].x, -0.27)
 
-console.log('fitOnShelf, separateOnShelf, fitGroupOnShelf, placeSavedBooks y placeNewBooks: OK')
+console.log('fitOnShelf, separateOnShelf, fitGroupOnShelf, placeSavedBooks y syncShelfBooks: OK')

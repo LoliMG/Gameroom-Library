@@ -420,6 +420,61 @@ const isNewBookFormat = (value: unknown): value is BookFormat => (FORMATS as rea
 const isIntegerBetween = (value: unknown, min: number, max: number): value is number =>
   typeof value === 'number' && Number.isInteger(value) && value > min && value < max
 
+// Formatos que se pueden elegir al editar un libro (al añadirlo solo novela o manga; bolsillo ya existe en la colección)
+const EDIT_FORMATS: readonly BookFormat[] = ['book', 'manga', 'bolsillo']
+
+/**
+ * Cambia los datos de un libro de la colección en booksMeta.json y en la base de datos. Solo se tocan los campos que
+ * llegan: title, author, publisher, pages, format, saga, saga_index (null o texto vacío = quitarlo).
+ */
+export function updateBook(db: DatabaseSync, { booksMetaFile }: Pick<CatalogOptions, 'booksMetaFile'>, isbn: string, changes: unknown): BookMeta {
+  if (!isPlainObject(changes)) throw new ValidationError('Cambios no válidos')
+  const booksMeta: BookMeta[] = JSON.parse(fs.readFileSync(booksMetaFile, 'utf8'))
+  const entry = booksMeta.find((item) => item.isbn === isbn)
+  if (!entry) throw new ValidationError('Ese libro no está en la colección')
+  if ('title' in changes) {
+    const title = cleanText(changes.title)
+    if (!title) throw new ValidationError('Falta el título')
+    entry.title = title
+  }
+  if ('author' in changes) entry.author = cleanText(changes.author)
+  if ('publisher' in changes) entry.publisher = cleanText(changes.publisher)
+  if ('pages' in changes) {
+    if (changes.pages !== null && !isIntegerBetween(changes.pages, 0, 10000)) throw new ValidationError('Páginas no válidas')
+    entry.pages = changes.pages
+  }
+  if ('format' in changes) {
+    const { format } = changes
+    if (!(EDIT_FORMATS as readonly unknown[]).includes(format)) throw new ValidationError('Formato no válido')
+    entry.format = format as BookFormat
+  }
+  if ('saga' in changes) entry.saga = cleanText(changes.saga)
+  if ('saga_index' in changes) {
+    if (changes.saga_index !== null && !isIntegerBetween(changes.saga_index, 0, 1000)) throw new ValidationError('Número de tomo no válido')
+    entry.saga_index = changes.saga_index
+  }
+  if (!entry.saga) entry.saga_index = null
+  // Primero la base de datos; el JSON al final, porque al cambiarlo Vite actualiza la sala
+  seedBooks(db, [entry])
+  fs.writeFileSync(booksMetaFile, `${JSON.stringify(booksMeta, null, 2)}\n`)
+  return entry
+}
+
+/**
+ * Quita un libro de la colección: de booksMeta.json, de isbns.json y de la base de datos (con su estado, sus subrayados
+ * y sus marcadores).
+ * shortcut: la portada de src/assets/covers se queda (si se vuelve a añadir el libro, se sustituye); borrarla si llegan a
+ * acumularse muchas
+ */
+export function deleteBook(db: DatabaseSync, { booksMetaFile, isbnsFile }: Pick<CatalogOptions, 'booksMetaFile' | 'isbnsFile'>, isbn: string) {
+  const booksMeta: BookMeta[] = JSON.parse(fs.readFileSync(booksMetaFile, 'utf8'))
+  if (!booksMeta.some((item) => item.isbn === isbn)) throw new ValidationError('Ese libro no está en la colección')
+  db.prepare('DELETE FROM books WHERE isbn = ?').run(isbn)
+  const isbns: string[] = JSON.parse(fs.readFileSync(isbnsFile, 'utf8'))
+  fs.writeFileSync(isbnsFile, `${JSON.stringify(isbns.filter((item) => item !== isbn), null, 2)}\n`)
+  fs.writeFileSync(booksMetaFile, `${JSON.stringify(booksMeta.filter((item) => item.isbn !== isbn), null, 2)}\n`)
+}
+
 /**
  * Añade un libro a la colección, de la búsqueda o escrito a mano. La portada llega subida (coverData), como dirección
  * de un resultado (coverUrl) o, sin ninguna de las dos, se busca por el ISBN. Escribe la portada, booksMeta.json e
