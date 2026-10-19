@@ -14,8 +14,6 @@ import type { ModelName } from '@/data/modelsManifest'
 import { createRandom } from '@/utils/random'
 // Cota del suelo de la habitación (el jardín está al mismo nivel)
 import { FLOOR_Y } from '@/scene/room/Room'
-// Cielo del atardecer, colinas y prado del fondo
-import SunsetSky from '@/scene/garden/SunsetSky'
 // Fuente, muro, banco, losas y faroles
 import { Bench, Fountain, Lantern, ModelProp, PathStones, StoneWall, Warrior, WALL_SEGMENT_LENGTH } from '@/scene/garden/GardenProps'
 import type { PathStone } from '@/scene/garden/GardenProps'
@@ -255,9 +253,6 @@ function Outside() {
 
   return (
     <group>
-      {/* Cielo con el sol poniente, colinas y prado (sin niebla: ya tienen los colores de la bruma) */}
-      <SunsetSky />
-
       {/* Muro, fuente, banco, macetero, guerrero y farolillos */}
       <StoneWall path={WALL_PATH} groundY={GROUND_Y} />
       <Fountain position={FOUNTAIN_POSITION} />

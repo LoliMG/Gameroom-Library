@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react'
 import '@/styles/playControls.css'
 
 /**
- * Controles HTML sobre el lienzo: botón para capturar el ratón (modo juego), mirilla en el centro
- * mientras está capturado y una ayuda breve. C o Esc sueltan el ratón.
+ * Controles HTML sobre el lienzo: botón "?" que muestra la ayuda al pasar el puntero (o al llegar con el teclado) y
+ * mirilla en el centro mientras el ratón está capturado. C captura o suelta el ratón; Esc también lo suelta.
  *
  * @param onLock - Pide al lienzo que capture el ratón
  */
@@ -35,15 +35,13 @@ function PlayControls({ onLock }: { onLock: () => void }) {
   return (
     <>
       <div className="play-controls">
-        {!locked && (
-          <button type="button" className="play-controls__button" onClick={onLock}>
-            Bloquear cámara (C)
-          </button>
-        )}
-        <p className="play-controls__hint">
+        <button type="button" className="play-controls__help" aria-label="Ayuda con los controles" aria-describedby="play-controls-hint">
+          ?
+        </button>
+        <p id="play-controls-hint" role="tooltip" className="play-controls__hint">
           {locked
             ? 'WASD para moverte · Z para agacharte · ratón para mirar · apunta y haz clic en un libro · mantén pulsado sobre un libro y suéltalo donde quieras de las estanterías · C o Esc para soltar'
-            : 'WASD para moverte · Z para agacharte · arrastra para mirar · clic en un libro para ver sus datos · arrastra un libro a cualquier sitio de las estanterías · Ctrl + arrastrar o Ctrl + clic para elegir varios (Esc los suelta)'}
+            : 'C para bloquear la cámara · WASD para moverte · Z para agacharte · arrastra para mirar · clic en un libro para ver sus datos · arrastra un libro a cualquier sitio de las estanterías · Ctrl + arrastrar o Ctrl + clic para elegir varios (Esc los suelta)'}
         </p>
       </div>
       {/* Mirilla: solo con el ratón capturado, marca el punto que se selecciona al hacer clic */}

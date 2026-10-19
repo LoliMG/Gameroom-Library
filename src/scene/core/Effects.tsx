@@ -34,8 +34,7 @@ const BRIGHTNESS = 0.0        // Brillo (-1 a 1)
 const CONTRAST = 0.06         // Ligero aumento de contraste (-1 a 1)
 
 // Niebla exponencial muy ligera: dentro de la sala apenas se nota (≈3 % en la pared del fondo); en el jardín es la bruma
-// cálida del atardecer que aclara lo lejano (el cielo y las colinas no la usan)
-const FOG_COLOR = '#b58272'
+// que aclara (u oscurece, de noche) lo lejano. Su color es el del momento del día (el cielo y las colinas no la usan)
 const FOG_DENSITY = 0.028
 
 // Muestreo múltiple del compositor para mantener los bordes suaves (sustituye al antialias del lienzo)
@@ -44,13 +43,13 @@ const COMPOSER_MULTISAMPLING = 4
 /**
  * Postprocesado (Bloom, viñeta, profundidad de campo opcional y corrección de color) y niebla ligera.
  */
-function Effects() {
+function Effects({ fogColor }: { fogColor: string }) {
   if (!ENABLE_EFFECTS) return null
 
   return (
     <>
       {/* Niebla exponencial: attach="fog" la asigna a scene.fog */}
-      <fogExp2 attach="fog" args={[FOG_COLOR, FOG_DENSITY]} />
+      <fogExp2 attach="fog" args={[fogColor, FOG_DENSITY]} />
 
       {/* EffectComposer sustituye el render normal por una cadena de pasadas de postprocesado */}
       <EffectComposer multisampling={COMPOSER_MULTISAMPLING}>

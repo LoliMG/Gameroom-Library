@@ -43,7 +43,7 @@ function sanitize(library: Partial<Record<LibraryPart, unknown>> | null | undefi
     : []
   const settings: AppSettings =
     isPlainObject(library?.settings) && typeof library.settings.city === 'string' && typeof library.settings.latitude === 'number' && typeof library.settings.longitude === 'number'
-      ? (library.settings as unknown as AppSettings)
+      ? { ...DEFAULT_SETTINGS, ...(library.settings as Partial<AppSettings>) }
       : DEFAULT_SETTINGS
   return { placements, flipped, readingStatus, tags, wishlist, settings }
 }
