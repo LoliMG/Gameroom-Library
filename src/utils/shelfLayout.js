@@ -179,3 +179,112 @@ export function separateOnShelf(items, innerWidth, gap = 0) {
   }
   return xs
 }
+
+/**
+ * Coloca juntos varios libros (una selección que se arrastra) en una balda: van seguidos en su orden, con el libro
+ * agarrado bajo el puntero, y el bloque entero se arrima al hueco libre más próximo como haría un solo libro.
+ *
+ * @param {Array<{ x: number, width: number }>} others - Libros de la balda que no se mueven
+ * @param {number[]} widths - Hueco de cada libro del bloque, en orden de izquierda a derecha
+ * @param {number} grabbedIndex - Posición en el bloque del libro agarrado
+ * @param {number} x - Centro donde debería quedar el libro agarrado
+ * @param {number} innerWidth - Ancho útil de la balda
+ * @param {number} [gap] - Separación entre libros
+ * @returns {number[]|null} Centro de cada libro del bloque, o null si el bloque no cabe en la balda
+ */
+export function fitGroupOnShelf(others, widths, grabbedIndex, x, innerWidth, gap = 0) {
+  const total = widths.reduce((sum, width) => sum + width, 0) + gap * (widths.length - 1)
+  // Del borde izquierdo del bloque al centro del libro agarrado
+  const lead = widths.slice(0, grabbedIndex).reduce((sum, width) => sum + width + gap, 0) + widths[grabbedIndex] / 2
+  const center = fitOnShelf(others, total, x - lead + total / 2, innerWidth, gap)
+  if (center === null) return null
+  let cursor = center - total / 2
+  return widths.map((width) => {
+    const xi = cursor + width / 2
+    cursor += width + gap
+    return xi
+  })
+}
+
+/**
+ * ¿El sitio guardado existe en las estanterías actuales? (puede ser de antes de cambiar las estanterías)
+ *
+ * @param {Array<{ key: string, moduleCount: number, innerWidth: number, shelfCount: number }>} walls - Tramos de estanterías
+ * @param {{ wall: string, module: number, shelf: number, x: number }} slot - Sitio guardado de un libro
+ */
+export function isValidSlot(walls, slot) {
+  const wall = walls.find((w) => w.key === slot?.wall)
+  if (!wall) return false
+  return (
+    Number.isInteger(slot.module) && slot.module >= 0 && slot.module < wall.moduleCount &&
+    Number.isInteger(slot.shelf) && slot.shelf >= 0 && slot.shelf < wall.shelfCount &&
+    Number.isFinite(slot.x) && Math.abs(slot.x) <= wall.innerWidth / 2
+  )
+}
+
+/**
+ * Primer hueco libre para un libro de ancho width: tramo a tramo, módulo a módulo y de la balda de abajo hacia
+ * arriba, lo más a la izquierda posible. null si no cabe en ninguna balda.
+ *
+ * @param {Array<Object>} walls - Tramos de estanterías (ver isValidSlot)
+ * @param {Array<{ wall, module, shelf, x, book: { width } }>} placed - Libros ya colocados
+ */
+export function firstFreeSlot(walls, placed, width, gap = 0) {
+  for (const wall of walls) {
+    for (let module = 0; module < wall.moduleCount; module++) {
+      for (let shelf = 0; shelf < wall.shelfCount; shelf++) {
+        const others = placed.filter((p) => p.wall === wall.key && p.module === module && p.shelf === shelf)
+        const x = fitOnShelf(others.map((p) => ({ x: p.x, width: p.book.width })), width, -wall.innerWidth / 2, wall.innerWidth, gap)
+        if (x !== null) return { wall: wall.key, module, shelf, x }
+      }
+    }
+  }
+  return null
+}
+
+/**
+ * Pone encima del reparto inicial los sitios guardados ({ isbn: sitio }). Si hay sitios guardados, los libros sin
+ * sitio (recién añadidos) van al primer hueco libre en vez de a su sitio del reparto inicial, que puede estar ocupado
+ * por libros movidos; si no hay ninguno guardado, se usa el reparto inicial tal cual.
+ *
+ * @param {Array<{ book, wall, module, shelf, x }>} initial - Reparto inicial de todos los libros
+ * @param {Object<string, Object>} saved - Sitios guardados por ISBN
+ * @param {Array<Object>} walls - Tramos de estanterías (ver isValidSlot)
+ */
+export function placeSavedBooks(initial, saved, walls, gap = 0) {
+  const isSaved = (p) => isValidSlot(walls, saved[p.book.isbn])
+  if (!initial.some(isSaved)) return initial
+  const placed = initial.filter(isSaved).map((p) => ({ ...p, ...saved[p.book.isbn] }))
+  return initial.map((p) => {
+    if (isSaved(p)) {
+      const { wall, module, shelf, x } = saved[p.book.isbn]
+      return { ...p, wall, module, shelf, x }
+    }
+    // Si no hay hueco en ninguna balda se queda en su sitio del reparto inicial
+    const free = firstFreeSlot(walls, placed, p.book.width, gap) ?? p
+    const placement = { ...p, wall: free.wall, module: free.module, shelf: free.shelf, x: free.x }
+    placed.push(placement)
+    return placement
+  })
+}
+
+/**
+ * Añade al primer hueco libre los libros de la lista que aún no están en las estanterías (los recién añadidos desde la
+ * consola). Si no falta ninguno devuelve la misma lista, así quien la usa como estado de React no vuelve a pintar.
+ *
+ * @param {Array<{ book, wall, module, shelf, x }>} placements - Libros ya colocados
+ * @param {Array<{ isbn: string, width: number }>} books - Todos los libros de la colección
+ * @param {Array<Object>} walls - Tramos de estanterías (ver isValidSlot)
+ */
+export function placeNewBooks(placements, books, walls, gap = 0) {
+  const placedIsbns = new Set(placements.map((p) => p.book.isbn))
+  const added = books.filter((book) => !placedIsbns.has(book.isbn))
+  if (added.length === 0) return placements
+  const next = [...placements]
+  for (const book of added) {
+    const free = firstFreeSlot(walls, next, book.width, gap)
+    if (free) next.push({ book, ...free })
+    else console.warn(`[shelfLayout] No queda hueco en las estanterías para «${book.title}»`)
+  }
+  return next
+}

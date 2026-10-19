@@ -9,7 +9,6 @@ export const CLOUDY = {
   skyGlow: '#d8dfe4',       // Claridad alrededor del sol tras las nubes
   lightColor: '#b4cbde',    // Luz tenue y fría entrando por el ventanal
   lightIntensity: 1.4,      // Intensidad de la luz del ventanal (la que usaba Lights.jsx antes de leerla de la paleta)
-  envPreset: 'night',       // Preset ambiental nocturno suave de drei para reflejos
   envIntensity: 0.06,       // Intensidad mínima solo para matizar el cristal y metales
 }
 
@@ -21,7 +20,6 @@ export const DUSK = {
   skyGlow: '#9a5a7a',       // Último resplandor rosado donde se puso el sol
   lightColor: '#8a77b8',    // Luz violeta-azulada fría y mágica
   lightIntensity: 1.4,      // Intensidad de la luz del ventanal (la que usaba Lights.jsx antes de leerla de la paleta)
-  envPreset: 'night',       // Preset nocturno
   envIntensity: 0.08,       // Intensidad ambiental baja
 }
 
@@ -33,7 +31,6 @@ export const SUNSET = {
   skyGlow: '#ffc35e',       // Dorado intenso alrededor del sol
   lightColor: '#ffc98f',    // Luz dorada de sol bajo
   lightIntensity: 2.4,      // Más intensa que las otras paletas para que la sala se vea luminosa
-  envPreset: 'sunset',      // Preset de atardecer de drei para reflejos cálidos
   envIntensity: 0.15,       // Algo más de reflejo que de noche
 }
 

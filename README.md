@@ -65,16 +65,13 @@ Los siguientes modelos 3D en formato `.glb` se encuentran en `src/assets/models/
 
 ### Vegetación y Flores (Flowers)
 - **Colección de árboles (`flowers/trees.glb`)**: ["Realistic Trees Collection"](https://skfb.ly/pDzJR) por *Jungle Jim*, licenciado bajo [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/).
-- **Azalea (`flowers/azalea.glb`)**: ["Rhododendron - Azalea ( Free download )"](https://skfb.ly/pzprt) por *Nestaeric*, licenciado bajo [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/).
 - **Lirios blancos (`flowers/lilies1.glb`)**: ["Lilies"](https://skfb.ly/6V9YF) por *sligocreatures*, licenciado bajo [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/).
 - **Lirios morados (`flowers/purple_lilies.glb`)**: ["Purple lilies"](https://skfb.ly/pBGwp) por *Chenchanchong*, licenciado bajo [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/).
 - **Rosal en maceta (`flowers/rose_in_a_pot.glb`)**: ["Rose in a pot"](https://skfb.ly/6SDLR) por *Lassi Kaukonen*, licenciado bajo [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/).
-- **Lirio asiático (`flowers/asiatic_lily.glb`)**: ["Asiatic Lily"](https://skfb.ly/oYLWL) por *local.yany*, licenciado bajo [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/).
 - **Lirio de araña (`flowers/spider_lily.glb`)**: ["Spider Lily (Lycoris Radiata)"](https://skfb.ly/oJJBW) por *Osian CG*, licenciado bajo [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/).
 
 ### Varios (Others)
 - **Libro abierto (`other/book_open.glb`)**: ["Book Open"](https://skfb.ly/6pMGN) por *FlukierJupiter*, licenciado bajo [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/).
-- **Libro vikingo / mágico (`other/viking_book.glb`)**: ["Viking book"](https://skfb.ly/6TqoO) por *katrin.kor*, licenciado bajo [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/).
 - **Candelabro con vela (`other/candle.glb`)**: ["Copper candlestick"](https://skfb.ly/oMYp6) por *shuvalov.di*, licenciado bajo [CC BY-SA 4.0](http://creativecommons.org/licenses/by-sa/4.0/).
 - **Taza de café (`other/coffee.glb`)**: ["Coffee"](https://sketchfab.com/3d-models/coffee-963a9e5d288c42509886c5efd4fedd3c) por *Rosnandie Yikie*, licenciado bajo [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/).
 - **Repisa de pared (`furniture/repisalarga.glb`)**: ["RepisaLarga"](https://sketchfab.com/3d-models/repisalarga-8b0bdc6ce8af46b5b7bf19599d34fd42) por *EmpDevTeam*, licenciado bajo [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/).

@@ -31,6 +31,8 @@ dist-ssr
 
 # Base de datos local de la biblioteca (datos personales: estados de lectura, sitio de los libros…)
 /data/*.sqlite*
+# Libros electrónicos personales para el lector (no se suben al repositorio)
+/ebooks/
 
 /docs/implementation_plan.md
 credits.md

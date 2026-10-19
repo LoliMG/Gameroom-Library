@@ -109,22 +109,70 @@
   padding-top: var(--panel-spacing-lg);
   display: flex;
   justify-content: flex-end;
+  gap: var(--panel-spacing-sm);
 }
 
-.book-detail-flip-btn {
-  background: var(--panel-close-bg);
+/* Botones de icono del pie (ver en grande, leer, voltear) */
+.book-detail-icon-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
   color: var(--panel-accent);
+  background: var(--panel-close-bg);
   border: 1px solid var(--panel-accent);
-  border-radius: 6px;
-  padding: 8px 14px;
-  font-size: 14px;
-  font-weight: 600;
+  border-radius: 8px;
   cursor: pointer;
 }
 
-.book-detail-flip-btn:hover,
-.book-detail-flip-btn:focus-visible {
+.book-detail-icon-btn:hover,
+.book-detail-icon-btn:focus-visible {
   background: rgba(226, 192, 112, 0.15);
+}
+
+.book-detail-icon-btn:focus-visible {
+  outline: 2px solid var(--panel-text-primary);
+  outline-offset: 2px;
+}
+
+/* Leer: el principal, relleno; voltear marcado cuando el libro está de frente */
+.book-detail-icon-btn.is-primary,
+.book-detail-icon-btn[aria-pressed='true'] {
+  color: #1a1408;
+  background: var(--panel-accent);
+}
+
+/* Etiqueta flotante encima del botón, alineada a su derecha para no salirse del panel por el borde de la pantalla */
+.book-detail-icon-btn::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 8px);
+  width: max-content;
+  max-width: 240px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: rgba(10, 10, 14, 0.95);
+  border: 1px solid var(--panel-border);
+  color: var(--panel-text-primary);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.3;
+  text-align: right;
+  white-space: normal;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.15s, transform 0.15s;
+}
+
+.book-detail-icon-btn:hover::after,
+.book-detail-icon-btn:focus-visible::after {
+  opacity: 1;
+  transform: none;
 }
 
 /* Pantallas móviles (< 600px): el panel ocupa todo el ancho y se coloca abajo */
