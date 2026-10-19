@@ -313,7 +313,7 @@ export const modelsManifest = {
     },
   },
 
-  // Guerrero (sacerdote caído) de pie en el jardín, junto al banco. Muy pesado: ~1,9 millones de triángulos y 138 MB
+  // Guerrero (sacerdote caído) de pie en el jardín, junto al banco. Simplificado de 1,9 millones a ~221 000 triángulos (24 MB); sin Meshopt porque turnHead edita sus vértices
   warrior: {
     url: warriorUrl,
     file: 'other/warrior.glb',
