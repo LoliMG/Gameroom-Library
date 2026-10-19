@@ -1,8 +1,10 @@
-// Grillos y viento de fondo cuando es de noche (ver nightAmbience.ts). No pinta nada en la escena.
+// Sonidos de fondo del jardín: grillos y viento de noche, lluvia cuando llueve y truenos con tormenta (ver
+// ambientSounds.ts). No pinta nada.
 import { useEffect, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
-import { createNightAmbience } from '@/utils/nightAmbience'
-import type { NightAmbience } from '@/utils/nightAmbience'
+import { createAmbientSounds } from '@/utils/ambientSounds'
+import type { AmbientSounds as Sounds } from '@/utils/ambientSounds'
+import type { SoundVolumes } from '@/types'
 // Cara interior del muro del ventanal: de ahí vienen los sonidos del jardín
 import { FRONT_WALL_INNER_Z } from '@/scene/room/Room'
 
@@ -12,12 +14,24 @@ const proximityAt = (distance: number) => Math.min(1, (1 + NEAR_DISTANCE) / (1 +
 // Cambio mínimo de cercanía para avisar al audio (no hace falta en cada fotograma)
 const PROXIMITY_STEP = 0.02
 
-/**
- * @param level - Lo de noche que es: 0 (día, silencio) a 1 (noche cerrada); el volumen lo sigue poco a poco
- */
-function NightSounds({ level }: { level: number }) {
-  const ambienceRef = useRef<NightAmbience | null>(null)
-  const levelRef = useRef(level)
+interface AmbientSoundsProps {
+  /** Lo de noche que es: 0 (día) a 1 (noche cerrada) */
+  level: number
+  /** Lluvia: 0 (nada) a 1 (fuerte) */
+  rain: number
+  /** Tormenta: suenan truenos */
+  thunder: boolean
+  /** Volumen de cada sonido (con los sonidos silenciados en Ajustes, todos a 0) */
+  volumes: SoundVolumes
+}
+
+function AmbientSounds({ level, rain, thunder, volumes }: AmbientSoundsProps) {
+  const ambienceRef = useRef<Sounds | null>(null)
+  // Los valores más recientes, para dárselos al audio cuando arranque (con el primer clic o tecla)
+  const latestRef = useRef({ level, rain, thunder, volumes })
+  useEffect(() => {
+    latestRef.current = { level, rain, thunder, volumes }
+  })
   const proximityRef = useRef(1)
 
   // Los navegadores no dejan sonar una página hasta que se toca: el audio arranca con el primer clic o tecla
@@ -27,8 +41,13 @@ function NightSounds({ level }: { level: number }) {
       window.removeEventListener('pointerdown', start)
       window.removeEventListener('keydown', start)
       ctx = new AudioContext()
-      ambienceRef.current = createNightAmbience(ctx)
-      ambienceRef.current.setLevel(levelRef.current)
+      const sounds = createAmbientSounds(ctx)
+      const latest = latestRef.current
+      sounds.setVolumes(latest.volumes)
+      sounds.setLevel(latest.level)
+      sounds.setRain(latest.rain)
+      sounds.setThunder(latest.thunder)
+      ambienceRef.current = sounds
       ambienceRef.current.setProximity(proximityRef.current)
     }
     window.addEventListener('pointerdown', start)
@@ -42,10 +61,10 @@ function NightSounds({ level }: { level: number }) {
     }
   }, [])
 
-  useEffect(() => {
-    levelRef.current = level
-    ambienceRef.current?.setLevel(level)
-  }, [level])
+  useEffect(() => ambienceRef.current?.setLevel(level), [level])
+  useEffect(() => ambienceRef.current?.setRain(rain), [rain])
+  useEffect(() => ambienceRef.current?.setThunder(thunder), [thunder])
+  useEffect(() => ambienceRef.current?.setVolumes(volumes), [volumes])
 
   // Más bajo cuanto más lejos del ventanal: distancia de la cámara al muro del ventanal, en cada fotograma
   useFrame(({ camera }) => {
@@ -58,4 +77,4 @@ function NightSounds({ level }: { level: number }) {
   return null
 }
 
-export default NightSounds
+export default AmbientSounds

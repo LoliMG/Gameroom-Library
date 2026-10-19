@@ -3,7 +3,7 @@
 // SQLite a través de la API (/api, la sirve server/library.ts con el servidor de Vite) y, como copia de seguridad, en
 // localStorage, por si el servidor no está disponible.
 import type { AppSettings, LibraryState, ReadingStatus, WishItem } from '@/types'
-import { DEFAULT_SETTINGS } from '@/types'
+import { DEFAULT_SETTINGS, withDefaultSettings } from '@/types'
 
 const READING_STATUSES: ReadingStatus[] = ['finished', 'reading', 'unread']
 
@@ -43,7 +43,7 @@ function sanitize(library: Partial<Record<LibraryPart, unknown>> | null | undefi
     : []
   const settings: AppSettings =
     isPlainObject(library?.settings) && typeof library.settings.city === 'string' && typeof library.settings.latitude === 'number' && typeof library.settings.longitude === 'number'
-      ? { ...DEFAULT_SETTINGS, ...(library.settings as Partial<AppSettings>) }
+      ? withDefaultSettings(library.settings as Partial<AppSettings>)
       : DEFAULT_SETTINGS
   return { placements, flipped, readingStatus, tags, wishlist, settings }
 }

@@ -146,15 +146,42 @@ export interface AppSettings {
   city: string
   latitude: number
   longitude: number
-  /** Sonidos de fondo (grillos y viento de noche); false = silenciados */
+  /** Sonidos de fondo (grillos, viento, lluvia y truenos); false = silenciados todos */
   sound: boolean
+  /** Volumen de cada sonido: 0 (apagado) a 1.5 (150 %); 1 es el volumen normal */
+  volumes: SoundVolumes
 }
+
+/** Volumen de cada sonido de fondo (ver src/utils/ambientSounds.ts) */
+export interface SoundVolumes {
+  wind: number
+  rain: number
+  thunder: number
+  crickets: number
+}
+
+/**
+ * Ajustes guardados encima de los de por defecto: los guardados antes de añadir un ajuste nuevo (como sound o el volumen
+ * de un sonido) lo reciben así. Lo usan el servidor (lo de la base de datos) y libraryApi.ts (lo de localStorage)
+ */
+export function withDefaultSettings(saved: Partial<AppSettings>): AppSettings {
+  return { ...DEFAULT_SETTINGS, ...saved, volumes: { ...DEFAULT_SETTINGS.volumes, ...saved.volumes } }
+}
+
+/** Volumen más alto que se puede poner a un sonido (150 %) */
+export const MAX_SOUND_VOLUME = 1.5
 
 /** Etiqueta de los libros favoritos (la estrella de la consola) */
 export const FAVORITE_TAG = 'Favorito'
 
 /** Ajustes por defecto (los que hay hasta que se cambian en la consola) */
-export const DEFAULT_SETTINGS: AppSettings = { city: 'Málaga', latitude: 36.7213, longitude: -4.4214, sound: true }
+export const DEFAULT_SETTINGS: AppSettings = {
+  city: 'Málaga',
+  latitude: 36.7213,
+  longitude: -4.4214,
+  sound: true,
+  volumes: { wind: 1, rain: 1, thunder: 1, crickets: 1 },
+}
 
 /** Colores de subrayado del lector (los mismos que acepta el servidor) */
 export type AnnotationColor = 'yellow' | 'pink' | 'green' | 'blue'

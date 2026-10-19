@@ -1,6 +1,8 @@
-// Comprobación rápida del ciclo del día (posición del sol y atmósfera según su altura): node scripts/checkDaylight.ts
+// Comprobación rápida del ciclo del día (posición del sol y atmósfera según su altura) y del tiempo (nubes, lluvia):
+// node scripts/checkDaylight.ts
 import assert from 'node:assert/strict'
-import { sunPosition, sunDirection, paletteForElevation, DAY, GOLDEN, NIGHT } from '../src/scene/core/ambiencePalette.ts'
+import { sunPosition, sunDirection, paletteForElevation, applyWeather, CLEAR_WEATHER, DAY, GOLDEN, NIGHT } from '../src/scene/core/ambiencePalette.ts'
+import { weatherFromForecast } from '../src/utils/weatherApi.ts'
 
 const MALAGA = { latitude: 36.7213, longitude: -4.4214 }
 const at = (iso: string) => sunPosition(new Date(iso), MALAGA.latitude, MALAGA.longitude)
@@ -35,4 +37,21 @@ const between = paletteForElevation(7) // A medio camino entre día (12°) y hor
 near(between.lightIntensity, (DAY.lightIntensity + GOLDEN.lightIntensity) / 2, 1e-9)
 assert.ok(paletteForElevation(-8).stars > 0 && paletteForElevation(-8).stars < 1)
 
-console.log('Ciclo del día (sol y atmósfera): OK')
+// Tiempo de Open-Meteo: código 3 (cubierto) sin lluvia; código 63 (lluvia moderada); llovizna con mucha agua medida;
+// niebla (45); y una respuesta vacía, que cuenta como despejado
+const overcast = weatherFromForecast({ current: { weather_code: 3, cloud_cover: 100, precipitation: 0, wind_speed_10m: 4.7, temperature_2m: 17 } })
+assert.deepEqual(overcast, { cloudCover: 1, rain: 0, fog: false, thunder: false, windSpeed: 4.7, temperature: 17 })
+assert.equal(weatherFromForecast({ current: { weather_code: 95 } }).thunder, true)
+assert.equal(weatherFromForecast({ current: { weather_code: 63 } }).rain, 0.65)
+assert.equal(weatherFromForecast({ current: { weather_code: 51, precipitation: 1.5 } }).rain, 1) // 6 mm/h: fuerte
+assert.equal(weatherFromForecast({ current: { weather_code: 45 } }).fog, true)
+assert.deepEqual(weatherFromForecast({}), CLEAR_WEATHER)
+
+// Nubes: despejado no cambia nada; cubierto apaga la luz y tapa las estrellas
+assert.equal(applyWeather(DAY, CLEAR_WEATHER), DAY)
+const cloudyNight = applyWeather(NIGHT, overcast)
+assert.equal(cloudyNight.stars, 0)
+assert.ok(applyWeather(DAY, overcast).lightIntensity < DAY.lightIntensity)
+assert.notEqual(applyWeather(DAY, overcast).skyTop, DAY.skyTop)
+
+console.log('Ciclo del día y tiempo (sol, atmósfera, nubes y lluvia): OK')

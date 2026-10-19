@@ -13,8 +13,8 @@ import type { IncomingMessage, ServerResponse } from 'node:http'
 // Tipo de Vite para el plugin que monta la API en el servidor de desarrollo
 import type { Plugin } from 'vite'
 // Tipos compartidos con la sala (la forma de los datos que van y vienen por la API)
-import type { Annotation, AnnotationColor, AppSettings, BookMeta, Bookmark, EbookFormat, LibraryState, ReaderLocation, ReadingStatus, Slot, WishItem } from '../src/types.ts'
-import { DEFAULT_SETTINGS } from '../src/types.ts'
+import type { Annotation, AnnotationColor, AppSettings, BookMeta, Bookmark, EbookFormat, LibraryState, ReaderLocation, ReadingStatus, Slot, SoundVolumes, WishItem } from '../src/types.ts'
+import { DEFAULT_SETTINGS, MAX_SOUND_VOLUME, withDefaultSettings } from '../src/types.ts'
 // Búsqueda y alta de libros nuevos desde la consola (usa seedBooks, ValidationError e isPlainObject de aquí, solo dentro
 // de funciones: así la importación circular entre los dos archivos no da problemas)
 import { searchBooks, addBook, setSynopsis, updateBook, deleteBook, CatalogConflictError } from './bookCatalog.ts'
@@ -193,8 +193,7 @@ export function readState(db: DatabaseSync): LibraryState {
     readingStatus: {},
     tags: readAppData(db, 'tags', {}),
     wishlist: readAppData(db, 'wishlist', []),
-    // Encima de los de por defecto: los ajustes guardados antes de añadir uno nuevo (como sound) lo reciben así
-    settings: { ...DEFAULT_SETTINGS, ...readAppData(db, 'settings', {}) },
+    settings: withDefaultSettings(readAppData(db, 'settings', {})),
   }
   for (const row of db.prepare('SELECT * FROM book_state').all() as BookStateRow[]) {
     // Con pared hay sitio guardado: las cuatro columnas se escriben juntas (writePlacements)
@@ -316,18 +315,26 @@ export function writeWishlist(db: DatabaseSync, wishlist: unknown) {
   writeAppData(db, 'wishlist', wishlist.map(({ isbn, title, author, publisher, pages, coverUrl, format }: WishItem) => ({ isbn, title, author, publisher, pages, coverUrl, format })))
 }
 
-/** Guarda los ajustes de la sala ({ city, latitude, longitude, sound }). */
+const SOUND_NAMES = Object.keys(DEFAULT_SETTINGS.volumes) as (keyof SoundVolumes)[]
+const validVolumes = (volumes: unknown): volumes is SoundVolumes =>
+  isPlainObject(volumes) &&
+  SOUND_NAMES.every((name) => typeof volumes[name] === 'number' && volumes[name] >= 0 && volumes[name] <= MAX_SOUND_VOLUME)
+
+/** Guarda los ajustes de la sala ({ city, latitude, longitude, sound, volumes }). */
 export function writeSettings(db: DatabaseSync, settings: unknown) {
   if (
     !isPlainObject(settings) ||
     !shortText(settings.city, 100) ||
     typeof settings.latitude !== 'number' || Math.abs(settings.latitude) > 90 ||
     typeof settings.longitude !== 'number' || Math.abs(settings.longitude) > 180 ||
-    typeof settings.sound !== 'boolean'
+    typeof settings.sound !== 'boolean' ||
+    !validVolumes(settings.volumes)
   ) {
     throw new ValidationError('Ajustes no válidos')
   }
-  const clean: AppSettings = { city: settings.city.trim(), latitude: settings.latitude, longitude: settings.longitude, sound: settings.sound }
+  // Solo los sonidos conocidos (validVolumes ya ha comprobado cada uno)
+  const volumes = Object.fromEntries(SOUND_NAMES.map((name) => [name, (settings.volumes as SoundVolumes)[name]])) as unknown as SoundVolumes
+  const clean: AppSettings = { city: settings.city.trim(), latitude: settings.latitude, longitude: settings.longitude, sound: settings.sound, volumes }
   writeAppData(db, 'settings', clean)
 }
 
