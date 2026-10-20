@@ -240,7 +240,10 @@ function GardenPlant({ model, node, height, position, rotationY = 0 }: { model: 
  * Jardín al atardecer visible por el ventanal: camino de losas hasta una fuente, macizos de lirios, banco, guerrero y macetero,
  * faroles encendidos, muro de piedra, árboles y colinas bajo el sol poniente.
  */
-function Outside({ night }: { night: boolean }) {
+// Manto de nieve sobre el césped: blanco mate, más opaco cuanto más nieva (deja asomar algo de hierba)
+const SNOW_COVER_OPACITY = 0.75
+
+function Outside({ night, snow }: { night: boolean; snow: number }) {
   // Reparto determinista de todas las piezas instanciadas (una semilla por grupo: tocar uno no mueve los demás)
   const scatter = useMemo(
     () => ({
@@ -272,6 +275,12 @@ function Outside({ night }: { night: boolean }) {
       {/* Modelos: césped, flores (instanciadas), matas y árboles */}
       <Suspense fallback={null}>
         <GardenGround />
+        {snow > 0 && (
+          <mesh position={[GROUND_POSITION[0], GROUND_Y + 0.01, GROUND_POSITION[2]]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+            <planeGeometry args={GROUND_SIZE} />
+            <meshStandardMaterial color="#f2f5f8" roughness={1} transparent opacity={snow * SNOW_COVER_OPACITY} depthWrite={false} />
+          </mesh>
+        )}
         <InstancedModel model="lilies1" items={scatter.flowers.white} />
         <InstancedModel model="spiderLily" items={scatter.flowers.red} />
         {PURPLE_LILY_STEMS.map((stem) => (
@@ -293,5 +302,5 @@ function Outside({ night }: { night: boolean }) {
   )
 }
 
-// memo: va dentro de DayCycle, que se repinta cada minuto; así solo se repinta al cambiar de día a noche
+// memo: va dentro de DayCycle, que se repinta cada minuto; así solo se repinta al cambiar de día a noche o la nieve
 export default memo(Outside)

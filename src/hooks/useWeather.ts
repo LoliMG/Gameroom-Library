@@ -8,11 +8,12 @@ import { fetchWeather } from '@/utils/weatherApi'
 
 const UPDATE_MS = 15 * 60 * 1000
 
-// Solo en desarrollo: ?clima=lluvia | tormenta | nublado | niebla | despejado en la dirección fuerza ese tiempo, para ver cómo queda
+// Solo en desarrollo: ?clima=lluvia | tormenta | nieve | nublado | niebla | despejado en la dirección fuerza ese tiempo, para ver cómo queda
 // sin esperar a que llueva de verdad
 const PREVIEWS: Record<string, Weather> = {
   lluvia: { ...CLEAR_WEATHER, cloudCover: 1, rain: 0.8, windSpeed: 25, temperature: 14 },
   tormenta: { ...CLEAR_WEATHER, cloudCover: 1, rain: 1, thunder: true, windSpeed: 40, temperature: 13 },
+  nieve: { ...CLEAR_WEATHER, cloudCover: 1, snow: 0.7, windSpeed: 10, temperature: -2 },
   nublado: { ...CLEAR_WEATHER, cloudCover: 1, temperature: 16 },
   niebla: { ...CLEAR_WEATHER, cloudCover: 0.6, fog: true, temperature: 12 },
   despejado: CLEAR_WEATHER,
