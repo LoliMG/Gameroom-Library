@@ -37,6 +37,7 @@ import FloorLamp from '@/scene/decor/FloorLamp'
 import Door from '@/scene/room/Door'
 // Pantalla con el panel de la biblioteca (portadas, búsqueda y estados de lectura)
 import BookConsole from '@/scene/books/BookConsole'
+import type { OccluderBox } from '@/scene/books/BookConsole'
 // Recuadro para seleccionar varios libros (Ctrl + arrastrar)
 import SelectionBox, { MIN_BOX_SIZE } from '@/scene/books/SelectionBox'
 // Modelo del manifiesto colocado y escalado (la katana de encima de las estanterías)
@@ -218,6 +219,22 @@ const CONSOLE_ROTATION_Y = 0
 // Gramófono sobre la repisa de la chimenea, hacia la izquierda y con la bocina hacia la sala
 const GRAMOPHONE_HEIGHT = 0.5
 const GRAMOPHONE_POSITION: Vector3Tuple = [FIREPLACE_POSITION[0] - 0.5, FLOOR_Y + FIREPLACE_HEIGHT, FIREPLACE_POSITION[2]]
+// Lo que tapa la consola, en cajas: la chimenea por partes (medidas del modelo, desde su centro en planta y el suelo:
+// [mitad del ancho, alto desde, alto hasta, fondo desde, fondo hasta]; el zócalo no llega a la altura de la pantalla)
+// y el gramófono (0.3 × 0.32 m en planta)
+const fireplacePart = ([halfX, y0, y1, z0, z1]: number[]): OccluderBox => ({
+  min: [FIREPLACE_POSITION[0] - halfX, FLOOR_Y + y0, FIREPLACE_POSITION[2] + z0],
+  max: [FIREPLACE_POSITION[0] + halfX, FLOOR_Y + y1, FIREPLACE_POSITION[2] + z1],
+})
+const CONSOLE_OCCLUDERS: OccluderBox[] = [
+  fireplacePart([0.69, 0.12, FIREPLACE_HEIGHT, -FIREPLACE_DEPTH / 2, 0.15]), // Bloque del fondo
+  fireplacePart([0.58, 0.12, 0.95, 0.15, 0.28]), // Columnas y marco tallado
+  fireplacePart([0.64, 0.95, 1.01, 0.15, 0.33]), // Cornisa
+  {
+    min: [GRAMOPHONE_POSITION[0] - 0.15, GRAMOPHONE_POSITION[1], GRAMOPHONE_POSITION[2] - 0.16],
+    max: [GRAMOPHONE_POSITION[0] + 0.15, GRAMOPHONE_POSITION[1] + GRAMOPHONE_HEIGHT, GRAMOPHONE_POSITION[2] + 0.16],
+  },
+]
 // Vuelta del gato por la sala (en sentido contrario a las agujas del reloj, visto desde arriba): delante de la chimenea,
 // junto a la puerta, entre la mesa de café (x 1.2, z 2.1) y la alfombra, ante el ventanal esquivando la lámpara (x 0),
 // a lo largo de las estanterías (cara en x -2.25) y de vuelta a la chimenea (frente en z -1.32)
@@ -598,6 +615,7 @@ function Experience({ onSelectBook, flippedIsbns, readingStatus, onSetStatus, sa
         <BookConsole
           position={CONSOLE_POSITION}
           rotationY={CONSOLE_ROTATION_Y}
+          occluders={CONSOLE_OCCLUDERS}
           books={books}
           readingStatus={readingStatus}
           onSetStatus={onSetStatus}

@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "fetch-books": "node scripts/fetchBooks.ts",
-    "check": "node scripts/checkShelfFit.ts && node scripts/checkSplitIslands.ts && node scripts/checkDaylight.ts && node scripts/checkDiary.ts && node --no-warnings scripts/checkLibraryDb.ts"
+    "check": "node scripts/checkShelfFit.ts && node scripts/checkSplitIslands.ts && node scripts/checkConvexHull.ts && node scripts/checkDaylight.ts && node scripts/checkDiary.ts && node --no-warnings scripts/checkLibraryDb.ts"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.9",
