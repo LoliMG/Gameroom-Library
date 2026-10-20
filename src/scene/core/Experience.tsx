@@ -14,6 +14,7 @@ import SunsetSky from '@/scene/garden/SunsetSky'
 // Grillos, viento y lluvia de fondo; gotas de lluvia tras el ventanal
 import AmbientSounds from '@/scene/core/AmbientSounds'
 import RainFall from '@/scene/garden/RainFall'
+import SnowFall from '@/scene/garden/SnowFall'
 import type { AppSettings, SoundVolumes } from '@/types'
 import { paletteForElevation } from '@/scene/core/ambiencePalette'
 // Importación del entorno exterior (jardín, árboles, flores y cielo)
@@ -218,7 +219,7 @@ const FIREPLACE_POSITION: Vector3Tuple = [0.15, FLOOR_Y, BACK_WALL_Z + 0.02 + FI
 const CAT_PATH = { center: [0.15, FLOOR_Y, -0.95] as Vector3Tuple, radii: [1.1, 0.2] as [number, number] }
 
 // Altura del sol (grados) por debajo de la cual empieza a oscurecer (acaba la hora dorada): se enciende la lámpara y
-// aparece el guerrero del jardín
+// aparece el guerrero del jardín; el polvo que flota en la luz del ventanal solo se ve antes
 const DUSK_ELEVATION = 2
 
 // Volúmenes con los sonidos silenciados en Ajustes
@@ -234,10 +235,12 @@ function DayCycle({ settings }: { settings: AppSettings }) {
   const ambience = useAmbience(settings, weather)
   const { palette } = ambience
   const dusk = ambience.sunElevation < DUSK_ELEVATION
+  // Noche sin contar las nubes (las nubes tapan las estrellas, no la noche): para los grillos y el color de la nieve
+  const night = paletteForElevation(ambience.sunElevation).stars
   return (
     <>
-      {/* Jardín con arboleda y flores visible tras el cristal del ventanal (el guerrero solo de noche) */}
-      <Outside night={dusk} />
+      {/* Jardín con arboleda y flores visible tras el cristal del ventanal (el guerrero solo de noche; nevado si nieva) */}
+      <Outside night={dusk} snow={weather.snow} />
 
       {/* Lámpara de pie entre los arcos del ventanal, encendida al oscurecer (25 MB: con su propio Suspense, la sala no
           la espera) */}
@@ -265,6 +268,11 @@ function DayCycle({ settings }: { settings: AppSettings }) {
 
       {/* Lluvia tras el ventanal, cuando llueve en la ciudad */}
       <RainFall intensity={weather.rain} windSpeed={weather.windSpeed} />
+      {/* Polvo flotando en la luz del ventanal, solo de día */}
+      {!dusk && <DustParticles />}
+
+      {/* Nieve tras el ventanal (sin sonido: la nieve cae en silencio) */}
+      <SnowFall intensity={weather.snow} windSpeed={weather.windSpeed} night={night} />
 
       {/* Chimenea, con el fuego encendido cuando hace frío (su caja de colisión va con los muebles) */}
       <Suspense fallback={null}>
@@ -275,7 +283,7 @@ function DayCycle({ settings }: { settings: AppSettings }) {
           tormenta; en Ajustes se ajusta el volumen de cada uno o se silencian todos. La noche se mide sin las nubes (las
           nubes tapan las estrellas, no la noche) */}
       <AmbientSounds
-        level={paletteForElevation(ambience.sunElevation).stars}
+        level={night}
         rain={weather.rain}
         thunder={weather.thunder}
         volumes={settings.sound ? settings.volumes : SILENT}
@@ -584,9 +592,6 @@ function Experience({ onSelectBook, flippedIsbns, readingStatus, onSetStatus, sa
 
         {/* Enredaderas colgando junto al ventanal */}
         <Vines />
-
-        {/* Polvo flotando en la luz del ventanal */}
-        <DustParticles />
 
         {/* Al terminar de cargar, sube a la tarjeta gráfica todas las texturas y compila todos los materiales: si no, se
             hace la primera vez que cada cosa entra en la vista y la cámara da tirones al moverse */}

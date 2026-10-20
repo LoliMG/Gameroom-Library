@@ -142,6 +142,8 @@ export interface Weather {
   cloudCover: number
   /** Lluvia: 0 (nada) a 1 (fuerte) */
   rain: number
+  /** Nieve: 0 (nada) a 1 (fuerte) */
+  snow: number
   /** Niebla */
   fog: boolean
   /** Tormenta (suenan truenos) */
@@ -153,12 +155,15 @@ export interface Weather {
 }
 
 /** Cielo despejado y sin viento (mientras no se sabe el tiempo, o si no se puede consultar) */
-export const CLEAR_WEATHER: Weather = { cloudCover: 0, rain: 0, fog: false, thunder: false, windSpeed: 0, temperature: 20 }
+export const CLEAR_WEATHER: Weather = { cloudCover: 0, rain: 0, snow: 0, fog: false, thunder: false, windSpeed: 0, temperature: 20 }
 
 // Cielo cubierto: cuánto se apagan los colores (saturación) y cuánto se oscurecen, y cuánto baja la luz del ventanal
 const OVERCAST_DESATURATE = 0.75
 const OVERCAST_DARKEN = 0.25
 const OVERCAST_LIGHT = 0.55
+// Nieve: color del manto y cuánto blanquea el prado y las colinas con nevada fuerte
+const SNOW_COLOR = '#e6ecf2'
+const SNOW_COVER = 0.65
 
 // Color gris a medias: menos saturado y algo más oscuro, según amount (0 = igual, 1 = del todo cubierto)
 function overcastColor(color: string, amount: number) {
@@ -168,13 +173,16 @@ function overcastColor(color: string, amount: number) {
 }
 
 /**
- * La atmósfera con el tiempo encima: las nubes (y más aún la lluvia) apagan el cielo, las colinas y la luz, y tapan las
- * estrellas. El sol y la niebla los ajusta quien pinta (SunsetSky y Effects) con weather.
+ * La atmósfera con el tiempo encima: las nubes (y más aún la lluvia o la nieve) apagan el cielo, las colinas y la luz, y
+ * tapan las estrellas; la nieve además blanquea el prado y las colinas. El sol y la niebla los ajusta quien pinta
+ * (SunsetSky y Effects) con weather.
  */
 export function applyWeather(palette: AmbiencePalette, weather: Weather): AmbiencePalette {
-  const amount = Math.min(1, weather.cloudCover * 0.85 + weather.rain * 0.3)
+  const amount = Math.min(1, weather.cloudCover * 0.85 + (weather.rain + weather.snow) * 0.3)
   if (amount === 0) return palette
+  const cover = weather.snow * SNOW_COVER
   const gray = (color: string) => overcastColor(color, amount)
+  const snowy = (color: string) => mixColor(gray(color), SNOW_COLOR, cover)
   return {
     ...palette,
     skyTop: gray(palette.skyTop),
@@ -185,9 +193,9 @@ export function applyWeather(palette: AmbiencePalette, weather: Weather): Ambien
     ambientIntensity: palette.ambientIntensity * (1 - 0.2 * amount),
     envIntensity: palette.envIntensity * (1 - 0.4 * amount),
     fogColor: gray(palette.fogColor),
-    hills: [gray(palette.hills[0]), gray(palette.hills[1]), gray(palette.hills[2])],
-    meadowNear: gray(palette.meadowNear),
-    meadowFar: gray(palette.meadowFar),
+    hills: [snowy(palette.hills[0]), snowy(palette.hills[1]), snowy(palette.hills[2])],
+    meadowNear: snowy(palette.meadowNear),
+    meadowFar: snowy(palette.meadowFar),
     stars: palette.stars * (1 - weather.cloudCover),
   }
 }
