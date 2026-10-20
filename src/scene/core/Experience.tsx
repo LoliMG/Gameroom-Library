@@ -214,7 +214,7 @@ const loadPlacements = (saved: Record<string, Slot>) => placeSavedBooks(layoutAl
 // Chimenea en la pared del fondo, entre las estanterías y la consola, con la trasera contra la pared
 const FIREPLACE_POSITION: Vector3Tuple = [0.15, FLOOR_Y, BACK_WALL_Z + 0.02 + FIREPLACE_DEPTH / 2]
 // Pantalla de la biblioteca en la pared del fondo, entre la chimenea y la esquina de la pared b, mirando a la sala (+Z)
-const CONSOLE_POSITION: Vector3Tuple = [(FIREPLACE_POSITION[0] + FIREPLACE_WIDTH / 2 + ROOM_WIDTH / 2) / 2, FLOOR_Y + 1.35, BACK_WALL_Z + 0.02]
+const CONSOLE_POSITION: Vector3Tuple = [(FIREPLACE_POSITION[0] + FIREPLACE_WIDTH / 2 + ROOM_WIDTH / 2) / 2, FLOOR_Y + 1.45, BACK_WALL_Z + 0.02]
 const CONSOLE_ROTATION_Y = 0
 // Gramófono sobre la repisa de la chimenea, hacia la izquierda y con la bocina hacia la sala
 const GRAMOPHONE_HEIGHT = 0.5
