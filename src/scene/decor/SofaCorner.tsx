@@ -1,7 +1,7 @@
 // Importación de useMemo de React para clonar y configurar los modelos 3D
 import { useMemo } from 'react'
-// Hooks y primitivas auxiliares de @react-three/drei
-import { useGLTF, RoundedBox } from '@react-three/drei'
+// useGLTF de @react-three/drei para cargar los modelos
+import { useGLTF } from '@react-three/drei'
 // Importación del manifiesto centralizado de modelos 3D
 import { modelsManifest } from '@/data/modelsManifest'
 // Activa sombras en todas las mallas de un modelo clonado
@@ -124,14 +124,8 @@ const POT_X = WALL_B_X - POT_FOOTPRINT / 2 - POT_CLEARANCE // Pegada a la pared 
 const POT_Y = FLOOR_Y + modelsManifest.roseInAPot.groundOffset // -1.0 m
 const POT_CORNER_Z = (SOFA_END_Z + FRONT_WALL_INNER_Z) / 2 // Centrada entre el sofá y el ventanal (+3.63 m)
 
-// Constantes de materiales y colores para cojines y manta
-const CUSHION_COLOR_OLIVE = '#3e4d3a'    // Verde bosque profundo
-const CUSHION_COLOR_BURGUNDY = '#6b242a' // Burdeos / vino oscuro
-const CUSHION_COLOR_BEIGE = '#c7bca9'    // Beige estampado suave
-const BLANKET_COLOR = '#5c1e24'          // Manta de lana granate cálida
-
 /**
- * Componente que agrupa el sofá, cojines, manta, mesa de café con marquetería,
+ * Componente que agrupa el sofá, la mesa de café con marquetería,
  * libro abierto, candelabro con vela real (candle.glb) y taza de café (coffee.glb).
  */
 function SofaCorner() {
@@ -163,54 +157,6 @@ function SofaCorner() {
         // Rotación de -90 grados (-PI / 2) sobre Y para que el frontal mire hacia -X (interior)
         rotation={[0, -Math.PI / 2, 0]}
       />
-
-      {/* 2. COJINES (3 unidades decorativas apoyadas sobre el asiento del sofá) */}
-      {/* Cojín izquierdo verde oliva */}
-      {/* RoundedBox ya es una malla: recibe directamente posición, giro y sombras */}
-      <RoundedBox
-        args={[0.14, 0.28, 0.28]} radius={0.035} smoothness={4}
-        position={[SOFA_X + 0.12, FLOOR_Y + 0.42, SOFA_Z - 0.50]}
-        rotation={[0.15, -0.3, 0.1]}
-        castShadow
-        receiveShadow
-      >
-          <meshStandardMaterial color={CUSHION_COLOR_OLIVE} roughness={0.85} />
-      </RoundedBox>
-
-      {/* Cojín central beige */}
-      {/* RoundedBox ya es una malla: recibe directamente posición, giro y sombras */}
-      <RoundedBox
-        args={[0.12, 0.26, 0.28]} radius={0.03} smoothness={4}
-        position={[SOFA_X + 0.14, FLOOR_Y + 0.40, SOFA_Z]}
-        rotation={[0.1, -0.05, 0.12]}
-        castShadow
-        receiveShadow
-      >
-          <meshStandardMaterial color={CUSHION_COLOR_BEIGE} roughness={0.8} />
-      </RoundedBox>
-
-      {/* Cojín derecho burdeos */}
-      {/* RoundedBox ya es una malla: recibe directamente posición, giro y sombras */}
-      <RoundedBox
-        args={[0.14, 0.28, 0.28]} radius={0.035} smoothness={4}
-        position={[SOFA_X + 0.12, FLOOR_Y + 0.42, SOFA_Z + 0.50]}
-        rotation={[0.12, 0.25, 0.08]}
-        castShadow
-        receiveShadow
-      >
-          <meshStandardMaterial color={CUSHION_COLOR_BURGUNDY} roughness={0.85} />
-      </RoundedBox>
-
-      {/* 3. MANTA DRAPEADA sobre el brazo del sofá (extremo hacia el ventanal) */}
-      <mesh
-        position={[SOFA_X, FLOOR_Y + 0.58, SOFA_Z + 0.82]}
-        rotation={[0, 0, 0.05]}
-        castShadow
-        receiveShadow
-      >
-        <boxGeometry args={[0.38, 0.18, 0.16]} />
-        <meshStandardMaterial color={BLANKET_COLOR} roughness={0.9} />
-      </mesh>
 
       {/* 4. ALFOMBRA ESTAMPADA CON BORLAS (Fase 6): situada bajo la mesa y frente al sofá */}
       <Rug position={[RUG_X, FLOOR_Y, RUG_Z]} rotationY={RUG_ROTATION_Y} />

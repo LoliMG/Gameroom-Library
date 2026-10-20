@@ -28,7 +28,7 @@ import Room, { ROOM_WIDTH, BACK_WALL_Z, FLOOR_Y, FRONT_WALL_INNER_Z } from '@/sc
 // Importación del componente de pared de estanterías
 import BookshelfWall from '@/scene/shelves/BookshelfWall'
 import type { BookDrag, ShelfSlot, ShownPlacement } from '@/scene/shelves/Bookshelf'
-// Importación del rincón de lectura con sofá, cojines, manta, mesa de café y accesorios
+// Importación del rincón de lectura con sofá, mesa de café y accesorios
 import SofaCorner from '@/scene/decor/SofaCorner'
 import Fireplace, { COLD_NIGHT_TEMPERATURE, COLD_TEMPERATURE, FIREPLACE_DEPTH, FIREPLACE_WIDTH } from '@/scene/decor/Fireplace'
 import Cat from '@/scene/decor/Cat'
@@ -215,8 +215,20 @@ const FIREPLACE_POSITION: Vector3Tuple = [0.15, FLOOR_Y, BACK_WALL_Z + 0.02 + FI
 // Pantalla de la biblioteca en la pared del fondo, entre la chimenea y la esquina de la pared b, mirando a la sala (+Z)
 const CONSOLE_POSITION: Vector3Tuple = [(FIREPLACE_POSITION[0] + FIREPLACE_WIDTH / 2 + ROOM_WIDTH / 2) / 2, FLOOR_Y + 1.35, BACK_WALL_Z + 0.02]
 const CONSOLE_ROTATION_Y = 0
-// El gato pasea en un óvalo delante de la chimenea (de x -0.95 a 1.25, sin llegar a las estanterías ni a la consola)
-const CAT_PATH = { center: [0.15, FLOOR_Y, -0.95] as Vector3Tuple, radii: [1.1, 0.2] as [number, number] }
+// Vuelta del gato por la sala (en sentido contrario a las agujas del reloj, visto desde arriba): delante de la chimenea,
+// junto a la puerta, entre la mesa de café (x 1.2, z 2.1) y la alfombra, ante el ventanal esquivando la lámpara (x 0),
+// a lo largo de las estanterías (cara en x -2.25) y de vuelta a la chimenea (frente en z -1.32)
+const CAT_PATH: Vector3Tuple[] = [
+  [0.2, FLOOR_Y, -1.0],
+  [1.7, FLOOR_Y, -0.8],
+  [1.4, FLOOR_Y, 0.5],
+  [0.55, FLOOR_Y, 1.5],
+  [0.5, FLOOR_Y, 2.9],
+  [-0.6, FLOOR_Y, 3.2],
+  [-1.6, FLOOR_Y, 2.2],
+  [-1.7, FLOOR_Y, 0.3],
+  [-1.0, FLOOR_Y, -0.9],
+]
 
 // Altura del sol (grados) por debajo de la cual empieza a oscurecer (acaba la hora dorada): se enciende la lámpara y
 // aparece el guerrero del jardín; el polvo que flota en la luz del ventanal solo se ve antes
@@ -547,7 +559,7 @@ function Experience({ onSelectBook, flippedIsbns, readingStatus, onSetStatus, sa
         {/* Mueble bajo empotrado bajo los módulos cortos: trasera contra la pared a y frente a ras de las estanterías */}
         <StorageCabinet position={[-ROOM_WIDTH / 2, FLOOR_Y, CABINET_CENTER_Z]} height={CABINET_HEIGHT} depth={BOOKSHELF_DEPTH} />
 
-        {/* Rincón de lectura (Fase 4): sofá verde oliva, cojines, manta, mesa de café, libro abierto y accesorios */}
+        {/* Rincón de lectura (Fase 4): sofá, mesa de café, libro abierto y accesorios */}
         <SofaCorner />
 
         {/* Puerta de entrada de madera antigua (door.glb) en la pared b */}
@@ -563,8 +575,8 @@ function Experience({ onSelectBook, flippedIsbns, readingStatus, onSetStatus, sa
           <boxGeometry args={[FIREPLACE_WIDTH, 1, FIREPLACE_DEPTH]} />
         </mesh>
 
-        {/* Gato paseando delante de la chimenea */}
-        <Cat {...CAT_PATH} />
+        {/* Gato paseando por la sala */}
+        <Cat path={CAT_PATH} />
 
         {/* Farolillos en las baldas, con una luz cálida tenue */}
         {SHELF_LANTERNS.map(({ wall, x, shelf }) => (
