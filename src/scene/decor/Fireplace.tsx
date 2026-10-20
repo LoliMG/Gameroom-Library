@@ -9,7 +9,7 @@ import { prepareModel } from '@/utils/prepareModel'
 import { withSpecularGlossiness } from '@/utils/specularGlossiness'
 
 // Alto total (repisa incluida)
-const FIREPLACE_HEIGHT = 1.15
+export const FIREPLACE_HEIGHT = 1.15
 /** Ancho y fondo en metros con esa altura (el modelo mide 2 × 0.746 × 1.303): para colocarla y su caja de colisión */
 export const FIREPLACE_WIDTH = 1.77
 export const FIREPLACE_DEPTH = 0.66
