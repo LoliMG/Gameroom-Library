@@ -129,7 +129,8 @@ function FirstPersonControls({ heldBookRef }: { heldBookRef: RefObject<unknown> 
       const found: Box3[] = []
       scene.traverse((object) => {
         if (!object.userData.collider) return
-        const box = new Box3().setFromObject(object)
+        // precise: con los vértices; sin él, un mueble girado (la mesa de café) mide su caja girada y bloquea casi el doble
+        const box = new Box3().setFromObject(object, true)
         // Se amplía en planta con el radio del jugador para tratarlo como un punto
         box.min.x -= PLAYER_RADIUS
         box.min.z -= PLAYER_RADIUS
