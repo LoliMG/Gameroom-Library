@@ -1,5 +1,5 @@
-// Importación de Suspense y useMemo de React
-import { Suspense, useMemo } from 'react'
+// Suspense, useMemo y memo de React
+import { memo, Suspense, useMemo } from 'react'
 // Hook useGLTF de drei para la carga de modelos 3D GLB
 import { Preload, useGLTF } from '@react-three/drei'
 // Repetición de las texturas del césped
@@ -240,7 +240,7 @@ function GardenPlant({ model, node, height, position, rotationY = 0 }: { model: 
  * Jardín al atardecer visible por el ventanal: camino de losas hasta una fuente, macizos de lirios, banco, guerrero y macetero,
  * faroles encendidos, muro de piedra, árboles y colinas bajo el sol poniente.
  */
-function Outside() {
+function Outside({ night }: { night: boolean }) {
   // Reparto determinista de todas las piezas instanciadas (una semilla por grupo: tocar uno no mueve los demás)
   const scatter = useMemo(
     () => ({
@@ -258,7 +258,10 @@ function Outside() {
       <Fountain position={FOUNTAIN_POSITION} />
       <Bench position={BENCH_POSITION} rotationY={BENCH_ROTATION_Y} />
       <ModelProp model="flowerPot" height={FLOWER_POT_HEIGHT} position={FLOWER_POT_POSITION} />
-      <Warrior height={WARRIOR_HEIGHT} position={WARRIOR_POSITION} rotationY={WARRIOR_ROTATION_Y} headTurn={WARRIOR_HEAD_TURN} />
+      {/* El guerrero solo está de noche: se oculta en vez de quitarlo, para no cargar su modelo con la escena en marcha */}
+      <group visible={night}>
+        <Warrior height={WARRIOR_HEIGHT} position={WARRIOR_POSITION} rotationY={WARRIOR_ROTATION_Y} headTurn={WARRIOR_HEAD_TURN} />
+      </group>
       {LANTERNS.map(([x, z], i) => (
         <Lantern key={`${x},${z}`} position={[x, GROUND_Y, z]} variant={i % 4} rotationY={i * 1.3} />
       ))}
@@ -290,4 +293,5 @@ function Outside() {
   )
 }
 
-export default Outside
+// memo: va dentro de DayCycle, que se repinta cada minuto; así solo se repinta al cambiar de día a noche
+export default memo(Outside)
