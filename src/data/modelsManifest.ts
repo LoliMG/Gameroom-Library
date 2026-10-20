@@ -32,6 +32,8 @@ import warriorUrl from '@/assets/models/other/warrior.glb?url'
 import flowerPotUrl from '@/assets/models/other/flower_pot.glb?url'
 import katanaUrl from '@/assets/models/other/katana.glb?url'
 import floorLampUrl from '@/assets/models/furniture/floor_lamp.glb?url'
+import fireplaceUrl from '@/assets/models/furniture/fireplace.glb?url'
+import toonCatUrl from '@/assets/models/other/toon_cat_free.glb?url'
 
 // Modelos varios (libros y accesorios de mesa)
 import bookTableUrl from '@/assets/models/other/book_open.glb?url'
@@ -346,6 +348,30 @@ export const modelsManifest = {
       author: 'bilgehan.korkmaz',
       license: 'CC-BY-4.0',
       url: 'https://sketchfab.com/3d-models/floor-lamp-33eb258d9873435690254cfbb0ea46ec',
+    },
+  },
+
+  // Chimenea en la pared del fondo (d), entre las estanterías y la pantalla de la biblioteca
+  fireplace: {
+    url: fireplaceUrl,
+    file: 'furniture/fireplace.glb',
+    credit: {
+      title: 'Fireplace',
+      author: 'Mark Bai',
+      license: 'CC-BY-4.0',
+      url: 'https://skfb.ly/6UUFs',
+    },
+  },
+
+  // Gato de dibujos animados con animación (esqueleto y un ciclo de 0.83 s)
+  toonCat: {
+    url: toonCatUrl,
+    file: 'other/toon_cat_free.glb',
+    credit: {
+      title: 'Toon Cat FREE',
+      author: 'Omabuarts Studio',
+      license: 'CC-BY-4.0',
+      url: 'https://skfb.ly/6TKrP',
     },
   },
 

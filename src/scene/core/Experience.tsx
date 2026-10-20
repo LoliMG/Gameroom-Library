@@ -29,6 +29,9 @@ import BookshelfWall from '@/scene/shelves/BookshelfWall'
 import type { BookDrag, ShelfSlot, ShownPlacement } from '@/scene/shelves/Bookshelf'
 // Importación del rincón de lectura con sofá, cojines, manta, mesa de café y accesorios
 import SofaCorner from '@/scene/decor/SofaCorner'
+import Fireplace, { COLD_TEMPERATURE, FIREPLACE_DEPTH, FIREPLACE_WIDTH } from '@/scene/decor/Fireplace'
+import Cat from '@/scene/decor/Cat'
+import FloorLamp from '@/scene/decor/FloorLamp'
 // Importación de la puerta de entrada de madera antigua (door.glb)
 import Door from '@/scene/room/Door'
 // Pantalla con el panel de la biblioteca (portadas, búsqueda y estados de lectura)
@@ -88,11 +91,9 @@ const KATANA_HEIGHT = KATANA_LENGTH * (1.534 / 5.932)
 const KATANA_POSITION: Vector3Tuple = [SHELF_WALL_A_X, FLOOR_Y + SHELF_HEIGHT, SHELF_WALL_A_Z]
 const KATANA_ROTATION: Vector3Tuple = [0, Math.PI / 2, 0]
 
-// Lámpara de pie en el machón entre los dos arcos del ventanal (x = 0), separada del muro lo que mide su pantalla.
-// Su luz cálida, a la altura de la pantalla, alumbra la sala
+// Lámpara de pie en el machón entre los dos arcos del ventanal (x = 0), separada del muro lo que mide su pantalla
 const FLOOR_LAMP_HEIGHT = 1.6
 const FLOOR_LAMP_POSITION: Vector3Tuple = [0, FLOOR_Y, FRONT_WALL_INNER_Z - 0.3]
-const FLOOR_LAMP_LIGHT: { position: Vector3Tuple; color: string; intensity: number; distance: number } = { position: [0, FLOOR_Y + FLOOR_LAMP_HEIGHT * 0.85, FRONT_WALL_INNER_Z - 0.3], color: '#ffc98a', intensity: 3, distance: 7 }
 
 // Pantalla de la biblioteca en la pared b, entre la esquina del fondo y el marco de la puerta, mirando a la sala (-X)
 const CONSOLE_POSITION: Vector3Tuple = [ROOM_WIDTH / 2 - 0.02, FLOOR_Y + 1.35, (BACK_WALL_Z + DOOR_FRAME_MIN_Z) / 2]
@@ -211,6 +212,15 @@ const bookFootprint = (book: Book, flippedIsbns: Set<string>) => (flippedIsbns.h
 // los libros sin sitio (recién añadidos desde la consola) van al primer hueco libre (ver placeSavedBooks)
 const loadPlacements = (saved: Record<string, Slot>) => placeSavedBooks(layoutAllBooks(), saved, SHELF_WALLS, DRAG_BOOK_GAP)
 
+// Chimenea en la pared del fondo, entre las estanterías y la consola, con la trasera contra la pared
+const FIREPLACE_POSITION: Vector3Tuple = [0.15, FLOOR_Y, BACK_WALL_Z + 0.02 + FIREPLACE_DEPTH / 2]
+// El gato pasea en un óvalo delante de la chimenea (de x -0.95 a 1.25, sin llegar a las estanterías ni a la consola)
+const CAT_PATH = { center: [0.15, FLOOR_Y, -0.95] as Vector3Tuple, radii: [1.1, 0.2] as [number, number] }
+
+// Altura del sol (grados) por debajo de la cual empieza a oscurecer (acaba la hora dorada): se enciende la lámpara y
+// aparece el guerrero del jardín
+const DUSK_ELEVATION = 2
+
 // Volúmenes con los sonidos silenciados en Ajustes
 const SILENT: SoundVolumes = { wind: 0, rain: 0, thunder: 0, crickets: 0 }
 
@@ -223,8 +233,19 @@ function DayCycle({ settings }: { settings: AppSettings }) {
   const weather = useWeather(settings)
   const ambience = useAmbience(settings, weather)
   const { palette } = ambience
+  const dusk = ambience.sunElevation < DUSK_ELEVATION
   return (
     <>
+      {/* Jardín con arboleda y flores visible tras el cristal del ventanal (el guerrero solo de noche) */}
+      <Outside night={dusk} />
+
+      {/* Lámpara de pie entre los arcos del ventanal, encendida al oscurecer (25 MB: con su propio Suspense, la sala no
+          la espera) */}
+      <Suspense fallback={null}>
+        <FloorLamp position={FLOOR_LAMP_POSITION} height={FLOOR_LAMP_HEIGHT} lit={dusk} />
+        <Preload all />
+      </Suspense>
+
       {/* Postprocesado (Bloom, viñeta, color) y niebla ligera; ENABLE_EFFECTS los apaga todos */}
       <Effects fogColor={palette.fogColor} fog={weather.fog} rain={weather.rain} />
 
@@ -244,6 +265,11 @@ function DayCycle({ settings }: { settings: AppSettings }) {
 
       {/* Lluvia tras el ventanal, cuando llueve en la ciudad */}
       <RainFall intensity={weather.rain} windSpeed={weather.windSpeed} />
+
+      {/* Chimenea, con el fuego encendido cuando hace frío (su caja de colisión va con los muebles) */}
+      <Suspense fallback={null}>
+        <Fireplace position={FIREPLACE_POSITION} lit={weather.temperature < COLD_TEMPERATURE} />
+      </Suspense>
 
       {/* Grillos y viento muy suaves de noche (empiezan al anochecer, con las estrellas), lluvia cuando llueve y truenos con
           tormenta; en Ajustes se ajusta el volumen de cada uno o se silencian todos. La noche se mide sin las nubes (las
@@ -484,8 +510,6 @@ function Experience({ onSelectBook, flippedIsbns, readingStatus, onSetStatus, sa
       {/* Lo que cambia con la hora de la ciudad de los ajustes: niebla, entorno, luces y cielo */}
       <DayCycle settings={collection.settings} />
 
-      {/* Jardín con arboleda y flores visible tras el cristal del ventanal */}
-      <Outside />
 
       {/* Suspense gestiona la carga asíncrona de las texturas del suelo, libros y modelos 3D */}
       <Suspense fallback={null}>
@@ -524,12 +548,14 @@ function Experience({ onSelectBook, flippedIsbns, readingStatus, onSetStatus, sa
         <ModelProp model="katana" height={KATANA_HEIGHT} position={KATANA_POSITION} rotation={KATANA_ROTATION} />
         <Lantern position={TOP_LANTERN_POSITION} variant={0} />
 
-        {/* Lámpara de pie entre los arcos del ventanal (25 MB: con su propio Suspense, la sala no la espera) */}
-        <Suspense fallback={null}>
-          <ModelProp model="floorLamp" height={FLOOR_LAMP_HEIGHT} position={FLOOR_LAMP_POSITION} />
-          <Preload all />
-        </Suspense>
-        <pointLight {...FLOOR_LAMP_LIGHT} decay={2} />
+        {/* Caja de colisión de la chimenea: la chimenea va en DayCycle (su fuego depende del tiempo) y carga aparte, y las
+            colisiones se recogen una sola vez, cuando los muebles de este Suspense ya están en la escena */}
+        <mesh position={[FIREPLACE_POSITION[0], FLOOR_Y + 0.5, FIREPLACE_POSITION[2]]} visible={false} raycast={() => null} userData={{ collider: true }}>
+          <boxGeometry args={[FIREPLACE_WIDTH, 1, FIREPLACE_DEPTH]} />
+        </mesh>
+
+        {/* Gato paseando delante de la chimenea */}
+        <Cat {...CAT_PATH} />
 
         {/* Farolillos en las baldas, con una luz cálida tenue */}
         {SHELF_LANTERNS.map(({ wall, x, shelf }) => (
