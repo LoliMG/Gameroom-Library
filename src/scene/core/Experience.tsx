@@ -30,7 +30,7 @@ import BookshelfWall from '@/scene/shelves/BookshelfWall'
 import type { BookDrag, ShelfSlot, ShownPlacement } from '@/scene/shelves/Bookshelf'
 // Importación del rincón de lectura con sofá, mesa de café y accesorios
 import SofaCorner from '@/scene/decor/SofaCorner'
-import Fireplace, { COLD_NIGHT_TEMPERATURE, COLD_TEMPERATURE, FIREPLACE_DEPTH, FIREPLACE_WIDTH } from '@/scene/decor/Fireplace'
+import Fireplace, { COLD_NIGHT_TEMPERATURE, COLD_TEMPERATURE, FIREPLACE_DEPTH, FIREPLACE_HEIGHT, FIREPLACE_WIDTH } from '@/scene/decor/Fireplace'
 import Cat from '@/scene/decor/Cat'
 import FloorLamp from '@/scene/decor/FloorLamp'
 // Importación de la puerta de entrada de madera antigua (door.glb)
@@ -215,6 +215,9 @@ const FIREPLACE_POSITION: Vector3Tuple = [0.15, FLOOR_Y, BACK_WALL_Z + 0.02 + FI
 // Pantalla de la biblioteca en la pared del fondo, entre la chimenea y la esquina de la pared b, mirando a la sala (+Z)
 const CONSOLE_POSITION: Vector3Tuple = [(FIREPLACE_POSITION[0] + FIREPLACE_WIDTH / 2 + ROOM_WIDTH / 2) / 2, FLOOR_Y + 1.35, BACK_WALL_Z + 0.02]
 const CONSOLE_ROTATION_Y = 0
+// Gramófono sobre la repisa de la chimenea, hacia la izquierda y con la bocina hacia la sala
+const GRAMOPHONE_HEIGHT = 0.5
+const GRAMOPHONE_POSITION: Vector3Tuple = [FIREPLACE_POSITION[0] - 0.5, FLOOR_Y + FIREPLACE_HEIGHT, FIREPLACE_POSITION[2]]
 // Vuelta del gato por la sala (en sentido contrario a las agujas del reloj, visto desde arriba): delante de la chimenea,
 // junto a la puerta, entre la mesa de café (x 1.2, z 2.1) y la alfombra, ante el ventanal esquivando la lámpara (x 0),
 // a lo largo de las estanterías (cara en x -2.25) y de vuelta a la chimenea (frente en z -1.32)
@@ -574,6 +577,9 @@ function Experience({ onSelectBook, flippedIsbns, readingStatus, onSetStatus, sa
         <mesh position={[FIREPLACE_POSITION[0], FLOOR_Y + 0.5, FIREPLACE_POSITION[2]]} visible={false} raycast={() => null} userData={{ collider: true }}>
           <boxGeometry args={[FIREPLACE_WIDTH, 1, FIREPLACE_DEPTH]} />
         </mesh>
+
+        {/* Gramófono sobre la chimenea */}
+        <ModelProp model="gramophone" height={GRAMOPHONE_HEIGHT} position={GRAMOPHONE_POSITION} />
 
         {/* Gato paseando por la sala */}
         <Cat path={CAT_PATH} />

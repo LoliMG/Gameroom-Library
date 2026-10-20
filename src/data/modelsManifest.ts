@@ -34,6 +34,7 @@ import katanaUrl from '@/assets/models/other/katana.glb?url'
 import floorLampUrl from '@/assets/models/furniture/floor_lamp.glb?url'
 import fireplaceUrl from '@/assets/models/furniture/fireplace.glb?url'
 import toonCatUrl from '@/assets/models/other/toon_cat_free.glb?url'
+import gramophoneUrl from '@/assets/models/furniture/old_gramophone.glb?url'
 
 // Modelos varios (libros y accesorios de mesa)
 import bookTableUrl from '@/assets/models/other/book_open.glb?url'
@@ -372,6 +373,18 @@ export const modelsManifest = {
       author: 'Omabuarts Studio',
       license: 'CC-BY-4.0',
       url: 'https://skfb.ly/6TKrP',
+    },
+  },
+
+  // Gramófono de bocina sobre la repisa de la chimenea (trae una animación)
+  gramophone: {
+    url: gramophoneUrl,
+    file: 'furniture/old_gramophone.glb',
+    credit: {
+      title: 'Old Gramophone',
+      author: 'KIFIR',
+      license: 'CC-BY-4.0',
+      url: 'https://skfb.ly/6WDvr',
     },
   },
 
