@@ -30,7 +30,7 @@ import BookshelfWall from '@/scene/shelves/BookshelfWall'
 import type { BookDrag, ShelfSlot, ShownPlacement } from '@/scene/shelves/Bookshelf'
 // Importación del rincón de lectura con sofá, cojines, manta, mesa de café y accesorios
 import SofaCorner from '@/scene/decor/SofaCorner'
-import Fireplace, { COLD_TEMPERATURE, FIREPLACE_DEPTH, FIREPLACE_WIDTH } from '@/scene/decor/Fireplace'
+import Fireplace, { COLD_NIGHT_TEMPERATURE, COLD_TEMPERATURE, FIREPLACE_DEPTH, FIREPLACE_WIDTH } from '@/scene/decor/Fireplace'
 import Cat from '@/scene/decor/Cat'
 import FloorLamp from '@/scene/decor/FloorLamp'
 // Importación de la puerta de entrada de madera antigua (door.glb)
@@ -96,9 +96,6 @@ const KATANA_ROTATION: Vector3Tuple = [0, Math.PI / 2, 0]
 const FLOOR_LAMP_HEIGHT = 1.6
 const FLOOR_LAMP_POSITION: Vector3Tuple = [0, FLOOR_Y, FRONT_WALL_INNER_Z - 0.3]
 
-// Pantalla de la biblioteca en la pared b, entre la esquina del fondo y el marco de la puerta, mirando a la sala (-X)
-const CONSOLE_POSITION: Vector3Tuple = [ROOM_WIDTH / 2 - 0.02, FLOOR_Y + 1.35, (BACK_WALL_Z + DOOR_FRAME_MIN_Z) / 2]
-const CONSOLE_ROTATION_Y = -Math.PI / 2
 
 // Rodapiés: solo donde se ve muro. La pared a está tapada por estanterías hasta el suelo, y el trozo
 // izquierdo del muro del ventanal queda detrás de ellas.
@@ -215,6 +212,9 @@ const loadPlacements = (saved: Record<string, Slot>) => placeSavedBooks(layoutAl
 
 // Chimenea en la pared del fondo, entre las estanterías y la consola, con la trasera contra la pared
 const FIREPLACE_POSITION: Vector3Tuple = [0.15, FLOOR_Y, BACK_WALL_Z + 0.02 + FIREPLACE_DEPTH / 2]
+// Pantalla de la biblioteca en la pared del fondo, entre la chimenea y la esquina de la pared b, mirando a la sala (+Z)
+const CONSOLE_POSITION: Vector3Tuple = [(FIREPLACE_POSITION[0] + FIREPLACE_WIDTH / 2 + ROOM_WIDTH / 2) / 2, FLOOR_Y + 1.35, BACK_WALL_Z + 0.02]
+const CONSOLE_ROTATION_Y = 0
 // El gato pasea en un óvalo delante de la chimenea (de x -0.95 a 1.25, sin llegar a las estanterías ni a la consola)
 const CAT_PATH = { center: [0.15, FLOOR_Y, -0.95] as Vector3Tuple, radii: [1.1, 0.2] as [number, number] }
 
@@ -274,9 +274,10 @@ function DayCycle({ settings }: { settings: AppSettings }) {
       {/* Nieve tras el ventanal (sin sonido: la nieve cae en silencio) */}
       <SnowFall intensity={weather.snow} windSpeed={weather.windSpeed} night={night} />
 
-      {/* Chimenea, con el fuego encendido cuando hace frío (su caja de colisión va con los muebles) */}
+      {/* Chimenea, con el fuego encendido cuando hace frío; de noche basta con que refresque (su caja de colisión va con
+          los muebles) */}
       <Suspense fallback={null}>
-        <Fireplace position={FIREPLACE_POSITION} lit={weather.temperature < COLD_TEMPERATURE} />
+        <Fireplace position={FIREPLACE_POSITION} lit={weather.temperature < (dusk ? COLD_NIGHT_TEMPERATURE : COLD_TEMPERATURE)} />
       </Suspense>
 
       {/* Grillos y viento muy suaves de noche (empiezan al anochecer, con las estrellas), lluvia cuando llueve y truenos con

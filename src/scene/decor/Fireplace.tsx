@@ -13,8 +13,9 @@ const FIREPLACE_HEIGHT = 1.15
 /** Ancho y fondo en metros con esa altura (el modelo mide 2 × 0.746 × 1.303): para colocarla y su caja de colisión */
 export const FIREPLACE_WIDTH = 1.77
 export const FIREPLACE_DEPTH = 0.66
-/** Por debajo de esta temperatura (°C) se enciende el fuego */
+/** Por debajo de esta temperatura (°C) se enciende el fuego: de día, y de noche (que refresca y apetece más) */
 export const COLD_TEMPERATURE = 16
+export const COLD_NIGHT_TEMPERATURE = 22
 
 // Materiales del modelo: las tarjetas de las llamas y el hogar con las brasas (lleva su brillo en un mapa emisivo)
 const FLAME_MATERIAL = 'fire'
