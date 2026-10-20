@@ -10,9 +10,9 @@ import BookDashboard from '@/components/BookDashboard'
 import type { ComponentProps } from 'react'
 import { convexHull } from '@/utils/convexHull'
 
-// Pantalla: 0.8 × 0.95 m de imagen dentro de un marco de 3 cm
+// Pantalla: 0.8 × 1.25 m de imagen dentro de un marco de 3 cm (el alto, igual que el de .dashboard en px)
 const SCREEN_WIDTH = 0.8
-const SCREEN_HEIGHT = 0.95
+const SCREEN_HEIGHT = 1.25
 const FRAME_BORDER = 0.03
 const FRAME_DEPTH = 0.04
 // La página mide 800 px de ancho; con transform, drei mide 1 px = distanceFactor / 400 m, así que 0.4 da 1 px = 1 mm

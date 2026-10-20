@@ -27,7 +27,8 @@ const GLOW_FLICKER = 0.25 // ±25 % de intensidad
  * `position` es el punto de apoyo (centro de la base); `glow` = { material, color, intensity } hace brillar
  * un material del modelo con su propia textura y un parpadeo suave (el Bloom de Effects le da el halo).
  * `alphaCutout = false` conserva la transparencia mezclada (para cristal).
- * `pose` es una función que recibe el clon (con su propio esqueleto) para colocarlo en una postura, p. ej. relaxArms.
+ * `adjust` es una función que recibe el clon (con su propio esqueleto) para colocarlo en una postura (p. ej. relaxArms) o
+ * corregir sus materiales.
  */
 interface ShelfFigureProps {
   model: ModelName
@@ -37,17 +38,17 @@ interface ShelfFigureProps {
   /** Material del modelo que brilla, su color y su intensidad */
   glow?: { material: string; color: string; intensity: number }
   alphaCutout?: boolean
-  /** Coloca el clon en una postura (recibe el modelo con su propio esqueleto) */
-  pose?: (root: Object3D) => void
+  /** Ajusta el clon: postura o materiales (recibe el modelo con su propio esqueleto) */
+  adjust?: (root: Object3D) => void
 }
 
-function ShelfFigure({ model, height, position, rotationY = 0, glow, alphaCutout = true, pose }: ShelfFigureProps) {
+function ShelfFigure({ model, height, position, rotationY = 0, glow, alphaCutout = true, adjust }: ShelfFigureProps) {
   // Draco y Meshopt como en el resto de cargas (valores por defecto de drei) más el plugin de materiales antiguos
   const { scene } = useGLTF(modelsManifest[model].url, true, true, withSpecularGlossiness)
   const { wrapper, scale, glowMaterial } = useMemo(() => {
     const prepared = prepareModel(scene, undefined, height, { alphaCutout })
-    // Postura: se aplica al clon antes de colocarlo en la escena (sin escala ni giro todavía)
-    if (pose) pose(prepared.wrapper)
+    // Postura o materiales: se aplica al clon antes de colocarlo en la escena (sin escala ni giro todavía)
+    if (adjust) adjust(prepared.wrapper)
     enableShadows(prepared.wrapper)
     // Material que brilla: usa su propia textura como mapa de emisión para que el brillo siga el dibujo
     // "null as …": si se escribiera "= null", TypeScript creería que sigue siendo null tras el traverse
@@ -63,7 +64,7 @@ function ShelfFigure({ model, height, position, rotationY = 0, glow, alphaCutout
       material.needsUpdate = true
     }
     return { ...prepared, glowMaterial: material }
-  }, [scene, height, alphaCutout, glow, model, pose])
+  }, [scene, height, alphaCutout, glow, model, adjust])
 
   // Referencia al material que brilla para animarlo en cada fotograma
   const glowRef = useRef<MeshStandardMaterial | null>(null)

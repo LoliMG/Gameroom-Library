@@ -24,7 +24,7 @@ import ShelfFigure from '@/scene/decor/ShelfFigure'
 // Postura relajada para personajes en postura en T
 import { relaxArms, spreadLegs } from '@/utils/pose'
 import { Vector3 } from 'three'
-import type { Object3D } from 'three'
+import type { Mesh, MeshStandardMaterial, Object3D } from 'three'
 // Vector3Tuple: [x, y, z] en metros (el formato que aceptan position y rotation en React Three Fiber)
 import type { Vector3Tuple } from 'three'
 
@@ -84,7 +84,8 @@ const IVY_POSITION: Vector3Tuple = [SHELF_ITEMS_X, WALL_SHELVES[0].y - IVY_VASE_
 const PONYTA_HEIGHT = 0.22
 const PONYTA_POSITION: Vector3Tuple = [SHELF_ITEMS_X, WALL_SHELVES[0].y, WALL_SHELVES[0].z + 0.11]
 // Crin y cola (material "Hair") brillando como fuego; intensidad > 1 para que el Bloom las haga resplandecer
-const PONYTA_GLOW = { material: 'Hair', color: '#ff7a1f', intensity: 1.6 }
+// Brillo suave: más fuerte, el halo del Bloom se come el cuerpo blanco y la figura entera parece naranja
+const PONYTA_GLOW = { material: 'Hair', color: '#ff7a1f', intensity: 0.5 }
 // Figura de Bakugo en la parte izquierda de la repisa de abajo (el candelabro queda a su derecha)
 const BAKUGO_HEIGHT = 0.32
 const BAKUGO_POSITION: Vector3Tuple = [SHELF_ITEMS_X, WALL_SHELVES[1].y, WALL_SHELVES[1].z - 0.23]
@@ -103,6 +104,19 @@ const BAKUGO_FORWARD = new Vector3(0, 0, 1)
 const BAKUGO_ARM_SPREAD = 0.45
 const BAKUGO_ELBOW_BEND = 0.6
 const BAKUGO_LEG_SPREAD = 0.14
+// ivy.glb trae las hojas con brillo propio (de noche relucen verdes en la oscuridad) y la maceta de metal puro sin mapa
+// que lo matice (sale oscura y de un color raro): sin brillo y sin metal. Los materiales son los del modelo cargado, pero
+// solo hay una hiedra
+const matteIvy = (root: Object3D) =>
+  root.traverse((node) => {
+    const mesh = node as Mesh
+    if (!mesh.isMesh) return
+    const material = mesh.material as MeshStandardMaterial
+    material.emissive.set('#000000')
+    material.emissiveMap = null
+    material.metalness = 0
+    material.needsUpdate = true
+  })
 const poseBakugo = (root: Object3D) => {
   relaxArms(root, BAKUGO_ARMS, BAKUGO_FORWARD, { armSpread: BAKUGO_ARM_SPREAD, elbowBend: BAKUGO_ELBOW_BEND })
   spreadLegs(root, BAKUGO_LEGS, BAKUGO_LEG_SPREAD)
@@ -206,10 +220,10 @@ function SofaCorner() {
       <Candlestick position={SHELF_CANDLE_POSITION} rotationY={-0.4} withLight={false} />
 
       {/* Figuras de las repisas */}
-      <ShelfFigure model="ivy" height={IVY_HEIGHT} position={IVY_POSITION} />
+      <ShelfFigure model="ivy" height={IVY_HEIGHT} position={IVY_POSITION} adjust={matteIvy} />
       <ShelfFigure model="ponyta" height={PONYTA_HEIGHT} position={PONYTA_POSITION} glow={PONYTA_GLOW} />
       {/* Bakugo en postura alerta (el modelo viene en postura en T) */}
-      <ShelfFigure model="bakugo" height={BAKUGO_HEIGHT} position={BAKUGO_POSITION} rotationY={BAKUGO_ROTATION_Y} pose={poseBakugo} />
+      <ShelfFigure model="bakugo" height={BAKUGO_HEIGHT} position={BAKUGO_POSITION} rotationY={BAKUGO_ROTATION_Y} adjust={poseBakugo} />
     </group>
   )
 }
