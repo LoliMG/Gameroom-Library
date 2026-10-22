@@ -18,6 +18,8 @@ import {
   writeGoals,
   writePosters,
   writePile,
+  writeBoard,
+  listHighlights,
   listReadings,
   createReading,
   updateReading,
@@ -50,6 +52,7 @@ assert.deepEqual(readState(db), {
   goals: {},
   posters: [],
   pile: [],
+  board: [],
 })
 
 // Guardar y leer: los ISBN que no existen se ignoran
@@ -122,6 +125,18 @@ assert.deepEqual(readState(db).pile, [diaryIsbn])
 assert.throws(() => writePile(db, [diaryIsbn, diaryIsbn]), ValidationError)
 assert.throws(() => writePile(db, ['9789999999999']), ValidationError)
 writePile(db, [])
+
+// Corcho: pósits, pegatinas y frases con su sitio y su giro; lo que no encaja no se guarda
+const note = { id: 'a', x: 0.2, y: 0.3, rotation: -5, kind: 'note', text: 'Leer a Sarah J. Maas', color: 'pink' }
+const sticker = { id: 'b', x: 0.5, y: 0.5, rotation: 10, kind: 'sticker', sticker: '🌙' }
+const quote = { id: 'c', x: 0.8, y: 0.7, rotation: 0, kind: 'quote', text: 'Había una vez', isbn: diaryIsbn }
+writeBoard(db, [note, sticker, { ...quote, extra: 'no se guarda' }])
+assert.deepEqual(readState(db).board, [note, sticker, quote])
+assert.throws(() => writeBoard(db, [{ ...note, x: 1.5 }]), ValidationError)
+assert.throws(() => writeBoard(db, [{ ...note, color: 'black' }]), ValidationError)
+assert.throws(() => writeBoard(db, [{ ...note, text: '' }]), ValidationError)
+assert.throws(() => writeBoard(db, [{ ...quote, isbn: 'abc' }]), ValidationError)
+assert.throws(() => writeBoard(db, [{ ...sticker, kind: 'photo' }]), ValidationError)
 const first = createReading(db, { isbn: diaryIsbn, startDate: '2026-01-02', endDate: '2026-01-20', rating: 4, comment: '  Muy bueno  ' })
 assert.deepEqual(first, { id: first.id, isbn: diaryIsbn, startDate: '2026-01-02', endDate: '2026-01-20', rating: 4, comment: 'Muy bueno' })
 const reread = createReading(db, { isbn: diaryIsbn, startDate: '2026-09-01' }) // Relectura en curso
@@ -173,6 +188,7 @@ assert.equal(updateAnnotation(db, epubNote.id, { note: 'Comentario nuevo' }).not
 assert.equal(updateAnnotation(db, epubNote.id, { color: 'green' }).note, 'Comentario nuevo') // cambiar el color no borra la nota
 deleteAnnotation(db, pdfNote.id)
 assert.deepEqual(readReader(db, isbn).annotations.map((a) => a.text), ['Había una vez'])
+assert.deepEqual(listHighlights(db).map(({ isbn: book, text }) => [book, text]), [[isbn, 'Había una vez']])
 
 // Datos no válidos: se rechazan
 assert.throws(() => readReader(db, '../../secreto'), ValidationError)
