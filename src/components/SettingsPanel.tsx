@@ -8,7 +8,7 @@ import { MAX_SOUND_VOLUME } from '@/types'
 
 // Cada sonido de fondo con su nombre y cuándo suena
 const SOUNDS: { key: keyof SoundVolumes; label: string; when: string }[] = [
-  { key: 'wind', label: 'Viento', when: 'de noche y con lluvia' },
+  { key: 'wind', label: 'Viento', when: 'siempre, de día y de noche' },
   { key: 'rain', label: 'Lluvia', when: 'cuando llueve' },
   { key: 'thunder', label: 'Tormenta', when: 'truenos cuando hay tormenta' },
   { key: 'crickets', label: 'Grillos', when: 'de noche sin lluvia' },

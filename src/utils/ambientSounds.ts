@@ -8,7 +8,7 @@
 // - Truenos (con tormenta): ruido marrón (muy grave) con un chasquido al principio y un retumbar que se apaga en unos
 //   segundos, de vez en cuando y cada uno distinto.
 // Lo de noche que es (setLevel), la lluvia (setRain), la tormenta (setThunder) y la cercanía al ventanal (setProximity)
-// ponen el volumen de cada parte: el viento suena de noche o con lluvia, los grillos solo de noche sin lluvia. Encima,
+// ponen el volumen de cada parte: el viento suena siempre, los grillos solo de noche sin lluvia. Encima,
 // cada sonido tiene su volumen de los ajustes (setVolumes). Todo cambia poco a poco, sin cortes.
 
 import type { SoundVolumes } from '@/types'
@@ -305,10 +305,10 @@ export function createAmbientSounds(ctx: BaseAudioContext): AmbientSounds {
   schedule()
   const timer = setInterval(schedule, SCHEDULE_EVERY_MS)
 
-  // Volumen de cada parte: viento de noche o con lluvia; grillos de noche, callados con lluvia; lluvia cuando llueve;
+  // Volumen de cada parte: viento siempre (de día también); grillos de noche, callados con lluvia; lluvia cuando llueve;
   // truenos con tormenta. Cada uno por su volumen de los ajustes
   const update = () => {
-    windLevel.gain.setTargetAtTime(Math.max(night, rain) * volumes.wind, ctx.currentTime, LEVEL_SMOOTHING)
+    windLevel.gain.setTargetAtTime(volumes.wind, ctx.currentTime, LEVEL_SMOOTHING)
     cricketLevel.gain.setTargetAtTime(night * (1 - rain) * volumes.crickets, ctx.currentTime, LEVEL_SMOOTHING)
     rainLevel.gain.setTargetAtTime(rain * volumes.rain, ctx.currentTime, LEVEL_SMOOTHING)
     thunderLevel.gain.setTargetAtTime(volumes.thunder, ctx.currentTime, 0.1)

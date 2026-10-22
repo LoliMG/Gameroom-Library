@@ -353,7 +353,7 @@ function DayCycle({ settings, windowOpen }: { settings: AppSettings; windowOpen:
         </Clickable>
       </Suspense>
 
-      {/* Grillos y viento muy suaves de noche (empiezan al anochecer, con las estrellas), lluvia cuando llueve y truenos con
+      {/* Viento suave siempre, grillos de noche (empiezan al anochecer, con las estrellas), lluvia cuando llueve y truenos con
           tormenta; en Ajustes se ajusta el volumen de cada uno o se silencian todos. La noche se mide sin las nubes (las
           nubes tapan las estrellas, no la noche) */}
       <AmbientSounds
