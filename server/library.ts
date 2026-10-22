@@ -13,8 +13,18 @@ import type { IncomingMessage, ServerResponse } from 'node:http'
 // Tipo de Vite para el plugin que monta la API en el servidor de desarrollo
 import type { Plugin } from 'vite'
 // Tipos compartidos con la sala (la forma de los datos que van y vienen por la API)
-import type { Annotation, AnnotationColor, AppSettings, BookMeta, Bookmark, EbookFormat, LibraryState, Reading, ReaderLocation, ReadingStatus, Slot, SoundVolumes, WishItem } from '../src/types.ts'
-import { DEFAULT_SETTINGS, MAX_PILE, MAX_POSTERS, MAX_SOUND_VOLUME, withDefaultSettings } from '../src/types.ts'
+import type { Annotation, AnnotationColor, AppSettings, BoardItem, BookMeta, Highlight, Bookmark, EbookFormat, LibraryState, Reading, ReaderLocation, ReadingStatus, Slot, SoundVolumes, WishItem } from '../src/types.ts'
+import {
+  DEFAULT_SETTINGS,
+  MAX_BOARD_ITEMS,
+  MAX_NOTE_TEXT,
+  MAX_PILE,
+  MAX_POSTERS,
+  MAX_QUOTE_TEXT,
+  MAX_SOUND_VOLUME,
+  NOTE_COLORS,
+  withDefaultSettings,
+} from '../src/types.ts'
 // Búsqueda y alta de libros nuevos desde la consola (usa seedBooks, ValidationError e isPlainObject de aquí, solo dentro
 // de funciones: así la importación circular entre los dos archivos no da problemas)
 import { searchBooks, addBook, setSynopsis, updateBook, deleteBook, CatalogConflictError } from './bookCatalog.ts'
@@ -214,6 +224,7 @@ export function readState(db: DatabaseSync): LibraryState {
     goals: readAppData(db, 'goals', {}),
     posters: readAppData(db, 'posters', []),
     pile: readAppData(db, 'pile', []),
+    board: readAppData(db, 'board', []),
   }
   for (const row of db.prepare('SELECT * FROM book_state').all() as BookStateRow[]) {
     // Con pared hay sitio guardado: las cuatro columnas se escriben juntas (writePlacements)
@@ -386,6 +397,43 @@ export function writePile(db: DatabaseSync, pile: unknown) {
   if (!pile.every((isbn) => typeof isbn === 'string' && ISBN.test(isbn) && known.has(isbn))) throw new ValidationError('Libro desconocido en la pila')
   writeAppData(db, 'pile', pile)
 }
+
+// Largo máximo de una pegatina: un emoji (varios caracteres, con modificadores) o "img:" y el nombre de su imagen
+const MAX_STICKER = 120
+const MAX_BOARD_ID = 40
+const isUnit = (value: unknown) => typeof value === 'number' && value >= 0 && value <= 1
+const textUpTo = (value: unknown, max: number): value is string => typeof value === 'string' && value.trim().length > 0 && value.length <= max
+
+// ¿Es algo válido para el corcho? (ver BoardItem)
+function validBoardItem(item: unknown): item is BoardItem {
+  if (!isPlainObject(item) || !textUpTo(item.id, MAX_BOARD_ID) || !isUnit(item.x) || !isUnit(item.y)) return false
+  if (typeof item.rotation !== 'number' || Math.abs(item.rotation) > 180) return false
+  if (item.kind === 'note') return textUpTo(item.text, MAX_NOTE_TEXT) && (NOTE_COLORS as readonly unknown[]).includes(item.color)
+  if (item.kind === 'sticker') return textUpTo(item.sticker, MAX_STICKER)
+  if (item.kind === 'quote') return textUpTo(item.text, MAX_QUOTE_TEXT) && (item.isbn === null || (typeof item.isbn === 'string' && ISBN.test(item.isbn)))
+  return false
+}
+
+/** Guarda lo pegado en el corcho (lista de BoardItem, como mucho MAX_BOARD_ITEMS). */
+export function writeBoard(db: DatabaseSync, board: unknown) {
+  if (!Array.isArray(board) || board.length > MAX_BOARD_ITEMS) throw new ValidationError(`Se esperaba una lista de hasta ${MAX_BOARD_ITEMS} cosas`)
+  if (!board.every(validBoardItem)) throw new ValidationError('Hay algo no válido en el corcho')
+  // Solo los campos conocidos (lo demás que mande el navegador no se guarda)
+  writeAppData(
+    db,
+    'board',
+    board.map((item) => {
+      const { id, x, y, rotation } = item
+      if (item.kind === 'note') return { id, x, y, rotation, kind: item.kind, text: item.text, color: item.color }
+      if (item.kind === 'sticker') return { id, x, y, rotation, kind: item.kind, sticker: item.sticker }
+      return { id, x, y, rotation, kind: item.kind, text: item.text, isbn: item.isbn }
+    })
+  )
+}
+
+/** Todas las frases subrayadas en el lector, de la más nueva a la más antigua: [{ id, isbn, text }] */
+export const listHighlights = (db: DatabaseSync): Highlight[] =>
+  db.prepare('SELECT id, isbn, text FROM annotations ORDER BY id DESC').all() as unknown as Highlight[]
 
 // --- Diario de lecturas ---
 
@@ -728,6 +776,7 @@ const WRITERS: Partial<Record<string, (db: DatabaseSync, value: unknown) => void
   '/goals': writeGoals,
   '/posters': writePosters,
   '/pile': writePile,
+  '/board': writeBoard,
 }
 
 /** Opciones de la API: carpeta de los libros electrónicos y, para añadir libros desde la consola, el catálogo */
@@ -740,7 +789,7 @@ export interface LibraryApiOptions {
  * Manejador de la API (montado en /api):
  * - GET /state, PUT /placements, PUT /flipped, PUT /reading-status (la sala)
  * - GET /ebooks (qué libros tienen libro electrónico), GET /ebooks/:isbn (el archivo)
- * - GET /progress (cuánto se lleva de cada libro y el último leído)
+ * - GET /progress (cuánto se lleva de cada libro y el último leído), GET /highlights (frases subrayadas, para el corcho)
  * - GET /reader/:isbn, PUT /reader/:isbn/position ({ location, progress }), PUT /reader/:isbn/page ({ page }), POST /reader/:isbn/annotations, POST /reader/:isbn/bookmarks,
  *   PATCH /annotations/:id, DELETE /annotations/:id, DELETE /bookmarks/:id (el lector)
  * - PUT /tags, PUT /wishlist, PUT /settings, PUT /goals (etiquetas, lista de deseos, ajustes y retos de la consola)
@@ -762,6 +811,7 @@ export function createLibraryApi(db: DatabaseSync, { ebooksDir, catalog }: Libra
     try {
       if (req.method === 'GET' && route === '/state') return send(res, 200, readState(db))
       if (req.method === 'GET' && route === '/progress') return send(res, 200, readProgress(db))
+      if (req.method === 'GET' && route === '/highlights') return send(res, 200, listHighlights(db))
       const writer = WRITERS[route]
       if (req.method === 'PUT' && writer) {
         writer(db, await readJsonBody(req))

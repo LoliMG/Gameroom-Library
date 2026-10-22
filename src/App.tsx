@@ -13,6 +13,7 @@ import BookDetailPanel from '@/components/BookDetailPanel'
 // Botón para capturar el ratón, mirilla y ayuda de controles
 import PlayControls from '@/components/PlayControls'
 import FocusTimer from '@/components/FocusTimer'
+import BoardEditor from '@/components/BoardEditor'
 // Estado de la biblioteca guardado en la base de datos (con copia en el navegador)
 import { loadLibrary, saveLibraryPart } from '@/utils/libraryApi'
 // Qué libros tienen libro electrónico para el lector
@@ -136,6 +137,13 @@ function Bookroom({ library }: { library: LibraryState }) {
     .map((isbn) => books.find((book) => book.isbn === isbn))
     .filter((book): book is Book => book !== undefined)
 
+  // Corcho de la pared (pósits, pegatinas y frases) y su editor en grande, que se abre pulsándolo
+  const [board, setBoard] = useState(library.board)
+  useEffect(() => {
+    saveLibraryPart('board', board)
+  }, [board])
+  const [boardOpen, setBoardOpen] = useState(false)
+
   // Diario de lecturas (null = cargando): lo usan la consola, los libros terminados del año en la sala y "¡Terminado!"
   const [readings, setReadings] = useState<Reading[] | null>(null)
   const [readingsError, setReadingsError] = useState<string | null>(null)
@@ -227,6 +235,8 @@ function Bookroom({ library }: { library: LibraryState }) {
           focus={focus}
           posters={posterBooks}
           pile={pile}
+          board={board}
+          onOpenBoard={() => setBoardOpen(true)}
         />
       </Canvas>
 
@@ -263,6 +273,8 @@ function Bookroom({ library }: { library: LibraryState }) {
         inPile={selectedBook ? pile.includes(selectedBook.isbn) : false}
         onTogglePile={() => selectedBook && togglePile(selectedBook.isbn)}
       />
+
+      {boardOpen && <BoardEditor items={board} books={books} onChange={setBoard} onClose={() => setBoardOpen(false)} />}
 
       {readingBook && (
         <Suspense fallback={<p className="app-loading reader-loading">Abriendo el lector…</p>}>

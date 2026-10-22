@@ -134,6 +134,8 @@ export interface LibraryState {
   posters: string[]
   /** Pila "por leer" junto al sofá: ISBN de abajo arriba (salen de la estantería mientras están en ella) */
   pile: string[]
+  /** Corcho de la pared: pósits, pegatinas y frases, en el orden en que se pegaron (lo último, encima) */
+  board: BoardItem[]
 }
 
 /**
@@ -199,6 +201,33 @@ export const MAX_POSTERS = 2
 
 /** Libros que caben en la pila "por leer" */
 export const MAX_PILE = 40
+
+/** Colores de los pósits */
+export const NOTE_COLORS = ['yellow', 'pink', 'mint', 'blue', 'lilac'] as const
+export type NoteColor = (typeof NOTE_COLORS)[number]
+/** Cosas que caben en el corcho y largo máximo de los textos */
+export const MAX_BOARD_ITEMS = 80
+export const MAX_NOTE_TEXT = 200
+export const MAX_QUOTE_TEXT = 400
+
+/**
+ * Algo pegado en el corcho. x, y: su centro, en fracción del ancho y del alto del corcho (0 a 1); rotation: giro en
+ * grados. Pósit: texto y color. Pegatina: un emoji o "img:archivo" (imagen de src/assets/stickers). Frase: texto y,
+ * si es de un libro, su ISBN
+ */
+export type BoardItem = { id: string; x: number; y: number; rotation: number } & BoardContent
+/** Lo que es cada cosa del corcho, sin su sitio */
+export type BoardContent =
+  | { kind: 'note'; text: string; color: NoteColor }
+  | { kind: 'sticker'; sticker: string }
+  | { kind: 'quote'; text: string; isbn: string | null }
+
+/** Frase subrayada en el lector (para pegarla en el corcho) */
+export interface Highlight {
+  id: number
+  isbn: string
+  text: string
+}
 
 /** Ajustes por defecto (los que hay hasta que se cambian en la consola) */
 export const DEFAULT_SETTINGS: AppSettings = {

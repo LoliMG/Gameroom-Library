@@ -1,6 +1,6 @@
 // Llamadas a la API del lector de libros electrónicos (rutas /api/ebooks, /api/reader, /api/annotations y
 // /api/bookmarks de server/library.ts, servidas por el servidor de Vite con la base de datos SQLite)
-import type { Annotation, AnnotationColor, Bookmark, EbookFormat, ReaderLocation } from '@/types'
+import type { Annotation, AnnotationColor, Bookmark, EbookFormat, Highlight, ReaderLocation } from '@/types'
 import { request, jsonBody as json } from '@/utils/apiRequest'
 
 /** Lo que necesita el lector de un libro: por dónde se iba, sus subrayados y sus marcadores */
@@ -42,6 +42,9 @@ export async function fetchProgress(): Promise<ReadingProgress> {
     return { progress: {}, pages: {}, lastRead: null }
   }
 }
+
+/** Todas las frases subrayadas en el lector (para pegarlas en el corcho), de la más nueva a la más antigua */
+export const fetchHighlights = async (): Promise<Highlight[]> => (await request('/api/highlights')).json()
 
 /** Guarda la página por la que se va (escrita a mano en el panel del libro). */
 export const saveCurrentPage = (isbn: string, page: number): Promise<Response> => request(`/api/reader/${isbn}/page`, json('PUT', { page }))

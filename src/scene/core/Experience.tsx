@@ -3,7 +3,7 @@ import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'rea
 // Tipos: evento de puntero de React Three Fiber, [x, y, z] y los datos compartidos de la biblioteca
 import type { ThreeEvent } from '@react-three/fiber'
 import type { Vector3Tuple } from 'three'
-import type { Book, Placement, ReadingStatus, ShelfWall, Slot } from '@/types'
+import type { BoardItem, Book, Placement, ReadingStatus, ShelfWall, Slot } from '@/types'
 // Environment de drei para reflejos sutiles, generado en la escena con paneles de luz (Lightformer)
 import { Environment, Lightformer, Preload } from '@react-three/drei'
 // Importación de la paleta ambiental activa
@@ -37,6 +37,7 @@ import Clickable from '@/scene/shared/Clickable'
 import Gramophone from '@/scene/decor/Gramophone'
 import Posters from '@/scene/decor/Posters'
 import BookPile from '@/scene/decor/BookPile'
+import Corkboard from '@/scene/decor/Corkboard'
 // Importación de la puerta de entrada de madera antigua (door.glb)
 import Door from '@/scene/room/Door'
 // Pantalla con el panel de la biblioteca (portadas, búsqueda y estados de lectura)
@@ -224,6 +225,10 @@ const CONSOLE_ROTATION_Y = 0
 // Gramófono sobre la repisa de la chimenea, hacia la izquierda y con la bocina hacia la sala
 const GRAMOPHONE_HEIGHT = 0.5
 const GRAMOPHONE_POSITION: Vector3Tuple = [FIREPLACE_POSITION[0] - 0.5, FLOOR_Y + FIREPLACE_HEIGHT, FIREPLACE_POSITION[2]]
+// Corcho: en la pared b (mirando a la sala, -X), entre el marco de la puerta (z 0.25) y la hiedra de la repisa (z ≈ 1.4),
+// de 1 a 1.6 m de alto (por encima del respaldo del sofá)
+const CORKBOARD_WIDTH = 0.9
+const CORKBOARD_POSITION: Vector3Tuple = [ROOM_WIDTH / 2 - 0.02, FLOOR_Y + 1.3, 0.85]
 // Pila "por leer": en el suelo, fuera de la alfombra, delante de la maceta del rincón y pasado el brazo del sofá que da
 // al ventanal (el sofá acaba en z ≈ 3.33 y la maceta está en x 2.3, z 3.63)
 const PILE_POSITION: Vector3Tuple = [1.6, FLOOR_Y, 3.5]
@@ -396,9 +401,12 @@ interface ExperienceProps {
   posters: Book[]
   /** Pila "por leer" (ISBN de abajo arriba): esos libros salen de la estantería y se apilan junto al sofá */
   pile: string[]
+  /** Lo pegado en el corcho de la pared, y abrir su editor al pulsarlo */
+  board: BoardItem[]
+  onOpenBoard: () => void
 }
 
-function Experience({ onSelectBook, flippedIsbns, readingStatus, onSetStatus, savedPlacements, onSavePlacements, collection, progress, currentBook, onReadBook, reading, focus, posters, pile }: ExperienceProps) {
+function Experience({ onSelectBook, flippedIsbns, readingStatus, onSetStatus, savedPlacements, onSavePlacements, collection, progress, currentBook, onReadBook, reading, focus, posters, pile, board, onOpenBoard }: ExperienceProps) {
   // Sitio de cada libro: { book, wall, module, shelf, x }; cambia al arrastrarlo y se guarda en la base de datos
   const [placements, setPlacements] = useState<Placement[]>(() => loadPlacements(savedPlacements))
   // Libros arrastrados (el agarrado y, si era parte de una selección, el resto): el estado los pinta sacados de la
@@ -661,6 +669,9 @@ function Experience({ onSelectBook, flippedIsbns, readingStatus, onSetStatus, sa
         <mesh position={[FIREPLACE_POSITION[0], FLOOR_Y + 0.5, FIREPLACE_POSITION[2]]} visible={false} raycast={() => null} userData={{ collider: true }}>
           <boxGeometry args={[FIREPLACE_WIDTH, 1, FIREPLACE_DEPTH]} />
         </mesh>
+
+        {/* Corcho en la pared b, entre la puerta y la hiedra, por encima del brazo del sofá */}
+        <Corkboard items={board} books={books} position={CORKBOARD_POSITION} rotationY={-Math.PI / 2} width={CORKBOARD_WIDTH} onOpen={onOpenBoard} />
 
         {/* Pila "por leer" en el suelo, junto al brazo del sofá del lado del ventanal */}
         <BookPile books={pileBooks} position={PILE_POSITION} onSelect={selectBook} />
