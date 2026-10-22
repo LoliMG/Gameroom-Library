@@ -9,6 +9,7 @@ import type { Camera, Group } from 'three'
 import BookDashboard from '@/components/BookDashboard'
 import type { ComponentProps } from 'react'
 import { convexHull } from '@/utils/convexHull'
+import ConsoleSnapshot from '@/scene/books/ConsoleSnapshot'
 
 // Pantalla: 0.8 × 1.25 m de imagen dentro de un marco de 3 cm (el alto, igual que el de .dashboard en px)
 const SCREEN_WIDTH = 0.8
@@ -120,6 +121,8 @@ function BookConsole({ position, rotationY, occluders, ...dashboard }: BookConso
         <boxGeometry args={[SCREEN_WIDTH + 2 * FRAME_BORDER, SCREEN_HEIGHT + 2 * FRAME_BORDER, FRAME_DEPTH]} />
         <meshStandardMaterial color="#1a1512" roughness={0.6} metalness={0.3} />
       </mesh>
+      {/* Imagen de la consola detrás del HTML: es lo que sale en las fotos del rincón (el HTML no sale en ellas) */}
+      <ConsoleSnapshot books={dashboard.books} width={SCREEN_WIDTH} z={FRAME_DEPTH / 2 + 0.001} />
       {/* Pantalla: la página va justo delante del marco */}
       <Html
         portal={layers.portal}
