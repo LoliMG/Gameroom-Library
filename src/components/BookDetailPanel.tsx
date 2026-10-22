@@ -29,6 +29,14 @@ const ICONS = {
       <path d="M3.5 9a9 9 0 0 1 14.9-3.4L23 10M1 14l4.6 4.4A9 9 0 0 0 20.5 15" />
     </>
   ),
+  // Cuadro colgado de un clavo: póster sobre la chimenea
+  poster: (
+    <>
+      <rect x="4" y="7" width="16" height="14" rx="1" />
+      <polyline points="8 7 12 3 16 7" />
+      <polyline points="7 18 11 13 14 16 17 12" />
+    </>
+  ),
 }
 
 // Propiedades del botón de icono: las de un <button> normal (onClick, aria-pressed…) más el icono y su explicación
@@ -103,9 +111,13 @@ interface BookDetailPanelProps {
   currentPage: number | undefined
   onSetPage: (page: number) => void
   onFinish: () => void
+  /** Favorito (★): se puede colgar como póster sobre la chimenea; posterOn: si ya está colgado */
+  favorite: boolean
+  posterOn: boolean
+  onTogglePoster: () => void
 }
 
-function BookDetailPanel({ book, onClose, flipped, onToggleFlip, ebookFormat, onRead, status, currentPage, onSetPage, onFinish }: BookDetailPanelProps) {
+function BookDetailPanel({ book, onClose, flipped, onToggleFlip, ebookFormat, onRead, status, currentPage, onSetPage, onFinish, favorite, posterOn, onTogglePoster }: BookDetailPanelProps) {
   const [viewing, setViewing] = useState<string | null>(null) // ISBN del libro que se está viendo en grande
   // useEffect para escuchar la pulsación de la tecla Escape y cerrar el panel
   useEffect(() => {
@@ -193,6 +205,14 @@ function BookDetailPanel({ book, onClose, flipped, onToggleFlip, ebookFormat, on
           aria-pressed={flipped}
           onClick={onToggleFlip}
         />
+        {favorite && (
+          <IconButton
+            icon="poster"
+            label={posterOn ? 'Descolgar el póster de la chimenea' : 'Colgarlo como póster sobre la chimenea (caben dos)'}
+            aria-pressed={posterOn}
+            onClick={onTogglePoster}
+          />
+        )}
       </div>
 
       {/* Si se elige otro libro en la sala, la vista en grande se cierra. Va en document.body: el desenfoque del panel

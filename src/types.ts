@@ -130,6 +130,8 @@ export interface LibraryState {
   settings: AppSettings
   /** Retos de lectura: libros que se quieren leer cada año ({ '2026': 50 }) */
   goals: Record<string, number>
+  /** Favoritos colgados como pósters sobre la chimenea (ISBN, como mucho MAX_POSTERS) */
+  posters: string[]
 }
 
 /**
@@ -189,6 +191,9 @@ export const MAX_SOUND_VOLUME = 1.5
 
 /** Etiqueta de los libros favoritos (la estrella de la consola) */
 export const FAVORITE_TAG = 'Favorito'
+
+/** Pósters de favoritos que caben sobre la chimenea */
+export const MAX_POSTERS = 2
 
 /** Ajustes por defecto (los que hay hasta que se cambian en la consola) */
 export const DEFAULT_SETTINGS: AppSettings = {

@@ -3,7 +3,7 @@
 // SQLite a través de la API (/api, la sirve server/library.ts con el servidor de Vite) y, como copia de seguridad, en
 // localStorage, por si el servidor no está disponible.
 import type { AppSettings, LibraryState, ReadingStatus, WishItem } from '@/types'
-import { DEFAULT_SETTINGS, withDefaultSettings } from '@/types'
+import { DEFAULT_SETTINGS, MAX_POSTERS, withDefaultSettings } from '@/types'
 
 const READING_STATUSES: ReadingStatus[] = ['finished', 'reading', 'unread']
 
@@ -19,6 +19,7 @@ const PARTS: Record<LibraryPart, { key: string; route: string }> = {
   wishlist: { key: 'fantasy-bookroom:wishlist', route: '/api/wishlist' },
   settings: { key: 'fantasy-bookroom:settings', route: '/api/settings' },
   goals: { key: 'fantasy-bookroom:goals', route: '/api/goals' },
+  posters: { key: 'fantasy-bookroom:posters', route: '/api/posters' },
 }
 
 const isPlainObject = (value: unknown): value is Record<string, unknown> =>
@@ -49,7 +50,8 @@ function sanitize(library: Partial<Record<LibraryPart, unknown>> | null | undefi
   const goals = isPlainObject(library?.goals)
     ? (Object.fromEntries(Object.entries(library.goals).filter(([, count]) => Number.isInteger(count))) as LibraryState['goals'])
     : {}
-  return { placements, flipped, readingStatus, tags, wishlist, settings, goals }
+  const posters = Array.isArray(library?.posters) ? library.posters.filter((isbn): isbn is string => typeof isbn === 'string').slice(0, MAX_POSTERS) : []
+  return { placements, flipped, readingStatus, tags, wishlist, settings, goals, posters }
 }
 
 function readLocal(): LibraryState {

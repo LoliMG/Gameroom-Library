@@ -1,9 +1,8 @@
 // Diario de lecturas de la consola: reto del año, calendario con los días de lectura y las lecturas del año (con sus
 // fechas, estrellas y comentarios). Las cuentas están en src/utils/readingCalendar.ts
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import type { Book, Reading, ReadingStatus } from '@/types'
-import { fetchReadings } from '@/utils/diaryApi'
-import { finishedInYear, readingDays, readingsInYear, todayIso, yearDays } from '@/utils/readingCalendar'
+import { finishedInYear, readingDays, readingsInYear, todayIso, yearDays, yearSummary } from '@/utils/readingCalendar'
 import ReadingForm from '@/components/ReadingForm'
 
 interface DiaryPanelProps {
@@ -11,7 +10,15 @@ interface DiaryPanelProps {
   onSetStatus: (isbns: string[], status: ReadingStatus) => void
   goals: Record<string, number>
   onSetGoal: (year: string, count: number) => void
+  /** Lecturas del diario (null = cargando; las carga App, que también las usa la sala) y error al cargarlas */
+  readings: Reading[] | null
+  error: string | null
+  /** Tras guardar o borrar una lectura: que se vuelvan a pedir */
+  onReadingsChange: () => void
 }
+
+// Nombre del mes ("marzo") a partir de su número (0 = enero)
+const monthName = (month: number) => new Date(2000, month, 1).toLocaleDateString('es-ES', { month: 'long' })
 
 // Fecha corta en español: "3 mar" (con el año si no es el que se está viendo)
 const shortDate = (iso: string, year: number) =>
@@ -20,29 +27,14 @@ const shortDate = (iso: string, year: number) =>
 // Color de un día del calendario según cuántos libros se leían (0, 1, 2 o 3 o más)
 const dayLevel = (count: number) => Math.min(3, count)
 
-function DiaryPanel({ books, onSetStatus, goals, onSetGoal }: DiaryPanelProps) {
+function DiaryPanel({ books, onSetStatus, goals, onSetGoal, readings, error, onReadingsChange }: DiaryPanelProps) {
   const today = todayIso()
   const [year, setYear] = useState(Number(today.slice(0, 4)))
-  const [readings, setReadings] = useState<Reading[] | null>(null) // null = cargando
-  const [error, setError] = useState<string | null>(null)
   const [editing, setEditing] = useState<Reading | 'new' | null>(null)
-  // Cada vez que cambia (al guardar o borrar una lectura) se vuelven a pedir las lecturas
-  const [version, setVersion] = useState(0)
   const booksByIsbn = useMemo(() => new Map(books.map((book) => [book.isbn, book])), [books])
-
-  useEffect(() => {
-    let cancelled = false
-    fetchReadings()
-      .then((list) => {
-        if (cancelled) return
-        setReadings(list)
-        setError(null)
-      })
-      .catch((loadError: Error) => !cancelled && setError(`No se pudo cargar el diario: ${loadError.message}`))
-    return () => {
-      cancelled = true
-    }
-  }, [version])
+  // "Ver mi año": resumen del año (libros, páginas, estrellas, mejor mes y autor)
+  const [showYear, setShowYear] = useState(false)
+  const summary = useMemo(() => yearSummary(readings ?? [], books, year), [readings, books, year])
 
   const yearReadings = useMemo(() => readingsInYear(readings ?? [], year, today), [readings, year, today])
   const days = useMemo(() => readingDays(readings ?? [], year, today), [readings, year, today])
@@ -60,7 +52,7 @@ function DiaryPanel({ books, onSetStatus, goals, onSetGoal }: DiaryPanelProps) {
           onSetStatus={onSetStatus}
           onDone={(saved) => {
             setEditing(null)
-            if (saved) setVersion((current) => current + 1)
+            if (saved) onReadingsChange()
           }}
         />
       </section>
@@ -79,10 +71,39 @@ function DiaryPanel({ books, onSetStatus, goals, onSetGoal }: DiaryPanelProps) {
             ›
           </button>
         </div>
+        <button type="button" className="dashboard-filter" aria-pressed={showYear} onClick={() => setShowYear(!showYear)}>
+          ✨ Ver mi año
+        </button>
         <button type="button" className="dashboard-action" onClick={() => setEditing('new')}>
           Añadir lectura
         </button>
       </div>
+
+      {/* Resumen del año */}
+      {showYear && (
+        <dl className="diary-summary" aria-label={`Resumen de ${year}`}>
+          <div>
+            <dt>Libros terminados</dt>
+            <dd>{summary.finished}</dd>
+          </div>
+          <div>
+            <dt>Páginas leídas</dt>
+            <dd>{summary.pages.toLocaleString('es-ES')}</dd>
+          </div>
+          <div>
+            <dt>Media de estrellas</dt>
+            <dd>{summary.averageRating === null ? '—' : `${summary.averageRating.toLocaleString('es-ES')} ★`}</dd>
+          </div>
+          <div>
+            <dt>Mejor mes</dt>
+            <dd>{summary.bestMonth === null ? '—' : monthName(summary.bestMonth)}</dd>
+          </div>
+          <div>
+            <dt>Autor más leído</dt>
+            <dd>{summary.topAuthor ?? '—'}</dd>
+          </div>
+        </dl>
+      )}
 
       {/* Reto del año: libros terminados frente a los que se quieren leer */}
       <div className="diary-goal">

@@ -1,7 +1,7 @@
 // Comprobación rápida de las cuentas del diario de lecturas: node scripts/checkDiary.ts
 import assert from 'node:assert/strict'
-import { readingDays, readingsInYear, finishedInYear, yearDays } from '../src/utils/readingCalendar.ts'
-import type { Reading } from '../src/types.ts'
+import { readingDays, readingsInYear, finishedInYear, yearDays, yearSummary } from '../src/utils/readingCalendar.ts'
+import type { Book, Reading } from '../src/types.ts'
 
 const reading = (id: number, startDate: string | null, endDate: string | null): Reading => ({ id, isbn: `isbn${id}`, startDate, endDate, rating: null, comment: null })
 const today = '2026-10-20'
@@ -33,4 +33,17 @@ assert.equal(finishedInYear(readings, 2025), 0)
 assert.deepEqual([yearDays(2026).days.length, yearDays(2026).firstWeekday], [365, 3])
 assert.equal(yearDays(2028).days.length, 366)
 
-console.log('Diario de lecturas (días, años y retos): OK')
+// Resumen del año: terminadas en 2026 son la 1, la 2, la 4 y la 6 (la 2 y la 6 en marzo); la 6 es una relectura del libro 2
+const book = (isbn: string, author: string, pages: number | null) => ({ isbn, author, pages }) as Book
+const summaryBooks = [book('isbn1', 'Ana', 300), book('isbn2', 'Ana', 200), book('isbn4', 'Luis', null)]
+const rated = readings.map((r) => (r.id === 1 ? { ...r, rating: 5 } : r.id === 2 ? { ...r, rating: 4 } : r.id === 6 ? { ...r, isbn: 'isbn2' } : r))
+assert.deepEqual(yearSummary(rated, summaryBooks, 2026), {
+  finished: 4,
+  pages: 300 + 200 + 200, // La 4 no tiene páginas; la relectura del libro 2 cuenta otra vez
+  averageRating: 4.5,
+  bestMonth: 2, // Marzo
+  topAuthor: 'Ana',
+})
+assert.deepEqual(yearSummary([], summaryBooks, 2026), { finished: 0, pages: 0, averageRating: null, bestMonth: null, topAuthor: null })
+
+console.log('Diario de lecturas (días, años, retos y resumen): OK')

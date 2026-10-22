@@ -1,9 +1,10 @@
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 // Contenedor Canvas de React Three Fiber y su gestor de eventos de puntero por defecto
 import { Canvas, events as createPointerEvents } from '@react-three/fiber'
 import type { CanvasProps } from '@react-three/fiber'
 // Tipos compartidos: libro, estado de la biblioteca, estado de lectura y formato de libro electrónico
-import type { Book, EbookFormat, LibraryState, ReadingStatus } from '@/types'
+import type { Book, EbookFormat, LibraryState, Reading, ReadingStatus } from '@/types'
+import { FAVORITE_TAG, MAX_POSTERS } from '@/types'
 import type { CollectionTools } from '@/components/BookDashboard'
 // Importación de la experiencia principal utilizando el alias "@"
 import Experience from '@/scene/core/Experience'
@@ -16,6 +17,8 @@ import FocusTimer from '@/components/FocusTimer'
 import { loadLibrary, saveLibraryPart } from '@/utils/libraryApi'
 // Qué libros tienen libro electrónico para el lector
 import { fetchEbooks, fetchProgress, saveCurrentPage } from '@/utils/readerApi'
+import { createReading, fetchReadings, updateReading } from '@/utils/diaryApi'
+import { todayIso } from '@/utils/readingCalendar'
 import books from '@/data/books'
 
 // Lector de libros electrónicos: se carga solo al abrir un libro (epub.js y PDF.js pesan bastante)
@@ -109,6 +112,45 @@ function Bookroom({ library }: { library: LibraryState }) {
   useEffect(() => {
     saveLibraryPart('goals', goals)
   }, [goals])
+  // Favoritos colgados sobre la chimenea (al colgar uno más de los que caben, se descuelga el más antiguo); solo cuentan
+  // los que siguen siendo favoritos
+  const [posters, setPosters] = useState(library.posters)
+  useEffect(() => {
+    saveLibraryPart('posters', posters)
+  }, [posters])
+  const togglePoster = (isbn: string) =>
+    setPosters((list) => (list.includes(isbn) ? list.filter((item) => item !== isbn) : [...list, isbn].slice(-MAX_POSTERS)))
+  const posterBooks = posters
+    .filter((isbn) => tags[isbn]?.includes(FAVORITE_TAG))
+    .map((isbn) => books.find((book) => book.isbn === isbn))
+    .filter((book): book is Book => book !== undefined)
+
+  // Diario de lecturas (null = cargando): lo usan la consola, los libros terminados del año en la sala y "¡Terminado!"
+  const [readings, setReadings] = useState<Reading[] | null>(null)
+  const [readingsError, setReadingsError] = useState<string | null>(null)
+  const loadReadings = useCallback(() => {
+    fetchReadings()
+      .then((list) => {
+        setReadings(list)
+        setReadingsError(null)
+      })
+      .catch((error: Error) => setReadingsError(`No se pudo cargar el diario: ${error.message}`))
+  }, [])
+  useEffect(loadReadings, [loadReadings])
+  // "¡Terminado!": el libro pasa a leído y su lectura se apunta en el diario con la fecha de hoy (cierra la que esté en
+  // curso o, si no hay ninguna, añade una)
+  const finishBook = async (isbn: string) => {
+    setStatuses([isbn], 'finished')
+    const open = readings?.find((reading) => reading.isbn === isbn && !reading.endDate)
+    const endDate = todayIso()
+    try {
+      if (open) await updateReading(open.id, { startDate: open.startDate, endDate, rating: open.rating, comment: open.comment })
+      else await createReading({ isbn, startDate: null, endDate, rating: null, comment: null })
+      loadReadings()
+    } catch (error) {
+      console.warn('[diario] No se pudo apuntar la lectura terminada:', (error as Error).message)
+    }
+  }
   const collection: CollectionTools = {
     tags,
     onSetTags: (isbn, list) =>
@@ -124,6 +166,9 @@ function Bookroom({ library }: { library: LibraryState }) {
     onSetSettings: setSettings,
     goals,
     onSetGoal: (year, count) => setGoals((all) => ({ ...all, [year]: count })),
+    readings,
+    readingsError,
+    onReadingsChange: loadReadings,
   }
 
   // Lienzo WebGL, necesario para capturar el ratón desde el botón HTML
@@ -169,6 +214,7 @@ function Bookroom({ library }: { library: LibraryState }) {
           onReadBook={setReadingBook}
           reading={readingBook !== null}
           focus={focus}
+          posters={posterBooks}
         />
       </Canvas>
 
@@ -198,7 +244,10 @@ function Bookroom({ library }: { library: LibraryState }) {
         status={selectedBook ? (readingStatus[selectedBook.isbn] ?? 'unread') : 'unread'}
         currentPage={selectedBook ? pages[selectedBook.isbn] : undefined}
         onSetPage={(page) => selectedBook && setCurrentPage(selectedBook, page)}
-        onFinish={() => selectedBook && setStatuses([selectedBook.isbn], 'finished')}
+        onFinish={() => selectedBook && finishBook(selectedBook.isbn)}
+        favorite={selectedBook ? Boolean(tags[selectedBook.isbn]?.includes(FAVORITE_TAG)) : false}
+        posterOn={selectedBook ? posterBooks.some((book) => book.isbn === selectedBook.isbn) : false}
+        onTogglePoster={() => selectedBook && togglePoster(selectedBook.isbn)}
       />
 
       {readingBook && (
