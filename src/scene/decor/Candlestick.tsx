@@ -23,7 +23,7 @@ const MODEL_FLAME_NODE = 'Flame_4'
  * `position` es el punto de apoyo de la base; `withLight` añade el halo de luz tenue
  * (el plan limita a 4 las luces de vela, así que no todas lo llevan).
  */
-function Candlestick({ position, rotationY = 0, withLight = true }: { position: Vector3Tuple; rotationY?: number; withLight?: boolean }) {
+function Candlestick({ position, rotationY = 0, withLight = true, lit = true }: { position: Vector3Tuple; rotationY?: number; withLight?: boolean; lit?: boolean }) {
   const { scene } = useGLTF(modelsManifest.candle.url)
   const candle = useMemo(() => {
     const clone = enableShadows(scene.clone())
@@ -36,7 +36,7 @@ function Candlestick({ position, rotationY = 0, withLight = true }: { position: 
     <>
       <primitive object={candle} position={position} rotation={[0, rotationY, 0]} scale={CANDLE_SCALE} />
       {/* La llama va en coordenadas del mundo para que cada vela parpadee a destiempo (su fase sale de la posición) */}
-      <CandleLight position={[position[0], position[1] + WICK_HEIGHT, position[2]]} withWax={false} withLight={withLight} />
+      <CandleLight position={[position[0], position[1] + WICK_HEIGHT, position[2]]} withWax={false} withLight={withLight} lit={lit} />
     </>
   )
 }

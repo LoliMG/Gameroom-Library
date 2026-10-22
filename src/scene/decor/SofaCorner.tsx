@@ -1,5 +1,5 @@
 // Importación de useMemo de React para clonar y configurar los modelos 3D; Suspense para la portada del libro de la mesa
-import { Suspense, useMemo } from 'react'
+import { Suspense, useMemo, useState } from 'react'
 // useGLTF de @react-three/drei para cargar los modelos
 import { useGLTF } from '@react-three/drei'
 // Importación del manifiesto centralizado de modelos 3D
@@ -21,6 +21,7 @@ import MugSteam from '@/scene/decor/MugSteam'
 import WallShelf, { WALL_SHELF_DEPTH_PER_LENGTH } from '@/scene/decor/WallShelf'
 // Figuras sobre las repisas (hiedra, Ponyta y Bakugo)
 import ShelfFigure from '@/scene/decor/ShelfFigure'
+import Clickable from '@/scene/shared/Clickable'
 // El libro que se está leyendo, tumbado en la mesa (el mismo libro de las baldas)
 import Book from '@/scene/books/Book'
 import type { Book as BookData } from '@/types'
@@ -159,6 +160,9 @@ interface SofaCornerProps {
 }
 
 function SofaCorner({ currentBook, currentProgress, onOpenCurrent }: SofaCornerProps) {
+  // Las dos velas se encienden y se apagan juntas pulsando cualquiera de ellas
+  const [candlesLit, setCandlesLit] = useState(true)
+  const toggleCandles = () => setCandlesLit((lit) => !lit)
   // 1. Carga del sofá desde modelsManifest
   const sofaGLTF = useGLTF(modelsManifest.sofa.url)
   const sofaScene = useMemo(() => enableShadows(applyAlphaCutout(sofaGLTF.scene.clone())), [sofaGLTF.scene])
@@ -244,7 +248,9 @@ function SofaCorner({ currentBook, currentProgress, onOpenCurrent }: SofaCornerP
       />
 
       {/* 7c. Candelabro de cobre con vela (candle.glb) y llama titilante, hacia el fondo izquierdo */}
-      <Candlestick position={CANDLESTICK_POSITION} rotationY={0.2} />
+      <Clickable onClick={toggleCandles}>
+        <Candlestick position={CANDLESTICK_POSITION} rotationY={0.2} lit={candlesLit} />
+      </Clickable>
 
       {/* 7e. Vapor sutil que sube de la taza (Fase 9c) */}
       <MugSteam position={STEAM_POSITION} />
@@ -254,7 +260,9 @@ function SofaCorner({ currentBook, currentProgress, onOpenCurrent }: SofaCornerP
         <WallShelf key={z} position={[WALL_B_X, y, z]} rotationY={WALL_SHELF_ROTATION_Y} length={WALL_SHELF_LENGTH} />
       ))}
       {/* Candelabro en la repisa derecha; sin halo de luz porque el plan limita a 4 las luces de vela */}
-      <Candlestick position={SHELF_CANDLE_POSITION} rotationY={-0.4} withLight={false} />
+      <Clickable onClick={toggleCandles}>
+        <Candlestick position={SHELF_CANDLE_POSITION} rotationY={-0.4} withLight={false} lit={candlesLit} />
+      </Clickable>
 
       {/* Figuras de las repisas */}
       <ShelfFigure model="ivy" height={IVY_HEIGHT} position={IVY_POSITION} adjust={matteIvy} />

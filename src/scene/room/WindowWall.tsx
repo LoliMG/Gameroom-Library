@@ -1,9 +1,12 @@
 // Importación de useMemo de React para clonar y optimizar la escena 3D
-import { useMemo } from 'react'
+import { useLayoutEffect, useMemo, useRef } from 'react'
+// useFrame abre y cierra las hojas poco a poco
+import { useFrame } from '@react-three/fiber'
+import Clickable from '@/scene/shared/Clickable'
 // Hook useGLTF de drei para carga del modelo GLB
 import { useGLTF } from '@react-three/drei'
 // Clases de Three.js para dibujar el contorno de la pared y extruirlo con grosor
-import { Shape, ExtrudeGeometry } from 'three'
+import { Box3, MathUtils, Object3D as Pivot, Quaternion, Shape, ExtrudeGeometry, Vector3 } from 'three'
 import type { Material, Mesh, Object3D } from 'three'
 // Vector3Tuple: [x, y, z] en metros (el formato que aceptan position y rotation en React Three Fiber)
 import type { Vector3Tuple } from 'three'
@@ -14,6 +17,44 @@ import useWallpaper, { WALLPAPER_TILE_SIZE, WALLPAPER_TINT } from '@/hooks/useWa
 
 // Punto [x, y] de un contorno plano
 type Point = [number, number]
+
+// Hojas de los dos arcos (dos por arco, cada una con su marco y su cristal), lo que se abren hacia el jardín y rapidez
+const LEAF_NODES = ['win', 'win_1', 'win_2', 'win_1_2']
+const OPEN_ANGLE = MathUtils.degToRad(75)
+const OPEN_DAMPING = 3
+
+// Bisagra de una hoja: un pivote en el canto exterior de la hoja (el que da al marco del arco) que la hace girar sobre
+// la vertical. sign: hacia dónde gira para abrirse hacia el jardín (+Z). Se guarda en la hoja: si se vuelve a preparar
+// (React lo hace dos veces en desarrollo) se reutiliza
+interface Hinge {
+  pivot: Pivot
+  axis: Vector3
+  sign: number
+}
+function hingeLeaf(scene: Object3D, name: string): Hinge | null {
+  const leaf = scene.getObjectByName(name)
+  if (!leaf) return null
+  if (leaf.userData.hinge) return leaf.userData.hinge as Hinge
+  const arch = leaf.parent!
+  // En window.glb las hojas de un arco vienen entreabiertas: cerradas, como las del otro, hasta que se abra la ventana
+  leaf.rotation.set(0, 0, 0)
+  scene.updateMatrixWorld(true)
+  const leafBox = new Box3().setFromObject(leaf)
+  const archCenter = new Box3().setFromObject(arch).getCenter(new Vector3())
+  const center = leafBox.getCenter(new Vector3())
+  // La hoja de la izquierda de su arco gira sobre su canto izquierdo; la de la derecha, sobre el derecho
+  const hingeOnLeft = center.x < archCenter.x
+  const pivot = new Pivot()
+  arch.add(pivot)
+  pivot.position.copy(arch.worldToLocal(new Vector3(hingeOnLeft ? leafBox.min.x : leafBox.max.x, center.y, center.z)))
+  pivot.updateMatrixWorld(true)
+  pivot.attach(leaf)
+  // La vertical de la escena en el espacio del arco (los nodos del modelo pueden venir girados)
+  const axis = new Vector3(0, 1, 0).applyQuaternion(arch.getWorldQuaternion(new Quaternion()).invert())
+  const hinge = { pivot, axis, sign: hingeOnLeft ? -1 : 1 }
+  leaf.userData.hinge = hinge
+  return hinge
+}
 
 // Valores por defecto de la pared en metros (el ancho no tiene: lo marca la habitación, ROOM_WIDTH en Room.tsx)
 export const DEFAULT_WALL_HEIGHT = 2.8    // Altura de suelo a techo (Y = -1.0 a +1.8)
@@ -160,6 +201,10 @@ function setupWindowMeshes<T extends Object3D>(scene: T): T {
 interface WindowWallProps {
   /** Obligatorio: ancho de la habitación (ventanal + fondo de estantería a cada lado) */
   width: number
+  /** Hojas abiertas hacia el jardín */
+  open: boolean
+  /** Pulsar el ventanal: abrirlo o cerrarlo */
+  onToggle: () => void
   height?: number
   floorY?: number
   position?: Vector3Tuple
@@ -168,6 +213,8 @@ interface WindowWallProps {
 
 function WindowWall({
   width,
+  open,
+  onToggle,
   height = DEFAULT_WALL_HEIGHT,
   floorY = DEFAULT_FLOOR_Y,
   position = [0, 0, 0],
@@ -178,6 +225,19 @@ function WindowWall({
 
   // Clonación y configuración de sombras y materiales de cristal
   const clonedScene = useMemo(() => setupWindowMeshes(scene.clone()), [scene])
+
+  // Bisagras de las hojas (en una ref: se giran en cada fotograma) y cuánto están abiertas (0 a 1)
+  const hingesRef = useRef<Hinge[]>([])
+  const opennessRef = useRef(0)
+  useLayoutEffect(() => {
+    hingesRef.current = LEAF_NODES.map((name) => hingeLeaf(clonedScene, name)).filter((hinge): hinge is Hinge => hinge !== null)
+  }, [clonedScene])
+  useFrame((_, delta) => {
+    const target = open ? 1 : 0
+    if (Math.abs(opennessRef.current - target) < 0.001) return
+    opennessRef.current = MathUtils.damp(opennessRef.current, target, OPEN_DAMPING, Math.min(delta, 0.1))
+    for (const { pivot, axis, sign } of hingesRef.current) pivot.quaternion.setFromAxisAngle(axis, sign * OPEN_ANGLE * opennessRef.current)
+  })
 
   // Cota Y local para que la base del ventanal apoye exactamente sobre el suelo (floorY)
   const localOffsetY = floorY - ORIGINAL_MIN_Y * WINDOW_SCALE // -1.0 + 1.2303 = +0.2303 m
@@ -194,12 +254,14 @@ function WindowWall({
   return (
     <group position={position} rotation={rotation}>
       {/* 1. MODELO 3D REAL DEL VENTANAL (window.glb) */}
-      <primitive
-        object={clonedScene}
-        position={[LOCAL_OFFSET_X, localOffsetY, 0]}
-        scale={WINDOW_SCALE}
-        rotation={[0, 0, 0]}
-      />
+      <Clickable onClick={onToggle}>
+        <primitive
+          object={clonedScene}
+          position={[LOCAL_OFFSET_X, localOffsetY, 0]}
+          scale={WINDOW_SCALE}
+          rotation={[0, 0, 0]}
+        />
+      </Clickable>
 
       {/* 2. PARED OPACA DE SUELO A TECHO con los dos arcos recortados; proyecta sombra para que la luz solo entre por el cristal */}
       <mesh geometry={wallGeometry} castShadow receiveShadow>
