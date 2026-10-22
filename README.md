@@ -62,5 +62,6 @@ src/
 
 ## 📜 Documentación y Créditos
 
+- **Funcionalidades**: Todo lo que se puede hacer dentro de la sala (controles, libros, lector, consola, objetos interactivos, tiempo real) en [docs/FUNCIONALIDADES.md](docs/FUNCIONALIDADES.md).
 - **Catálogo Completo de Libros**: Consulta el listado detallado de los libros de la base de datos en [docs/BOOKS.md](docs/BOOKS.md).
 - **Créditos y Atribuciones 3D**: Consulta todos los autores, enlaces y licencias de los modelos y texturas utilizados en [docs/CREDITS.md](docs/CREDITS.md).
