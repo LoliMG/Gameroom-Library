@@ -1,7 +1,7 @@
 // Búsqueda, filtro y selección del panel de la biblioteca, y sus pantallas: añadir, editar, lista de deseos y ajustes
 import { useMemo, useState } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
-import type { AppSettings, Book, CatalogBook, ReadingStatus, WishItem } from '@/types'
+import type { AppSettings, Book, CatalogBook, Reading, ReadingStatus, WishItem } from '@/types'
 import { FAVORITE_TAG } from '@/types'
 import AddBookPanel from '@/components/AddBookPanel'
 import BookEditForm from '@/components/BookEditForm'
@@ -44,6 +44,10 @@ export interface CollectionTools {
   /** Retos de lectura por año */
   goals: Record<string, number>
   onSetGoal: (year: string, count: number) => void
+  /** Lecturas del diario (null = cargando) y error al cargarlas; onReadingsChange las vuelve a pedir tras cambiarlas */
+  readings: Reading[] | null
+  readingsError: string | null
+  onReadingsChange: () => void
 }
 
 // Pantalla de la consola: portadas, añadir libro, diario, lista de deseos o ajustes (editar va aparte: editingIsbn)
@@ -69,7 +73,7 @@ interface BookDashboardProps {
 }
 
 function BookDashboard({ books, readingStatus, onSetStatus, onOpenBook, onLocateBook, collection }: BookDashboardProps) {
-  const { tags, onSetTags, wishlist, onSetWishlist, settings, onSetSettings, goals, onSetGoal } = collection
+  const { tags, onSetTags, wishlist, onSetWishlist, settings, onSetSettings, goals, onSetGoal, readings, readingsError, onReadingsChange } = collection
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<StatusFilter>('all')
   const [formatFilter, setFormatFilter] = useState<FormatFilter>('all')
@@ -207,7 +211,7 @@ function BookDashboard({ books, readingStatus, onSetStatus, onOpenBook, onLocate
       )}
       {!editingBook && view === 'wishlist' && <WishlistPanel wishlist={wishlist} onSetWishlist={onSetWishlist} onSearch={() => setView('add')} />}
       {!editingBook && view === 'settings' && <SettingsPanel settings={settings} onSetSettings={onSetSettings} />}
-      {!editingBook && view === 'diary' && <DiaryPanel books={books} onSetStatus={onSetStatus} goals={goals} onSetGoal={onSetGoal} />}
+      {!editingBook && view === 'diary' && <DiaryPanel books={books} onSetStatus={onSetStatus} goals={goals} onSetGoal={onSetGoal} readings={readings} error={readingsError} onReadingsChange={onReadingsChange} />}
 
       {!editingBook && view === 'books' && (
         <>

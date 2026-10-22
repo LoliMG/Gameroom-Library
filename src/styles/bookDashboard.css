@@ -772,3 +772,31 @@
   font-size: 13px;
   color: var(--dash-muted);
 }
+
+/* Resumen del año del diario ("Ver mi año"): cifras en tarjetas */
+.diary-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+
+.diary-summary div {
+  padding: 10px 12px;
+  background: var(--dash-surface);
+  border: 1px solid var(--dash-border);
+  border-radius: 10px;
+}
+
+.diary-summary dt {
+  font-size: 12px;
+  color: var(--dash-muted);
+}
+
+.diary-summary dd {
+  margin: 4px 0 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--dash-accent);
+  text-transform: capitalize;
+}

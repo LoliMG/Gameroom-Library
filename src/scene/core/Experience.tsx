@@ -35,6 +35,7 @@ import Cat from '@/scene/decor/Cat'
 import FloorLamp from '@/scene/decor/FloorLamp'
 import Clickable from '@/scene/shared/Clickable'
 import Gramophone from '@/scene/decor/Gramophone'
+import Posters from '@/scene/decor/Posters'
 // Importación de la puerta de entrada de madera antigua (door.glb)
 import Door from '@/scene/room/Door'
 // Pantalla con el panel de la biblioteca (portadas, búsqueda y estados de lectura)
@@ -222,6 +223,8 @@ const CONSOLE_ROTATION_Y = 0
 // Gramófono sobre la repisa de la chimenea, hacia la izquierda y con la bocina hacia la sala
 const GRAMOPHONE_HEIGHT = 0.5
 const GRAMOPHONE_POSITION: Vector3Tuple = [FIREPLACE_POSITION[0] - 0.5, FLOOR_Y + FIREPLACE_HEIGHT, FIREPLACE_POSITION[2]]
+// Pósters de favoritos: en la pared sobre la chimenea, con el borde de abajo por encima del gramófono (0.5 m)
+const POSTERS_CENTER: Vector3Tuple = [FIREPLACE_POSITION[0], FLOOR_Y + FIREPLACE_HEIGHT + 0.88, BACK_WALL_Z + 0.015]
 // Lo que tapa la consola, en cajas: la chimenea por partes (medidas del modelo, desde su centro en planta y el suelo:
 // [mitad del ancho, alto desde, alto hasta, fondo desde, fondo hasta]; el zócalo no llega a la altura de la pantalla)
 // y el gramófono (0.3 × 0.32 m en planta)
@@ -385,9 +388,11 @@ interface ExperienceProps {
   reading: boolean
   /** Modo concentración: el gato se duerme junto a la chimenea */
   focus: boolean
+  /** Favoritos colgados como pósters sobre la chimenea */
+  posters: Book[]
 }
 
-function Experience({ onSelectBook, flippedIsbns, readingStatus, onSetStatus, savedPlacements, onSavePlacements, collection, progress, currentBook, onReadBook, reading, focus }: ExperienceProps) {
+function Experience({ onSelectBook, flippedIsbns, readingStatus, onSetStatus, savedPlacements, onSavePlacements, collection, progress, currentBook, onReadBook, reading, focus, posters }: ExperienceProps) {
   // Sitio de cada libro: { book, wall, module, shelf, x }; cambia al arrastrarlo y se guarda en la base de datos
   const [placements, setPlacements] = useState<Placement[]>(() => loadPlacements(savedPlacements))
   // Libros arrastrados (el agarrado y, si era parte de una selección, el resto): el estado los pinta sacados de la
@@ -502,7 +507,12 @@ function Experience({ onSelectBook, flippedIsbns, readingStatus, onSetStatus, sa
       )
       // Cinta del lomo en los libros empezados que no están marcados como acabados
       list.forEach((p, i) =>
-        shown.push({ ...p, x: xs[i], flipped: flippedIsbns.has(p.book.isbn), progress: readingStatus[p.book.isbn] === 'finished' ? undefined : progress[p.book.isbn] })
+        shown.push({
+          ...p,
+          x: xs[i],
+          flipped: flippedIsbns.has(p.book.isbn),
+          progress: readingStatus[p.book.isbn] === 'finished' ? undefined : progress[p.book.isbn],
+        })
       )
     })
     return shown
@@ -639,6 +649,9 @@ function Experience({ onSelectBook, flippedIsbns, readingStatus, onSetStatus, sa
         <mesh position={[FIREPLACE_POSITION[0], FLOOR_Y + 0.5, FIREPLACE_POSITION[2]]} visible={false} raycast={() => null} userData={{ collider: true }}>
           <boxGeometry args={[FIREPLACE_WIDTH, 1, FIREPLACE_DEPTH]} />
         </mesh>
+
+        {/* Pósters de favoritos en la pared, por encima del gramófono */}
+        <Posters books={posters} center={POSTERS_CENTER} onSelect={selectBook} />
 
         {/* Gramófono sobre la chimenea: al pulsarlo pone música lofi */}
         <Gramophone height={GRAMOPHONE_HEIGHT} position={GRAMOPHONE_POSITION} sound={collection.settings.sound} />
