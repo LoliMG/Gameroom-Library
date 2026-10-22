@@ -14,7 +14,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http'
 import type { Plugin } from 'vite'
 // Tipos compartidos con la sala (la forma de los datos que van y vienen por la API)
 import type { Annotation, AnnotationColor, AppSettings, BookMeta, Bookmark, EbookFormat, LibraryState, Reading, ReaderLocation, ReadingStatus, Slot, SoundVolumes, WishItem } from '../src/types.ts'
-import { DEFAULT_SETTINGS, MAX_POSTERS, MAX_SOUND_VOLUME, withDefaultSettings } from '../src/types.ts'
+import { DEFAULT_SETTINGS, MAX_PILE, MAX_POSTERS, MAX_SOUND_VOLUME, withDefaultSettings } from '../src/types.ts'
 // Búsqueda y alta de libros nuevos desde la consola (usa seedBooks, ValidationError e isPlainObject de aquí, solo dentro
 // de funciones: así la importación circular entre los dos archivos no da problemas)
 import { searchBooks, addBook, setSynopsis, updateBook, deleteBook, CatalogConflictError } from './bookCatalog.ts'
@@ -213,6 +213,7 @@ export function readState(db: DatabaseSync): LibraryState {
     settings: withDefaultSettings(readAppData(db, 'settings', {})),
     goals: readAppData(db, 'goals', {}),
     posters: readAppData(db, 'posters', []),
+    pile: readAppData(db, 'pile', []),
   }
   for (const row of db.prepare('SELECT * FROM book_state').all() as BookStateRow[]) {
     // Con pared hay sitio guardado: las cuatro columnas se escriben juntas (writePlacements)
@@ -374,6 +375,16 @@ export function writePosters(db: DatabaseSync, posters: unknown) {
   const known = knownIsbns(db)
   if (!posters.every((isbn) => typeof isbn === 'string' && ISBN.test(isbn) && known.has(isbn))) throw new ValidationError('Libro desconocido en los pósters')
   writeAppData(db, 'posters', posters)
+}
+
+/** Guarda la pila "por leer" ([isbn] de abajo arriba, como mucho MAX_PILE y sin repetir). */
+export function writePile(db: DatabaseSync, pile: unknown) {
+  if (!Array.isArray(pile) || pile.length > MAX_PILE || new Set(pile).size !== pile.length) {
+    throw new ValidationError(`Se esperaba una lista de hasta ${MAX_PILE} libros distintos`)
+  }
+  const known = knownIsbns(db)
+  if (!pile.every((isbn) => typeof isbn === 'string' && ISBN.test(isbn) && known.has(isbn))) throw new ValidationError('Libro desconocido en la pila')
+  writeAppData(db, 'pile', pile)
 }
 
 // --- Diario de lecturas ---
@@ -716,6 +727,7 @@ const WRITERS: Partial<Record<string, (db: DatabaseSync, value: unknown) => void
   '/settings': writeSettings,
   '/goals': writeGoals,
   '/posters': writePosters,
+  '/pile': writePile,
 }
 
 /** Opciones de la API: carpeta de los libros electrónicos y, para añadir libros desde la consola, el catálogo */

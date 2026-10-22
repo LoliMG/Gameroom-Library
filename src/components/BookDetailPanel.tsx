@@ -29,6 +29,14 @@ const ICONS = {
       <path d="M3.5 9a9 9 0 0 1 14.9-3.4L23 10M1 14l4.6 4.4A9 9 0 0 0 20.5 15" />
     </>
   ),
+  // Libros apilados: mandarlo a la pila "por leer"
+  pile: (
+    <>
+      <rect x="3" y="15" width="18" height="5" rx="1" />
+      <rect x="5" y="10" width="15" height="5" rx="1" />
+      <rect x="4" y="5" width="16" height="5" rx="1" />
+    </>
+  ),
   // Cuadro colgado de un clavo: póster sobre la chimenea
   poster: (
     <>
@@ -115,9 +123,12 @@ interface BookDetailPanelProps {
   favorite: boolean
   posterOn: boolean
   onTogglePoster: () => void
+  /** En la pila "por leer" junto al sofá (fuera de la estantería) */
+  inPile: boolean
+  onTogglePile: () => void
 }
 
-function BookDetailPanel({ book, onClose, flipped, onToggleFlip, ebookFormat, onRead, status, currentPage, onSetPage, onFinish, favorite, posterOn, onTogglePoster }: BookDetailPanelProps) {
+function BookDetailPanel({ book, onClose, flipped, onToggleFlip, ebookFormat, onRead, status, currentPage, onSetPage, onFinish, favorite, posterOn, onTogglePoster, inPile, onTogglePile }: BookDetailPanelProps) {
   const [viewing, setViewing] = useState<string | null>(null) // ISBN del libro que se está viendo en grande
   // useEffect para escuchar la pulsación de la tecla Escape y cerrar el panel
   useEffect(() => {
@@ -204,6 +215,12 @@ function BookDetailPanel({ book, onClose, flipped, onToggleFlip, ebookFormat, on
           label={flipped ? 'Voltear: dejarlo de canto, con el lomo a la vista' : 'Voltear: ponerlo de frente, con la portada a la vista'}
           aria-pressed={flipped}
           onClick={onToggleFlip}
+        />
+        <IconButton
+          icon="pile"
+          label={inPile ? 'Devolverlo a su sitio de la estantería' : 'Mandarlo a la pila «por leer» junto al sofá'}
+          aria-pressed={inPile}
+          onClick={onTogglePile}
         />
         {favorite && (
           <IconButton
