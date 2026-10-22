@@ -23,6 +23,8 @@ import {
   listEbooks,
   readReader,
   writePosition,
+  readProgress,
+  writePage,
   createAnnotation,
   updateAnnotation,
   deleteAnnotation,
@@ -130,6 +132,20 @@ const isbn = '9788410140462'
 assert.deepEqual(readReader(db, isbn), { position: null, annotations: [], bookmarks: [] })
 writePosition(db, isbn, { cfi: 'epubcfi(/6/4!/4/2)' })
 assert.deepEqual(readReader(db, isbn).position, { cfi: 'epubcfi(/6/4!/4/2)' })
+// Progreso: sin él se guarda solo la posición; con él, el porcentaje, y el libro pasa a ser el último leído
+assert.deepEqual(readProgress(db), { progress: {}, pages: {}, lastRead: isbn })
+writePosition(db, isbn, { cfi: 'epubcfi(/6/6!/4/2)' }, 0.25)
+assert.deepEqual(readProgress(db), { progress: { [isbn]: 0.25 }, pages: {}, lastRead: isbn })
+assert.throws(() => writePosition(db, isbn, { cfi: 'epubcfi(/6/6!/4/2)' }, 1.5), ValidationError)
+// Página escrita a mano: se guarda y, con el número de páginas del libro (200), da el progreso; no pasa del total
+const paperIsbn = '9788410140479'
+seedBooks(db, [{ isbn: paperIsbn, title: 'En papel', pages: 200 }])
+writePage(db, paperIsbn, 50)
+assert.equal(readProgress(db).pages[paperIsbn], 50)
+assert.equal(readProgress(db).progress[paperIsbn], 0.25)
+assert.equal(readProgress(db).lastRead, isbn) // Escribir la página no lo pone en la mesa: eso es del lector
+assert.throws(() => writePage(db, paperIsbn, 201), ValidationError)
+assert.throws(() => writePage(db, paperIsbn, 2.5), ValidationError)
 
 const epubNote = createAnnotation(db, isbn, { location: { cfi: 'epubcfi(/6/4!/4/2,/1:0,/1:20)' }, text: 'Había una vez', color: 'yellow' })
 const pdfNote = createAnnotation(db, isbn, { location: { page: 3, rects: [[0.1, 0.2, 0.5, 0.03]] }, text: 'línea', note: 'Me encanta', color: 'pink' })

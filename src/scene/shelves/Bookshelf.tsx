@@ -54,7 +54,8 @@ const HELD_BOOK_PULL = 0.06
 const SELECTED_BOOK_PULL = 0.025
 
 /** Libro tal como se pinta: su sitio y si está de frente (los volteados ocupan su fondo en vez de su grosor) */
-export type ShownPlacement = Placement & { flipped: boolean }
+// progress: cuánto se lleva leído, para la cinta del lomo (sin él, no hay cinta)
+export type ShownPlacement = Placement & { flipped: boolean; progress?: number }
 
 /** Balda concreta: pared, módulo y balda (el sitio de un libro sin la X) */
 export type ShelfSlot = { wall: string; module: number; shelf: number }
@@ -216,7 +217,7 @@ function Bookshelf({ slot, placements = [], width = BASE_SHELF_WIDTH, onSelectBo
       ))}
 
       {/* 8. Libros en su sitio guardado (balda y centro X) */}
-      {placements.map(({ book, shelf, x, flipped }) => {
+      {placements.map(({ book, shelf, x, flipped, progress }) => {
         // Altura Y: cota de apoyo de la balda + mitad de la altura del libro
         const posY = getShelfSurfaceY(shelf + startShelf) + book.height / 2
         // Profundidad Z: lomo al frente (+Z) y cuerpo proyectado hacia el fondo; el libro agarrado sale un poco
@@ -232,6 +233,7 @@ function Bookshelf({ slot, placements = [], width = BASE_SHELF_WIDTH, onSelectBo
               onGrab={bookDrag.grab}
               selected={bookDrag.selectedIds.has(book.id)}
               located={bookDrag.locatedId === book.id}
+              progress={progress}
               rotationY={flipped ? FLIPPED_BOOK_ROTATION_Y : 0}
               position={[x, posY, posZ]}
               width={book.width}

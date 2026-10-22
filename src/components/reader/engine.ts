@@ -22,6 +22,8 @@ export interface PlaceInfo {
   atStart: boolean
   atEnd: boolean
   label: string
+  /** Cuánto se lleva leído, de 0 a 1 */
+  progress: number
 }
 
 /** Avisos del motor a BookReader */

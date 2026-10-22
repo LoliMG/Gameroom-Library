@@ -12,7 +12,9 @@
   z-index: 1100;
   display: flex;
   flex-direction: column;
-  background: radial-gradient(circle at 50% 40%, #2a221c 0%, #0f0c0a 75%);
+  /* Translúcido: se lee sentada en el sofá y la sala (la chimenea, la ventana) se intuye alrededor del libro */
+  background: radial-gradient(circle at 50% 40%, rgba(42, 34, 28, 0.55) 0%, rgba(15, 12, 10, 0.8) 75%);
+  backdrop-filter: blur(3px);
   color: var(--reader-text);
   font-family: Georgia, 'Times New Roman', serif;
 }

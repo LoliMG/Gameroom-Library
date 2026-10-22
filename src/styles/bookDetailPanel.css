@@ -190,3 +190,40 @@
     border-radius: var(--panel-radius) var(--panel-radius) 0 0;
   }
 }
+
+/* Libro que se está leyendo: página por la que se va y botón de terminado */
+.book-detail-progress {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--panel-spacing-sm);
+  margin-top: var(--panel-spacing-sm);
+  font-size: 13px;
+  color: var(--panel-text-secondary);
+}
+
+.book-detail-progress input {
+  width: 64px;
+  padding: 4px 6px;
+  font: inherit;
+  color: var(--panel-text-primary);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+}
+
+.book-detail-finish {
+  padding: 6px 12px;
+  font: inherit;
+  font-weight: 600;
+  color: #1a1512;
+  background: var(--panel-accent);
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.book-detail-finish:hover,
+.book-detail-finish:focus-visible {
+  filter: brightness(1.1);
+}

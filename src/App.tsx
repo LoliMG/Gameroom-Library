@@ -14,7 +14,8 @@ import PlayControls from '@/components/PlayControls'
 // Estado de la biblioteca guardado en la base de datos (con copia en el navegador)
 import { loadLibrary, saveLibraryPart } from '@/utils/libraryApi'
 // Qué libros tienen libro electrónico para el lector
-import { fetchEbooks } from '@/utils/readerApi'
+import { fetchEbooks, fetchProgress, saveCurrentPage } from '@/utils/readerApi'
+import books from '@/data/books'
 
 // Lector de libros electrónicos: se carga solo al abrir un libro (epub.js y PDF.js pesan bastante)
 const BookReader = lazy(() => import('@/components/reader/BookReader'))
@@ -49,9 +50,25 @@ function Bookroom({ library }: { library: LibraryState }) {
   // Libros con libro electrónico ({ isbn: 'epub' | 'pdf' }) y libro que se está leyendo
   const [ebooks, setEbooks] = useState<Record<string, EbookFormat>>({})
   const [readingBook, setReadingBook] = useState<Book | null>(null)
+  // Cuánto se lleva de cada libro electrónico y el último leído (los pone al día el lector al pasar de página)
+  // Y la página escrita a mano en el panel de los libros que se están leyendo
+  const [progress, setProgress] = useState<Record<string, number>>({})
+  const [pages, setPages] = useState<Record<string, number>>({})
+  const [lastRead, setLastRead] = useState<string | null>(null)
   useEffect(() => {
     fetchEbooks().then(setEbooks)
+    fetchProgress().then((saved) => {
+      setProgress(saved.progress)
+      setPages(saved.pages)
+      setLastRead(saved.lastRead)
+    })
   }, [])
+  // Página escrita en el panel: se guarda y, si se sabe cuántas tiene el libro, mueve su cinta
+  const setCurrentPage = (book: Book, page: number) => {
+    setPages((all) => ({ ...all, [book.isbn]: page }))
+    if (book.pages) setProgress((all) => ({ ...all, [book.isbn]: page / book.pages! }))
+    saveCurrentPage(book.isbn, page).catch((error: Error) => console.warn('[lector] No se pudo guardar la página:', error.message))
+  }
   // ISBN de los libros puestos de frente (botón de volteo del panel)
   const [flippedIsbns, setFlippedIsbns] = useState(library.flipped)
   const flippedSet = useMemo(() => new Set(flippedIsbns), [flippedIsbns])
@@ -69,6 +86,8 @@ function Bookroom({ library }: { library: LibraryState }) {
   // Cambia el estado de lectura de uno o varios libros (pantalla de la biblioteca)
   const setStatuses = (isbns: string[], status: ReadingStatus) =>
     setReadingStatus((all) => ({ ...all, ...Object.fromEntries(isbns.map((isbn) => [isbn, status])) }))
+  // Libro que se está leyendo (va a la mesa de café): el último abierto en el lector, si no está marcado como acabado
+  const currentBook = books.find((book) => book.isbn === lastRead && readingStatus[book.isbn] !== 'finished' && ebooks[book.isbn]) ?? null
 
   // Etiquetas por ISBN, lista de deseos y ajustes (los cambia la consola; se guardan como el resto)
   const [tags, setTags] = useState(library.tags)
@@ -142,6 +161,10 @@ function Bookroom({ library }: { library: LibraryState }) {
           savedPlacements={library.placements}
           onSavePlacements={(slots: LibraryState['placements']) => saveLibraryPart('placements', slots)}
           collection={collection}
+          progress={progress}
+          currentBook={currentBook}
+          onReadBook={setReadingBook}
+          reading={readingBook !== null}
         />
       </Canvas>
 
@@ -166,11 +189,23 @@ function Bookroom({ library }: { library: LibraryState }) {
         onToggleFlip={() => selectedBook && toggleFlip(selectedBook.isbn)}
         ebookFormat={selectedBook ? ebooks[selectedBook.isbn] : undefined}
         onRead={() => setReadingBook(selectedBook)}
+        status={selectedBook ? (readingStatus[selectedBook.isbn] ?? 'unread') : 'unread'}
+        currentPage={selectedBook ? pages[selectedBook.isbn] : undefined}
+        onSetPage={(page) => selectedBook && setCurrentPage(selectedBook, page)}
+        onFinish={() => selectedBook && setStatuses([selectedBook.isbn], 'finished')}
       />
 
       {readingBook && (
         <Suspense fallback={<p className="app-loading reader-loading">Abriendo el lector…</p>}>
-          <BookReader book={readingBook} format={ebooks[readingBook.isbn]} onClose={() => setReadingBook(null)} />
+          <BookReader
+            book={readingBook}
+            format={ebooks[readingBook.isbn]}
+            onClose={() => setReadingBook(null)}
+            onProgress={(value) => {
+              setProgress((all) => ({ ...all, [readingBook.isbn]: value }))
+              setLastRead(readingBook.isbn)
+            }}
+          />
         </Suspense>
       )}
     </>

@@ -89,6 +89,7 @@ interface Latest {
   closeOutside?: () => void
   noteDraft?: string | null
   place?: PlaceInfo
+  onProgress?: (progress: number) => void
 }
 
 const nextFrame = () => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())))
@@ -123,8 +124,9 @@ function Snapshot({ mount, style, className = 'reader-snap' }: { mount?: Mount; 
  * @param book - Libro de la sala (isbn, title, author)
  * @param format - Formato de su libro electrónico
  * @param onClose - Cierra el lector
+ * @param onProgress - Avisa de cuánto se lleva leído (0 a 1) al pasar de página
  */
-function BookReader({ book, format, onClose }: { book: Book; format: EbookFormat; onClose: () => void }) {
+function BookReader({ book, format, onClose, onProgress }: { book: Book; format: EbookFormat; onClose: () => void; onProgress: (progress: number) => void }) {
   const pagesRef = useRef<HTMLDivElement>(null)
   const bookRef = useRef<HTMLDivElement>(null)
   const engineRef = useRef<ReaderEngine | null>(null)
@@ -132,7 +134,7 @@ function BookReader({ book, format, onClose }: { book: Book; format: EbookFormat
   const [loadError, setLoadError] = useState<string | null>(null)
   const [annotations, setAnnotations] = useState<Annotation[]>([])
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([])
-  const [place, setPlace] = useState<PlaceInfo>({ atStart: true, atEnd: false, label: '' })
+  const [place, setPlace] = useState<PlaceInfo>({ atStart: true, atEnd: false, label: '', progress: 0 })
   const [markedId, setMarkedId] = useState<number | null>(null) // Marcador de las páginas que se ven, si lo hay
   const [popup, setPopup] = useState<Popup | null>(null)
   const [noteDraft, setNoteDraft] = useState<string | null>(null) // Texto del comentario mientras se escribe
@@ -190,7 +192,8 @@ function BookReader({ book, format, onClose }: { book: Book; format: EbookFormat
       onRelocate: (location, info) => {
         setPlace(info)
         clearTimeout(saveTimerRef.current)
-        saveTimerRef.current = setTimeout(() => saveReadingPosition(book.isbn, location), POSITION_SAVE_DELAY)
+        saveTimerRef.current = setTimeout(() => saveReadingPosition(book.isbn, location, info.progress), POSITION_SAVE_DELAY)
+        latestRef.current.onProgress?.(info.progress)
         requestAnimationFrame(refreshMarginsAndBookmark)
       },
       onKey: (event) => latestRef.current.onKey?.(event),
@@ -366,7 +369,7 @@ function BookReader({ book, format, onClose }: { book: Book; format: EbookFormat
     else if (!typing && event.key === 'ArrowLeft') turn('prev')
   }
   useEffect(() => {
-    latestRef.current = { ...latestRef.current, onKey, closeOutside, noteDraft, place }
+    latestRef.current = { ...latestRef.current, onKey, closeOutside, noteDraft, place, onProgress }
   })
   useEffect(() => {
     const listener = (event: KeyboardEvent) => {

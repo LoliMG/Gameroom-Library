@@ -119,6 +119,7 @@ export async function createPdfEngine(container: HTMLElement, data: ArrayBuffer,
         atStart: first <= 1,
         atEnd: first + 1 >= pageCount,
         label: last > first ? `Páginas ${first}–${last} de ${pageCount}` : `Página ${first} de ${pageCount}`,
+        progress: last / pageCount,
       }
     )
   }
