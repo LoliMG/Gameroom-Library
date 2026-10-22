@@ -40,7 +40,7 @@ const CANDLE_LIGHT_HEIGHT = 0.05      // Altura de la luz sobre la base de la ll
  * `position` es el punto de apoyo: la base de la cera o, con `withWax = false`, la base de la llama
  * (útil cuando la vela ya forma parte de un modelo, como candle.glb).
  */
-function CandleLight({ position = [0, 0, 0], withWax = true, withLight = true }: { position?: Vector3Tuple; withWax?: boolean; withLight?: boolean }) {
+function CandleLight({ position = [0, 0, 0], withWax = true, withLight = true, lit = true }: { position?: Vector3Tuple; withWax?: boolean; withLight?: boolean; lit?: boolean }) {
   // Referencia al grupo de la llama para escalarla e inclinarla en cada fotograma
   const flameRef = useRef<Group>(null)
   // Referencia a la luz puntual para que su intensidad acompañe al parpadeo
@@ -62,7 +62,7 @@ function CandleLight({ position = [0, 0, 0], withWax = true, withLight = true }:
       flameRef.current.rotation.z = Math.sin(t * FLICKER_SPEED_A * 0.37) * SWAY_AMOUNT
     }
     if (lightRef.current) {
-      lightRef.current.intensity = CANDLE_LIGHT_INTENSITY * (1 + flicker * FLICKER_AMOUNT)
+      lightRef.current.intensity = lit ? CANDLE_LIGHT_INTENSITY * (1 + flicker * FLICKER_AMOUNT) : 0
     }
   })
 
@@ -84,7 +84,8 @@ function CandleLight({ position = [0, 0, 0], withWax = true, withLight = true }:
       )}
 
       {/* Llama: el grupo tiene el origen en la base para que escale y se incline desde la mecha */}
-      <group ref={flameRef} position={[0, flameBaseY, 0]}>
+      {/* Apagada: sin llama (la luz se queda a 0 en vez de quitarla, para no recompilar los materiales) */}
+      <group ref={flameRef} position={[0, flameBaseY, 0]} visible={lit}>
         {/* Llama exterior: esfera estirada en vertical; toneMapped=false conserva el color > 1 para el Bloom */}
         <mesh position={[0, FLAME_HEIGHT / 2, 0]} scale={[FLAME_RADIUS, FLAME_HEIGHT / 2, FLAME_RADIUS]}>
           <sphereGeometry args={[1, 12, 12]} />

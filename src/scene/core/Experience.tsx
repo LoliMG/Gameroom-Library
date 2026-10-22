@@ -33,6 +33,8 @@ import SofaCorner from '@/scene/decor/SofaCorner'
 import Fireplace, { COLD_NIGHT_TEMPERATURE, COLD_TEMPERATURE, FIREPLACE_DEPTH, FIREPLACE_HEIGHT, FIREPLACE_WIDTH } from '@/scene/decor/Fireplace'
 import Cat from '@/scene/decor/Cat'
 import FloorLamp from '@/scene/decor/FloorLamp'
+import Clickable from '@/scene/shared/Clickable'
+import Gramophone from '@/scene/decor/Gramophone'
 // Importación de la puerta de entrada de madera antigua (door.glb)
 import Door from '@/scene/room/Door'
 // Pantalla con el panel de la biblioteca (portadas, búsqueda y estados de lectura)
@@ -262,16 +264,34 @@ const SOFA_SEAT: Seat = { position: [2.1, FLOOR_Y + 1.0, 2.1], yaw: Math.atan2(2
 // Volúmenes con los sonidos silenciados en Ajustes
 const SILENT: SoundVolumes = { wind: 0, rain: 0, thunder: 0, crickets: 0 }
 
+// Volumen de los sonidos de fuera con la ventana abierta (veces el de los ajustes)
+const OPEN_WINDOW_VOLUME = 1.6
+
+/**
+ * Interruptor de algo que se enciende solo (la chimenea con el frío, la lámpara al oscurecer) y que también se puede
+ * encender o apagar a mano: lo elegido a mano manda hasta que lo automático cambia (si se apaga la lámpara de noche,
+ * a la noche siguiente vuelve a encenderse sola). Devuelve [encendido, cambiar]
+ */
+function useSwitch(auto: boolean): [boolean, () => void] {
+  const [manual, setManual] = useState<{ on: boolean; auto: boolean } | null>(null)
+  const on = manual?.auto === auto ? manual.on : auto
+  return [on, () => setManual({ on: !on, auto })]
+}
+
 /**
  * Lo que cambia con la hora y con el tiempo de la ciudad: niebla, reflejos del entorno, luces, cielo, lluvia y sonidos.
  * Va en su propio componente para que los relojes (la hora cambia cada minuto, el tiempo cada 15) solo vuelvan a pintar
  * esto y no toda la sala con sus libros
  */
-function DayCycle({ settings }: { settings: AppSettings }) {
+function DayCycle({ settings, windowOpen }: { settings: AppSettings; windowOpen: boolean }) {
   const weather = useWeather(settings)
   const ambience = useAmbience(settings, weather)
   const { palette } = ambience
   const dusk = ambience.sunElevation < DUSK_ELEVATION
+  // Chimenea y lámpara: solas con el frío y al oscurecer, o a mano pulsándolas
+  const [fireLit, toggleFire] = useSwitch(weather.temperature < (dusk ? COLD_NIGHT_TEMPERATURE : COLD_TEMPERATURE))
+  const [lampLit, toggleLamp] = useSwitch(dusk)
+  const volumes = settings.sound ? settings.volumes : SILENT
   // Noche sin contar las nubes (las nubes tapan las estrellas, no la noche): para los grillos y el color de la nieve
   const night = paletteForElevation(ambience.sunElevation).stars
   return (
@@ -279,10 +299,12 @@ function DayCycle({ settings }: { settings: AppSettings }) {
       {/* Jardín con arboleda y flores visible tras el cristal del ventanal (el guerrero solo de noche; nevado si nieva) */}
       <Outside night={dusk} snow={weather.snow} />
 
-      {/* Lámpara de pie entre los arcos del ventanal, encendida al oscurecer (25 MB: con su propio Suspense, la sala no
-          la espera) */}
+      {/* Lámpara de pie entre los arcos del ventanal, encendida al oscurecer o a mano (25 MB: con su propio Suspense, la
+          sala no la espera) */}
       <Suspense fallback={null}>
-        <FloorLamp position={FLOOR_LAMP_POSITION} height={FLOOR_LAMP_HEIGHT} lit={dusk} />
+        <Clickable onClick={toggleLamp}>
+          <FloorLamp position={FLOOR_LAMP_POSITION} height={FLOOR_LAMP_HEIGHT} lit={lampLit} />
+        </Clickable>
         <Preload all />
       </Suspense>
 
@@ -311,10 +333,12 @@ function DayCycle({ settings }: { settings: AppSettings }) {
       {/* Nieve tras el ventanal (sin sonido: la nieve cae en silencio) */}
       <SnowFall intensity={weather.snow} windSpeed={weather.windSpeed} night={night} />
 
-      {/* Chimenea, con el fuego encendido cuando hace frío; de noche basta con que refresque (su caja de colisión va con
-          los muebles) */}
+      {/* Chimenea, con el fuego encendido cuando hace frío (de noche basta con que refresque) o a mano (su caja de colisión
+          va con los muebles) */}
       <Suspense fallback={null}>
-        <Fireplace position={FIREPLACE_POSITION} lit={weather.temperature < (dusk ? COLD_NIGHT_TEMPERATURE : COLD_TEMPERATURE)} />
+        <Clickable onClick={toggleFire}>
+          <Fireplace position={FIREPLACE_POSITION} lit={fireLit} />
+        </Clickable>
       </Suspense>
 
       {/* Grillos y viento muy suaves de noche (empiezan al anochecer, con las estrellas), lluvia cuando llueve y truenos con
@@ -324,7 +348,8 @@ function DayCycle({ settings }: { settings: AppSettings }) {
         level={night}
         rain={weather.rain}
         thunder={weather.thunder}
-        volumes={settings.sound ? settings.volumes : SILENT}
+        // Con la ventana abierta, lo de fuera se oye más
+        volumes={windowOpen ? { wind: volumes.wind * OPEN_WINDOW_VOLUME, rain: volumes.rain * OPEN_WINDOW_VOLUME, thunder: volumes.thunder * OPEN_WINDOW_VOLUME, crickets: volumes.crickets * OPEN_WINDOW_VOLUME } : volumes}
       />
     </>
   )
@@ -375,6 +400,8 @@ function Experience({ onSelectBook, flippedIsbns, readingStatus, onSetStatus, sa
   // id (el orden en la lista) cambian: la selección se suelta para no quedarse con libros que no son
   // Libro localizado desde la consola (brilla en azul hasta que se pulsa)
   const [locatedId, setLocatedId] = useState<number | null>(null)
+  // Ventanal abierto (se pulsa para abrirlo): se ve el jardín sin cristal y se oye más lo de fuera
+  const [windowOpen, setWindowOpen] = useState(false)
   const syncedPlacements = syncShelfBooks(placements, books, SHELF_WALLS, DRAG_BOOK_GAP)
   if (syncedPlacements !== placements) {
     if (syncedPlacements.length < placements.length) {
@@ -565,13 +592,13 @@ function Experience({ onSelectBook, flippedIsbns, readingStatus, onSetStatus, sa
       <SelectionBox onSelect={addToSelection} />
 
       {/* Lo que cambia con la hora de la ciudad de los ajustes: niebla, entorno, luces y cielo */}
-      <DayCycle settings={collection.settings} />
+      <DayCycle settings={collection.settings} windowOpen={windowOpen} />
 
 
       {/* Suspense gestiona la carga asíncrona de las texturas del suelo, libros y modelos 3D */}
       <Suspense fallback={null}>
         {/* Renderizado de la estructura de la habitación (suelo con textura de madera, paredes y ventanal frontal c) */}
-        <Room doorOpening={DOOR_OPENING} />
+        <Room doorOpening={DOOR_OPENING} windowOpen={windowOpen} onToggleWindow={() => setWindowOpen((open) => !open)} />
 
         {/* Rodapiés de madera en los tramos de pared visibles */}
         <SkirtingBoards segments={SKIRTING_SEGMENTS} />
@@ -611,11 +638,11 @@ function Experience({ onSelectBook, flippedIsbns, readingStatus, onSetStatus, sa
           <boxGeometry args={[FIREPLACE_WIDTH, 1, FIREPLACE_DEPTH]} />
         </mesh>
 
-        {/* Gramófono sobre la chimenea */}
-        <ModelProp model="gramophone" height={GRAMOPHONE_HEIGHT} position={GRAMOPHONE_POSITION} />
+        {/* Gramófono sobre la chimenea: al pulsarlo pone música lofi */}
+        <Gramophone height={GRAMOPHONE_HEIGHT} position={GRAMOPHONE_POSITION} sound={collection.settings.sound} />
 
         {/* Gato paseando por la sala */}
-        <Cat path={CAT_PATH} />
+        <Cat path={CAT_PATH} sound={collection.settings.sound} />
 
         {/* Farolillos en las baldas, con una luz cálida tenue */}
         {SHELF_LANTERNS.map(({ wall, x, shelf }) => (

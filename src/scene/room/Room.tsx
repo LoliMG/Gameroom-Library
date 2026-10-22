@@ -83,7 +83,8 @@ function createDoorWallGeometry({ minZ, maxZ, height }: DoorOpening) {
 /**
  * @param doorOpening - Hueco de la puerta en la pared b (m)
  */
-function Room({ doorOpening }: { doorOpening: DoorOpening }) {
+// windowOpen / onToggleWindow: las hojas del ventanal, que se abren pulsándolo
+function Room({ doorOpening, windowOpen, onToggleWindow }: { doorOpening: DoorOpening; windowOpen: boolean; onToggleWindow: () => void }) {
   // Carga asíncrona de mapas PBR de madera oscura para el suelo (useTexture suspende hasta que están listos)
   const loadedTextures = useTexture({
     map: woodDiffUrl,
@@ -195,6 +196,8 @@ function Room({ doorOpening }: { doorOpening: DoorOpening }) {
         width={ROOM_WIDTH}
         height={ROOM_HEIGHT}
         floorY={FLOOR_Y}
+        open={windowOpen}
+        onToggle={onToggleWindow}
       />
     </group>
   )
