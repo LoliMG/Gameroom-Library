@@ -10,7 +10,7 @@ El Rincón de Lectura es una sala en 3D donde viven tus libros. Puedes pasear po
 | Mirar alrededor | Arrastra con el ratón |
 | Mirar sin arrastrar | Pulsa `C` para fijar la cámara al ratón (aparece una mirilla en el centro). Vuelve a pulsar `C` o `Esc` para soltarla |
 | Agacharte | Mantén pulsada la `Z` (viene bien para las baldas de abajo) |
-| Recordar los controles | Pasa el ratón por el botón `?` |
+| Recordar los controles | Pasa el ratón por el botón `?` de arriba a la derecha |
 
 No puedes atravesar paredes ni muebles.
 
@@ -21,7 +21,9 @@ No puedes atravesar paredes ni muebles.
 - **Mover varios a la vez**: con `Ctrl` pulsado, haz clic en varios libros o arrastra un recuadro sobre ellos, y luego muévelos juntos. `Esc` deshace la selección.
 - **Ponerlo de frente**: desde la ficha, el botón de las flechas coloca el libro con la portada hacia la sala o lo devuelve de canto.
 - **Verlo en grande**: el botón del ojo te lo pone delante como si lo tuvieras en la mano. Gíralo arrastrando o con las flechas para leer la sinopsis de la contraportada. Si no tiene sinopsis, puedes escribirla tú.
-- **Apuntar por dónde vas**: si estás leyendo un libro, en su ficha puedes escribir la página en la que vas y pulsar **¡Terminado!** cuando lo acabes.
+- **Dejarlo para leer pronto**: desde su ficha, mándalo a la pila «por leer» que hay en el suelo junto al sofá. Desde la ficha también lo devuelves a su sitio, y cuando lo marcas como leído vuelve solo a su estantería.
+- **Colgarlo como póster**: si es uno de tus favoritos, desde su ficha puedes colgar su portada enmarcada sobre la chimenea. Caben dos; si cuelgas un tercero, se descuelga el más antiguo.
+- **Apuntar por dónde vas**: si estás leyendo un libro, en su ficha puedes escribir la página en la que vas. Cuando lo acabes, pulsa **¡Terminado!**: el libro pasa a leído y se apunta en tu diario con la fecha de hoy.
 - **Ver tu progreso**: los libros que estás leyendo llevan una cinta en el lomo que muestra cuánto has avanzado. El libro que estás leyendo te espera sobre la mesa de café.
 
 ## 📖 Leer en la sala
@@ -43,7 +45,8 @@ En la pared, junto a la chimenea, hay una pantalla para gestionar tu colección.
 ### Tu colección
 - Todas tus portadas de un vistazo. Pulsa una para abrir su ficha.
 - **Busca** por título, autor, editorial o saga.
-- **Filtra** por estado (acabados, leyendo, sin leer), por tipo (mangas o novelas) o por etiqueta.
+- **Filtra** por estado (acabados, leyendo, sin leer), por tipo con el menú *Tipo* (mangas o novelas) o por etiqueta.
+- **¿No sabes qué leer?** Pulsa **🎲 Elige por mí** y te propondrá al azar un libro que aún no has leído; además, brillará en azul en su estantería. Vuelve a pulsarlo para que te proponga otro.
 - **Marca tus favoritos** con la estrella de cada portada y fíltralos con la estrella de arriba.
 - **Cambia el estado de varios libros a la vez**: marca sus casillas y elige *Acabado*, *Leyendo* o *Sin leer*.
 - **Encuentra un libro en la sala** con el icono de la diana: brillará en azul en su estantería.
@@ -62,6 +65,7 @@ Los libros que te gustaría tener. Cuando consigas uno, pulsa **Ya lo tengo** y 
 - **Reto del año**: decide cuántos libros quieres leer y sigue tu avance.
 - **Calendario**: cada día que leíste aparece coloreado. Pasa el ratón por un día para ver qué leías.
 - **Tus lecturas**: con fechas de inicio y fin, una puntuación de 1 a 5 estrellas y un comentario. También puedes apuntar relecturas.
+- **✨ Ver mi año**: un resumen con los libros terminados, las páginas leídas, tu media de estrellas, tu mejor mes y el autor que más has leído.
 - Cambia de año con las flechas `‹` `›`.
 
 ### Ajustes ⚙
@@ -80,8 +84,28 @@ Cuando el cursor se convierte en una mano, puedes hacer clic.
 | Ventanal | Lo abres o lo cierras. Abierto, oirás mejor lo que pasa fuera |
 | Gramófono | Pone música lofi tranquila. Púlsalo otra vez para pararla |
 | Gato | Pasea por la sala. Si lo acaricias de cerca, se sienta y ronronea |
+| Corcho | Está en la pared, encima del sofá. Al pulsarlo se abre en grande para decorarlo (más abajo te contamos cómo) |
+| Pósters y pila «por leer» | Al pulsar uno de sus libros se abre su ficha |
 
 Si apagas la lámpara o la chimenea, se quedan así hasta que cambie la hora o el tiempo.
+
+## 📌 Tu corcho
+
+Un tablero de corcho para decorar a tu gusto. Pulsa el corcho de la pared y se abrirá en grande:
+
+- **Pósits**: elige un color y escribe una nota.
+- **Pegatinas**: lunas, estrellas, gatos, flores, dragones y muchas más.
+- **Frases**: elige una de las que has subrayado en el lector o escribe la tuya, y si quieres indica de qué libro es.
+
+Arrastra cada cosa para colocarla, y púlsala para girarla o quitarla (con el teclado: las flechas la mueven y `Supr` la quita). Lo que pegues aparece también en el corcho de la pared.
+
+## ⏳ Modo concentración
+
+Pulsa el reloj de arena de abajo a la izquierda y elige cuánto rato quieres leer (de 10 a 60 minutos). Verás la cuenta atrás en el botón; púlsalo otra vez si quieres cancelarla. Mientras dura, el gato se va a dormir junto a la chimenea. Al terminar suena una campanita (si tienes los sonidos activados), sale un aviso y el gato se despereza.
+
+## 📷 Foto del rincón
+
+Con el botón de la cámara de abajo a la derecha haces una foto de lo que estás viendo. Te la enseña como una postal, con la fecha, y puedes guardarla en tu ordenador.
 
 ## 🌦️ Una sala que vive contigo
 
@@ -92,4 +116,4 @@ Si apagas la lámpara o la chimenea, se quedan así hasta que cambie la hora o e
 
 ## 💾 Todo se guarda
 
-No tienes que guardar nada: la sala recuerda dónde está cada libro, qué estás leyendo, tus subrayados, comentarios y marcadores, tu diario, tu lista de deseos y tus ajustes.
+No tienes que guardar nada: la sala recuerda dónde está cada libro, qué estás leyendo, tu pila «por leer», tus pósters, tu corcho, tus subrayados, comentarios y marcadores, tu diario, tu lista de deseos y tus ajustes.
