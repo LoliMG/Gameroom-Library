@@ -1,4 +1,4 @@
-// Sonidos de fondo del jardín: grillos y viento de noche, lluvia cuando llueve y truenos con tormenta (ver
+// Sonidos de fondo del jardín: viento siempre, grillos de noche, lluvia cuando llueve y truenos con tormenta (ver
 // ambientSounds.ts). No pinta nada.
 import { useEffect, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
