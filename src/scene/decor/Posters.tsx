@@ -7,12 +7,14 @@ import type { Vector3Tuple } from 'three'
 import type { Book } from '@/types'
 import Clickable from '@/scene/shared/Clickable'
 
-// Alto de cada póster (el ancho sale de la forma de la portada), marco y separación entre los dos (m)
-const POSTER_HEIGHT = 0.5
+// Alto de la portada de cada póster (el ancho sale de su forma), marco y separación entre los dos (m)
+const POSTER_HEIGHT = 0.65
 const FRAME = 0.025
+/** Alto del póster con su marco (POSTER_HEIGHT + 2 × FRAME), para colocarlo */
+export const POSTER_FRAMED_HEIGHT = 0.7
 const FRAME_DEPTH = 0.02
 const FRAME_COLOR = '#3b2a1e'
-const GAP = 0.18
+const GAP = 0.12
 
 function Poster({ book, position, onSelect }: { book: Book; position: Vector3Tuple; onSelect: (book: Book) => void }) {
   const cover = useTexture(book.cover, (texture) => {
