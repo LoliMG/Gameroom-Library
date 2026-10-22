@@ -11,6 +11,7 @@ import Experience from '@/scene/core/Experience'
 import BookDetailPanel from '@/components/BookDetailPanel'
 // Botón para capturar el ratón, mirilla y ayuda de controles
 import PlayControls from '@/components/PlayControls'
+import FocusTimer from '@/components/FocusTimer'
 // Estado de la biblioteca guardado en la base de datos (con copia en el navegador)
 import { loadLibrary, saveLibraryPart } from '@/utils/libraryApi'
 // Qué libros tienen libro electrónico para el lector
@@ -50,6 +51,8 @@ function Bookroom({ library }: { library: LibraryState }) {
   // Libros con libro electrónico ({ isbn: 'epub' | 'pdf' }) y libro que se está leyendo
   const [ebooks, setEbooks] = useState<Record<string, EbookFormat>>({})
   const [readingBook, setReadingBook] = useState<Book | null>(null)
+  // Modo concentración (el temporizador de los controles): mientras dura, el gato duerme junto a la chimenea
+  const [focus, setFocus] = useState(false)
   // Cuánto se lleva de cada libro electrónico y el último leído (los pone al día el lector al pasar de página)
   // Y la página escrita a mano en el panel de los libros que se están leyendo
   const [progress, setProgress] = useState<Record<string, number>>({})
@@ -165,6 +168,7 @@ function Bookroom({ library }: { library: LibraryState }) {
           currentBook={currentBook}
           onReadBook={setReadingBook}
           reading={readingBook !== null}
+          focus={focus}
         />
       </Canvas>
 
@@ -176,7 +180,9 @@ function Bookroom({ library }: { library: LibraryState }) {
             ?.requestPointerLock()
             ?.catch((error: Error) => console.warn('[PlayControls] No se pudo bloquear la cámara:', error.message))
         }
-      />
+      >
+        <FocusTimer sound={settings.sound} onFocusChange={setFocus} />
+      </PlayControls>
 
       {/* BookDetailPanel se coloca fuera del <Canvas> como hermano suyo porque es un componente HTML tradicional; */}
       {/* los elementos HTML (div, img, button) no pueden procesarse dentro del contexto WebGL de Three.js. */}

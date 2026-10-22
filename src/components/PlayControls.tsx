@@ -1,5 +1,6 @@
 // Importación de useEffect y useState de React para seguir si el ratón está capturado
 import { useEffect, useState } from 'react'
+import type { ReactNode } from 'react'
 // Estilos del botón, la mirilla y la ayuda
 import '@/styles/playControls.css'
 
@@ -8,8 +9,9 @@ import '@/styles/playControls.css'
  * mirilla en el centro mientras el ratón está capturado. C captura o suelta el ratón; Esc también lo suelta.
  *
  * @param onLock - Pide al lienzo que capture el ratón
+ * @param children - Más controles en la misma fila (el modo concentración)
  */
-function PlayControls({ onLock }: { onLock: () => void }) {
+function PlayControls({ onLock, children }: { onLock: () => void; children?: ReactNode }) {
   // ¿Está el ratón capturado ahora mismo?
   const [locked, setLocked] = useState(false)
 
@@ -43,6 +45,7 @@ function PlayControls({ onLock }: { onLock: () => void }) {
             ? 'WASD para moverte · Z para agacharte · ratón para mirar · apunta y haz clic en un libro · mantén pulsado sobre un libro y suéltalo donde quieras de las estanterías · C o Esc para soltar'
             : 'C para bloquear la cámara · WASD para moverte · Z para agacharte · arrastra para mirar · clic en un libro para ver sus datos · arrastra un libro a cualquier sitio de las estanterías · Ctrl + arrastrar o Ctrl + clic para elegir varios (Esc los suelta)'}
         </p>
+        {children}
       </div>
       {/* Mirilla: solo con el ratón capturado, marca el punto que se selecciona al hacer clic */}
       {locked && <div className="play-controls__crosshair" aria-hidden="true" />}

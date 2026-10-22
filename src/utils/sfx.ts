@@ -1,5 +1,5 @@
-// Ronroneo del gato, hecho con Web Audio (como los sonidos del jardín en ambientSounds.ts): ruido grave que vibra
-// unas 25 veces por segundo y respira (sube y baja) un par de veces
+// Sonidos sueltos de la sala, hechos con Web Audio (como los del jardín en ambientSounds.ts): el ronroneo del gato y la
+// campanita del final del modo concentración
 
 // Vibración del ronroneo (veces por segundo), ritmo de la respiración (s por inspiración y espiración) y duración
 const PURR_RATE = 25
@@ -9,12 +9,14 @@ const BREATHS = 2
 const PURR_LOWPASS = 220
 const PURR_VOLUME = 0.6
 
-// Un solo contexto de audio para todos los ronroneos: se crea con el primer clic (antes el navegador no deja sonar)
+// Un solo contexto de audio para todos: se crea al primer sonido, que siempre llega tras un clic (antes el navegador no
+// deja sonar)
 let context: AudioContext | null = null
+const audio = () => (context ??= new AudioContext())
 
-/** Ronronea unos segundos (BREATHS × BREATH_SECONDS). */
+/** Ronroneo: ruido grave que vibra unas 25 veces por segundo y respira (sube y baja) un par de veces. */
 export function purr() {
-  const ctx = (context ??= new AudioContext())
+  const ctx = audio()
   const now = ctx.currentTime
   const duration = BREATHS * BREATH_SECONDS
 
@@ -52,4 +54,30 @@ export function purr() {
   vibration.start(now)
   noise.stop(now + duration)
   vibration.stop(now + duration)
+}
+
+// Campanita: dos notas (Hz) una tras otra, cada una con su armónico, que se apagan despacio
+const CHIME_NOTES = [988, 1319]
+const CHIME_GAP = 0.35
+const CHIME_DECAY = 2.5
+const CHIME_VOLUME = 0.25
+
+/** Campanita suave (fin del modo concentración). */
+export function chime() {
+  const ctx = audio()
+  const now = ctx.currentTime
+  CHIME_NOTES.forEach((frequency, i) => {
+    const start = now + i * CHIME_GAP
+    for (const [multiple, level] of [[1, 1], [2.76, 0.3]]) {
+      const tone = ctx.createOscillator()
+      tone.frequency.value = frequency * multiple
+      const gain = ctx.createGain()
+      gain.gain.setValueAtTime(0, start)
+      gain.gain.linearRampToValueAtTime(CHIME_VOLUME * level, start + 0.01)
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + CHIME_DECAY)
+      tone.connect(gain).connect(ctx.destination)
+      tone.start(start)
+      tone.stop(start + CHIME_DECAY)
+    }
+  })
 }
