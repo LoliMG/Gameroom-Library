@@ -14,6 +14,7 @@ import BookDetailPanel from '@/components/BookDetailPanel'
 import PlayControls from '@/components/PlayControls'
 import FocusTimer from '@/components/FocusTimer'
 import BoardEditor from '@/components/BoardEditor'
+import PhotoButton from '@/components/PhotoButton'
 // Estado de la biblioteca guardado en la base de datos (con copia en el navegador)
 import { loadLibrary, saveLibraryPart } from '@/utils/libraryApi'
 // Qué libros tienen libro electrónico para el lector
@@ -273,6 +274,9 @@ function Bookroom({ library }: { library: LibraryState }) {
         inPile={selectedBook ? pile.includes(selectedBook.isbn) : false}
         onTogglePile={() => selectedBook && togglePile(selectedBook.isbn)}
       />
+
+      {/* Foto del rincón, abajo a la derecha */}
+      <PhotoButton canvasRef={canvasRef} />
 
       {boardOpen && <BoardEditor items={board} books={books} onChange={setBoard} onClose={() => setBoardOpen(false)} />}
 
