@@ -4,7 +4,7 @@ import { Html } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import { useEffect, useRef, useState } from 'react'
 import { Vector3 } from 'three'
-import type { Camera } from 'three'
+import type { Camera, Group } from 'three'
 // Panel de la biblioteca que se muestra en la pantalla
 import BookDashboard from '@/components/BookDashboard'
 import type { ComponentProps } from 'react'
@@ -57,8 +57,21 @@ function silhouette({ min, max }: OccluderBox, camera: Camera, width: number, he
   return convexHull(points)
 }
 
+// Rectángulo [izquierda, arriba, derecha, abajo] en pantalla (px) que abarca unos puntos
+type Rect = [number, number, number, number]
+const boundsOf = (points: [number, number][]): Rect => [
+  Math.min(...points.map(([x]) => x)),
+  Math.min(...points.map(([, y]) => y)),
+  Math.max(...points.map(([x]) => x)),
+  Math.max(...points.map(([, y]) => y)),
+]
+const overlaps = (a: Rect, b: Rect) => a[0] < b[2] && b[0] < a[2] && a[1] < b[3] && b[1] < a[3]
+// Esquinas de la pantalla en el espacio del grupo de la consola
+const SCREEN_CORNERS = [-1, 1].flatMap((x) => [-1, 1].map((y) => new Vector3((x * SCREEN_WIDTH) / 2, (y * SCREEN_HEIGHT) / 2, FRAME_DEPTH / 2)))
+
 function BookConsole({ position, rotationY, occluders, ...dashboard }: BookConsoleProps) {
   const cornerRef = useRef(new Vector3())
+  const groupRef = useRef<Group>(null)
   // Capas a pantalla completa, una dentro de otra (una por caja), y en la última pone drei la página (portal). La página
   // es HTML encima del lienzo, así que nada la tapa por sí solo (occlude="blending" de drei sí, pero le quita los clics al
   // lienzo): cada caja abre en su capa un agujero con su silueta (clip-path). Una capa por caja porque un solo recorte no
@@ -78,17 +91,30 @@ function BookConsole({ position, rotationY, occluders, ...dashboard }: BookConso
   }, [layers])
 
   // Cada fotograma, los agujeros. Los objetos siempre quedan por delante de la pantalla, que está en la pared: no hace falta
-  // comparar distancias
+  // comparar distancias. Solo se recorta si la silueta pisa la pantalla: con un recorte puesto, la rueda del ratón deja de
+  // desplazar la lista de libros, y así funciona siempre que no haya nada delante (al usarla de frente).
+  // shortcut: tapada en parte desde un lado, la rueda no desplaza la lista; arrastrar su barra sí
   useFrame(({ camera, size }) => {
+    const group = groupRef.current
+    if (!group) return
+    const corner = cornerRef.current
+    const screen = boundsOf(
+      SCREEN_CORNERS.map((point) => {
+        corner.copy(point).applyMatrix4(group.matrixWorld).project(camera)
+        return [((corner.x + 1) / 2) * size.width, ((1 - corner.y) / 2) * size.height]
+      })
+    )
     layers.list.forEach((layer, i) => {
-      const hull = silhouette(occluders[i], camera, size.width, size.height, cornerRef.current)
+      const hull = silhouette(occluders[i], camera, size.width, size.height, corner)
       layer.style.clipPath =
-        hull.length < 3 ? '' : `path(evenodd, "${EVERYTHING} M${hull.map(([x, y]) => `${x.toFixed(1)} ${y.toFixed(1)}`).join(' L')} Z")`
+        hull.length < 3 || !overlaps(boundsOf(hull), screen)
+          ? ''
+          : `path(evenodd, "${EVERYTHING} M${hull.map(([x, y]) => `${x.toFixed(1)} ${y.toFixed(1)}`).join(' L')} Z")`
     })
   })
 
   return (
-    <group position={position} rotation={[0, rotationY, 0]}>
+    <group ref={groupRef} position={position} rotation={[0, rotationY, 0]}>
       {/* Marco */}
       <mesh castShadow receiveShadow>
         <boxGeometry args={[SCREEN_WIDTH + 2 * FRAME_BORDER, SCREEN_HEIGHT + 2 * FRAME_BORDER, FRAME_DEPTH]} />
