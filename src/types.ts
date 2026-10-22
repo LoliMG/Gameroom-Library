@@ -132,6 +132,8 @@ export interface LibraryState {
   goals: Record<string, number>
   /** Favoritos colgados como pósters sobre la chimenea (ISBN, como mucho MAX_POSTERS) */
   posters: string[]
+  /** Pila "por leer" junto al sofá: ISBN de abajo arriba (salen de la estantería mientras están en ella) */
+  pile: string[]
 }
 
 /**
@@ -194,6 +196,9 @@ export const FAVORITE_TAG = 'Favorito'
 
 /** Pósters de favoritos que caben sobre la chimenea */
 export const MAX_POSTERS = 2
+
+/** Libros que caben en la pila "por leer" */
+export const MAX_PILE = 40
 
 /** Ajustes por defecto (los que hay hasta que se cambian en la consola) */
 export const DEFAULT_SETTINGS: AppSettings = {

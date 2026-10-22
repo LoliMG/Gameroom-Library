@@ -17,6 +17,7 @@ import {
   writeSettings,
   writeGoals,
   writePosters,
+  writePile,
   listReadings,
   createReading,
   updateReading,
@@ -48,6 +49,7 @@ assert.deepEqual(readState(db), {
   settings: { city: 'Málaga', latitude: 36.7213, longitude: -4.4214, sound: true, volumes: { wind: 1, rain: 1, thunder: 1, crickets: 1 } },
   goals: {},
   posters: [],
+  pile: [],
 })
 
 // Guardar y leer: los ISBN que no existen se ignoran
@@ -113,6 +115,13 @@ assert.deepEqual(readState(db).posters, [diaryIsbn])
 assert.throws(() => writePosters(db, [diaryIsbn, diaryIsbn]), ValidationError)
 assert.throws(() => writePosters(db, [diaryIsbn, '9780000000019', '9780000000026']), ValidationError)
 assert.throws(() => writePosters(db, ['9789999999999']), ValidationError) // No está en la colección
+
+// Pila "por leer": libros de la colección, sin repetir
+writePile(db, [diaryIsbn])
+assert.deepEqual(readState(db).pile, [diaryIsbn])
+assert.throws(() => writePile(db, [diaryIsbn, diaryIsbn]), ValidationError)
+assert.throws(() => writePile(db, ['9789999999999']), ValidationError)
+writePile(db, [])
 const first = createReading(db, { isbn: diaryIsbn, startDate: '2026-01-02', endDate: '2026-01-20', rating: 4, comment: '  Muy bueno  ' })
 assert.deepEqual(first, { id: first.id, isbn: diaryIsbn, startDate: '2026-01-02', endDate: '2026-01-20', rating: 4, comment: 'Muy bueno' })
 const reread = createReading(db, { isbn: diaryIsbn, startDate: '2026-09-01' }) // Relectura en curso

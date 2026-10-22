@@ -3,7 +3,7 @@
 // SQLite a través de la API (/api, la sirve server/library.ts con el servidor de Vite) y, como copia de seguridad, en
 // localStorage, por si el servidor no está disponible.
 import type { AppSettings, LibraryState, ReadingStatus, WishItem } from '@/types'
-import { DEFAULT_SETTINGS, MAX_POSTERS, withDefaultSettings } from '@/types'
+import { DEFAULT_SETTINGS, MAX_PILE, MAX_POSTERS, withDefaultSettings } from '@/types'
 
 const READING_STATUSES: ReadingStatus[] = ['finished', 'reading', 'unread']
 
@@ -20,6 +20,7 @@ const PARTS: Record<LibraryPart, { key: string; route: string }> = {
   settings: { key: 'fantasy-bookroom:settings', route: '/api/settings' },
   goals: { key: 'fantasy-bookroom:goals', route: '/api/goals' },
   posters: { key: 'fantasy-bookroom:posters', route: '/api/posters' },
+  pile: { key: 'fantasy-bookroom:pile', route: '/api/pile' },
 }
 
 const isPlainObject = (value: unknown): value is Record<string, unknown> =>
@@ -51,7 +52,8 @@ function sanitize(library: Partial<Record<LibraryPart, unknown>> | null | undefi
     ? (Object.fromEntries(Object.entries(library.goals).filter(([, count]) => Number.isInteger(count))) as LibraryState['goals'])
     : {}
   const posters = Array.isArray(library?.posters) ? library.posters.filter((isbn): isbn is string => typeof isbn === 'string').slice(0, MAX_POSTERS) : []
-  return { placements, flipped, readingStatus, tags, wishlist, settings, goals, posters }
+  const pile = Array.isArray(library?.pile) ? library.pile.filter((isbn): isbn is string => typeof isbn === 'string').slice(0, MAX_PILE) : []
+  return { placements, flipped, readingStatus, tags, wishlist, settings, goals, posters, pile }
 }
 
 function readLocal(): LibraryState {

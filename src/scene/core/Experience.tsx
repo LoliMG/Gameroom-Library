@@ -36,6 +36,7 @@ import FloorLamp from '@/scene/decor/FloorLamp'
 import Clickable from '@/scene/shared/Clickable'
 import Gramophone from '@/scene/decor/Gramophone'
 import Posters from '@/scene/decor/Posters'
+import BookPile from '@/scene/decor/BookPile'
 // Importación de la puerta de entrada de madera antigua (door.glb)
 import Door from '@/scene/room/Door'
 // Pantalla con el panel de la biblioteca (portadas, búsqueda y estados de lectura)
@@ -223,6 +224,9 @@ const CONSOLE_ROTATION_Y = 0
 // Gramófono sobre la repisa de la chimenea, hacia la izquierda y con la bocina hacia la sala
 const GRAMOPHONE_HEIGHT = 0.5
 const GRAMOPHONE_POSITION: Vector3Tuple = [FIREPLACE_POSITION[0] - 0.5, FLOOR_Y + FIREPLACE_HEIGHT, FIREPLACE_POSITION[2]]
+// Pila "por leer": en el suelo, fuera de la alfombra, delante de la maceta del rincón y pasado el brazo del sofá que da
+// al ventanal (el sofá acaba en z ≈ 3.33 y la maceta está en x 2.3, z 3.63)
+const PILE_POSITION: Vector3Tuple = [1.6, FLOOR_Y, 3.5]
 // Pósters de favoritos: en la pared sobre la chimenea, con el borde de abajo por encima del gramófono (0.5 m)
 const POSTERS_CENTER: Vector3Tuple = [FIREPLACE_POSITION[0], FLOOR_Y + FIREPLACE_HEIGHT + 0.88, BACK_WALL_Z + 0.015]
 // Lo que tapa la consola, en cajas: la chimenea por partes (medidas del modelo, desde su centro en planta y el suelo:
@@ -390,9 +394,11 @@ interface ExperienceProps {
   focus: boolean
   /** Favoritos colgados como pósters sobre la chimenea */
   posters: Book[]
+  /** Pila "por leer" (ISBN de abajo arriba): esos libros salen de la estantería y se apilan junto al sofá */
+  pile: string[]
 }
 
-function Experience({ onSelectBook, flippedIsbns, readingStatus, onSetStatus, savedPlacements, onSavePlacements, collection, progress, currentBook, onReadBook, reading, focus, posters }: ExperienceProps) {
+function Experience({ onSelectBook, flippedIsbns, readingStatus, onSetStatus, savedPlacements, onSavePlacements, collection, progress, currentBook, onReadBook, reading, focus, posters, pile }: ExperienceProps) {
   // Sitio de cada libro: { book, wall, module, shelf, x }; cambia al arrastrarlo y se guarda en la base de datos
   const [placements, setPlacements] = useState<Placement[]>(() => loadPlacements(savedPlacements))
   // Libros arrastrados (el agarrado y, si era parte de una selección, el resto): el estado los pinta sacados de la
@@ -488,10 +494,16 @@ function Experience({ onSelectBook, flippedIsbns, readingStatus, onSetStatus, sa
     return () => window.removeEventListener('pointerup', release)
   }, [])
 
+  // Libros de la pila "por leer", de abajo arriba (los que ya no están en la colección no cuentan)
+  const pileBooks = useMemo(() => pile.map((isbn) => books.find((book) => book.isbn === isbn)).filter((book): book is Book => book !== undefined), [pile])
+
   // Lo que se pinta: cada libro con su volteo y, si al voltear alguno se pisan, apartados lo justo en su balda
   const shownPlacements = useMemo(() => {
     const shelves = new Map<string, Placement[]>()
+    // Los de la pila no están en la estantería (su sitio se guarda: al quitarlos de la pila vuelven a él)
+    const piled = new Set(pile)
     placements.forEach((p) => {
+      if (piled.has(p.book.isbn)) return
       const key = `${p.wall}/${p.module}/${p.shelf}`
       if (!shelves.has(key)) shelves.set(key, [])
       shelves.get(key)!.push(p)
@@ -516,7 +528,7 @@ function Experience({ onSelectBook, flippedIsbns, readingStatus, onSetStatus, sa
       )
     })
     return shown
-  }, [placements, flippedIsbns, progress, readingStatus])
+  }, [placements, flippedIsbns, progress, readingStatus, pile])
 
   // Lleva los libros agarrados (uno o una selección, seguidos y en su orden) al hueco libre más cercano a x en esa
   // balda; si no caben, se quedan donde estaban
@@ -649,6 +661,9 @@ function Experience({ onSelectBook, flippedIsbns, readingStatus, onSetStatus, sa
         <mesh position={[FIREPLACE_POSITION[0], FLOOR_Y + 0.5, FIREPLACE_POSITION[2]]} visible={false} raycast={() => null} userData={{ collider: true }}>
           <boxGeometry args={[FIREPLACE_WIDTH, 1, FIREPLACE_DEPTH]} />
         </mesh>
+
+        {/* Pila "por leer" en el suelo, junto al brazo del sofá del lado del ventanal */}
+        <BookPile books={pileBooks} position={PILE_POSITION} onSelect={selectBook} />
 
         {/* Pósters de favoritos en la pared, por encima del gramófono */}
         <Posters books={posters} center={POSTERS_CENTER} onSelect={selectBook} />

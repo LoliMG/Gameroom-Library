@@ -4,7 +4,7 @@ import { Canvas, events as createPointerEvents } from '@react-three/fiber'
 import type { CanvasProps } from '@react-three/fiber'
 // Tipos compartidos: libro, estado de la biblioteca, estado de lectura y formato de libro electrónico
 import type { Book, EbookFormat, LibraryState, Reading, ReadingStatus } from '@/types'
-import { FAVORITE_TAG, MAX_POSTERS } from '@/types'
+import { FAVORITE_TAG, MAX_PILE, MAX_POSTERS } from '@/types'
 import type { CollectionTools } from '@/components/BookDashboard'
 // Importación de la experiencia principal utilizando el alias "@"
 import Experience from '@/scene/core/Experience'
@@ -90,8 +90,19 @@ function Bookroom({ library }: { library: LibraryState }) {
     saveLibraryPart('readingStatus', readingStatus)
   }, [readingStatus])
   // Cambia el estado de lectura de uno o varios libros (pantalla de la biblioteca)
-  const setStatuses = (isbns: string[], status: ReadingStatus) =>
+  // Al marcar libros como leídos, los que estaban en la pila "por leer" vuelven a su sitio de la estantería
+  const setStatuses = (isbns: string[], status: ReadingStatus) => {
     setReadingStatus((all) => ({ ...all, ...Object.fromEntries(isbns.map((isbn) => [isbn, status])) }))
+    if (status === 'finished') setPile((list) => list.filter((isbn) => !isbns.includes(isbn)))
+  }
+  // Pila "por leer" junto al sofá (ISBN de abajo arriba): sus libros salen de la estantería y vuelven a su sitio al
+  // quitarlos de ella
+  const [pile, setPile] = useState(library.pile)
+  useEffect(() => {
+    saveLibraryPart('pile', pile)
+  }, [pile])
+  const togglePile = (isbn: string) =>
+    setPile((list) => (list.includes(isbn) ? list.filter((item) => item !== isbn) : [...list, isbn].slice(-MAX_PILE)))
   // Libro que se está leyendo (va a la mesa de café): el último abierto en el lector, si no está marcado como acabado
   const currentBook = books.find((book) => book.isbn === lastRead && readingStatus[book.isbn] !== 'finished' && ebooks[book.isbn]) ?? null
 
@@ -215,6 +226,7 @@ function Bookroom({ library }: { library: LibraryState }) {
           reading={readingBook !== null}
           focus={focus}
           posters={posterBooks}
+          pile={pile}
         />
       </Canvas>
 
@@ -248,6 +260,8 @@ function Bookroom({ library }: { library: LibraryState }) {
         favorite={selectedBook ? Boolean(tags[selectedBook.isbn]?.includes(FAVORITE_TAG)) : false}
         posterOn={selectedBook ? posterBooks.some((book) => book.isbn === selectedBook.isbn) : false}
         onTogglePoster={() => selectedBook && togglePoster(selectedBook.isbn)}
+        inPile={selectedBook ? pile.includes(selectedBook.isbn) : false}
+        onTogglePile={() => selectedBook && togglePile(selectedBook.isbn)}
       />
 
       {readingBook && (
