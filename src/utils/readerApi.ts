@@ -26,9 +26,29 @@ export const fetchEbookFile = async (isbn: string): Promise<ArrayBuffer> => (awa
 /** Por dónde se iba leyendo, los subrayados y los marcadores. */
 export const fetchReaderData = async (isbn: string): Promise<ReaderData> => (await request(`/api/reader/${isbn}`)).json()
 
-/** Guarda por dónde se va leyendo (si falla solo se avisa: no es un dato que se pierda de forma grave). */
-export function saveReadingPosition(isbn: string, location: ReaderLocation): Promise<unknown> {
-  return request(`/api/reader/${isbn}/position`, json('PUT', location)).catch((error: Error) =>
+/** Cuánto se lleva leído: { progress: { isbn: 0 a 1 }, pages: { isbn: página escrita a mano }, lastRead }. */
+export interface ReadingProgress {
+  progress: Record<string, number>
+  pages: Record<string, number>
+  lastRead: string | null
+}
+
+/** Cuánto se lleva leído de cada libro, las páginas escritas a mano y el último leído. Sin servidor, nada. */
+export async function fetchProgress(): Promise<ReadingProgress> {
+  try {
+    return await (await request('/api/progress')).json()
+  } catch (error) {
+    console.warn('[lector] No se pudo saber cuánto se lleva leído:', (error as Error).message)
+    return { progress: {}, pages: {}, lastRead: null }
+  }
+}
+
+/** Guarda la página por la que se va (escrita a mano en el panel del libro). */
+export const saveCurrentPage = (isbn: string, page: number): Promise<Response> => request(`/api/reader/${isbn}/page`, json('PUT', { page }))
+
+/** Guarda por dónde se va leyendo y cuánto se lleva (si falla solo se avisa: no es un dato que se pierda de forma grave). */
+export function saveReadingPosition(isbn: string, location: ReaderLocation, progress: number): Promise<unknown> {
+  return request(`/api/reader/${isbn}/position`, json('PUT', { location, progress })).catch((error: Error) =>
     console.warn('[lector] No se pudo guardar la posición de lectura:', error.message)
   )
 }

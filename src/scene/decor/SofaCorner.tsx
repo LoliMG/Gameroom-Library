@@ -1,5 +1,5 @@
-// Importación de useMemo de React para clonar y configurar los modelos 3D
-import { useMemo } from 'react'
+// Importación de useMemo de React para clonar y configurar los modelos 3D; Suspense para la portada del libro de la mesa
+import { Suspense, useMemo } from 'react'
 // useGLTF de @react-three/drei para cargar los modelos
 import { useGLTF } from '@react-three/drei'
 // Importación del manifiesto centralizado de modelos 3D
@@ -21,6 +21,9 @@ import MugSteam from '@/scene/decor/MugSteam'
 import WallShelf, { WALL_SHELF_DEPTH_PER_LENGTH } from '@/scene/decor/WallShelf'
 // Figuras sobre las repisas (hiedra, Ponyta y Bakugo)
 import ShelfFigure from '@/scene/decor/ShelfFigure'
+// El libro que se está leyendo, tumbado en la mesa (el mismo libro de las baldas)
+import Book from '@/scene/books/Book'
+import type { Book as BookData } from '@/types'
 // Postura relajada para personajes en postura en T
 import { relaxArms, spreadLegs } from '@/utils/pose'
 import { Vector3 } from 'three'
@@ -142,7 +145,20 @@ const POT_CORNER_Z = (SOFA_END_Z + FRONT_WALL_INNER_Z) / 2 // Centrada entre el 
  * Componente que agrupa el sofá, la mesa de café con marquetería,
  * libro abierto, candelabro con vela real (candle.glb) y taza de café (coffee.glb).
  */
-function SofaCorner() {
+// El libro que se está leyendo va donde el libro abierto, tumbado con la portada hacia arriba y girado hacia el sofá
+const TABLE_BOOK_POSITION: Vector3Tuple = [TABLE_X + 0.1, ITEMS_Y, TABLE_Z + 0.02]
+const TABLE_BOOK_ROTATION_Y = -Math.PI / 4
+
+interface SofaCornerProps {
+  /** Libro que se está leyendo (el último abierto en el lector, sin acabar): sustituye al libro abierto de la mesa */
+  currentBook: BookData | null
+  /** Cuánto se lleva de él (para su cinta) */
+  currentProgress?: number
+  /** Pulsar el libro de la mesa: sigue leyéndolo */
+  onOpenCurrent: (book: BookData) => void
+}
+
+function SofaCorner({ currentBook, currentProgress, onOpenCurrent }: SofaCornerProps) {
   // 1. Carga del sofá desde modelsManifest
   const sofaGLTF = useGLTF(modelsManifest.sofa.url)
   const sofaScene = useMemo(() => enableShadows(applyAlphaCutout(sofaGLTF.scene.clone())), [sofaGLTF.scene])
@@ -189,14 +205,35 @@ function SofaCorner() {
       />
 
       {/* 7. ELEMENTOS SOBRE EL TABLERO DE LA MESA DE CAFÉ */}
-      {/* 7a. Libro abierto apoyado sobre el tablero hacia la derecha (+X) */}
-      <primitive
-        object={bookTableScene}
-        position={[TABLE_X + 0.10, ITEMS_Y, TABLE_Z + 0.02]}
-        scale={modelsManifest.bookTable.scale}
-        // Rotación para orientarlo estéticamente hacia el lector sentado en el sofá
-        rotation={[0, -Math.PI / 4, 0]}
-      />
+      {/* 7a. El libro que se está leyendo, tumbado (la portada, su +X, girada hacia arriba): al pulsarlo se sigue leyendo.
+          Si no hay ninguno, el libro abierto */}
+      {currentBook ? (
+        <Suspense fallback={null}>
+          <group position={TABLE_BOOK_POSITION} rotation={[0, TABLE_BOOK_ROTATION_Y, 0]}>
+            <group position={[0, currentBook.width / 2, 0]} rotation={[0, 0, Math.PI / 2]}>
+              <Book
+                book={currentBook}
+                position={[0, 0, 0]}
+                width={currentBook.width}
+                height={currentBook.height}
+                depth={currentBook.depth}
+                progress={currentProgress}
+                onSelect={onOpenCurrent}
+                // No se arrastra: no está en ninguna balda
+                onGrab={() => {}}
+              />
+            </group>
+          </group>
+        </Suspense>
+      ) : (
+        <primitive
+          object={bookTableScene}
+          position={TABLE_BOOK_POSITION}
+          scale={modelsManifest.bookTable.scale}
+          // Rotación para orientarlo estéticamente hacia el lector sentado en el sofá
+          rotation={[0, TABLE_BOOK_ROTATION_Y, 0]}
+        />
+      )}
 
       {/* 7b. Taza de café con plato real (coffee.glb) hacia el frente izquierdo */}
       <primitive

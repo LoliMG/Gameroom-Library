@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
-import type { ButtonHTMLAttributes } from 'react'
+import type { ButtonHTMLAttributes, FormEvent } from 'react'
 import { createPortal } from 'react-dom'
-import type { Book, EbookFormat } from '@/types'
+import type { Book, EbookFormat, ReadingStatus } from '@/types'
 import BookViewer from '@/components/BookViewer'
 import '@/styles/bookDetailPanel.css'
 
@@ -50,6 +50,34 @@ function IconButton({ icon, label, className = '', ...props }: IconButtonProps) 
 }
 
 /**
+ * Libro que se está leyendo: la página por la que se va (se guarda al pulsar Intro o al salir del campo) y el botón para
+ * marcarlo como terminado. Con un key por libro, el borrador vuelve a la página guardada al cambiar de libro.
+ */
+function ReadingProgressForm({ book, page, onSetPage, onFinish }: { book: Book; page: number | undefined; onSetPage: (page: number) => void; onFinish: () => void }) {
+  const [draft, setDraft] = useState(page === undefined ? '' : String(page))
+  const total = book.pages ?? 0 // 0: no se sabe cuántas páginas tiene
+  const save = (event?: FormEvent) => {
+    event?.preventDefault()
+    const value = Number(draft)
+    // Vacío o fuera de rango: no se guarda (el campo ya limita, pero se puede escribir a mano)
+    if (draft === '' || !Number.isInteger(value) || value < 0 || (total > 0 && value > total) || value === page) return
+    onSetPage(value)
+  }
+  return (
+    <form className="book-detail-progress" onSubmit={save}>
+      <label>
+        Voy por la página{' '}
+        <input type="number" min={0} max={total || undefined} value={draft} onChange={(event) => setDraft(event.target.value)} onBlur={() => save()} />
+        {total > 0 && ` de ${total}`}
+      </label>
+      <button type="button" className="book-detail-finish" onClick={onFinish}>
+        ¡Terminado!
+      </button>
+    </form>
+  )
+}
+
+/**
  * Panel con los datos del libro pulsado. El botón de volteo (abajo a la derecha) lo pone en la estantería
  * con la portada hacia la sala, o lo devuelve de canto con el lomo.
  *
@@ -69,9 +97,15 @@ interface BookDetailPanelProps {
   ebookFormat: EbookFormat | undefined
   /** Abre el lector */
   onRead: () => void
+  /** Estado de lectura del libro: si se está leyendo, se puede apuntar la página y marcarlo como terminado */
+  status: ReadingStatus
+  /** Página por la que se va (escrita aquí antes), si la hay */
+  currentPage: number | undefined
+  onSetPage: (page: number) => void
+  onFinish: () => void
 }
 
-function BookDetailPanel({ book, onClose, flipped, onToggleFlip, ebookFormat, onRead }: BookDetailPanelProps) {
+function BookDetailPanel({ book, onClose, flipped, onToggleFlip, ebookFormat, onRead, status, currentPage, onSetPage, onFinish }: BookDetailPanelProps) {
   const [viewing, setViewing] = useState<string | null>(null) // ISBN del libro que se está viendo en grande
   // useEffect para escuchar la pulsación de la tecla Escape y cerrar el panel
   useEffect(() => {
@@ -146,6 +180,7 @@ function BookDetailPanel({ book, onClose, flipped, onToggleFlip, ebookFormat, on
           <p className="book-detail-meta">
             <strong>Páginas:</strong> {book.pages}
           </p>
+          {status === 'reading' && <ReadingProgressForm key={book.isbn} book={book} page={currentPage} onSetPage={onSetPage} onFinish={onFinish} />}
         </div>
       </div>
 

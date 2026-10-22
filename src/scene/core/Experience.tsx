@@ -68,6 +68,7 @@ import Vines from '@/scene/room/Vines'
 import DustParticles from '@/scene/room/DustParticles'
 // Cámara en primera persona: WASD para caminar dentro de la sala, ratón para mirar
 import FirstPersonControls from '@/scene/core/FirstPersonControls'
+import type { Seat } from '@/scene/core/FirstPersonControls'
 
 // Posición y orientación de la puerta de entrada (door.glb) en la pared b (+X):
 // Situada entre la pared del fondo d y el sofá (Z = +1.06 m)
@@ -254,6 +255,10 @@ const CAT_PATH: Vector3Tuple[] = [
 // aparece el guerrero del jardín; el polvo que flota en la luz del ventanal solo se ve antes
 const DUSK_ELEVATION = 2
 
+// Sitio para leer: sentada en el sofá (centro en x 2.15, z 2.1, de espaldas a la pared b), a la altura de los ojos de
+// alguien sentado, mirando hacia la chimenea y un poco hacia abajo
+const SOFA_SEAT: Seat = { position: [2.1, FLOOR_Y + 1.0, 2.1], yaw: Math.atan2(2.1 - 0.15, 2.1 + 1.65), pitch: -0.15 }
+
 // Volúmenes con los sonidos silenciados en Ajustes
 const SILENT: SoundVolumes = { wind: 0, rain: 0, thunder: 0, crickets: 0 }
 
@@ -345,9 +350,17 @@ interface ExperienceProps {
   onSavePlacements: (slots: Record<string, Slot>) => void
   /** Etiquetas, lista de deseos y ajustes, para la consola */
   collection: CollectionTools
+  /** Cuánto se lleva leído de cada libro electrónico ({ isbn: 0 a 1 }): la cinta del lomo */
+  progress: Record<string, number>
+  /** Libro que se está leyendo, en la mesa de café (o null) */
+  currentBook: Book | null
+  /** Abre el lector con ese libro */
+  onReadBook: (book: Book) => void
+  /** El lector está abierto: la cámara se sienta en el sofá */
+  reading: boolean
 }
 
-function Experience({ onSelectBook, flippedIsbns, readingStatus, onSetStatus, savedPlacements, onSavePlacements, collection }: ExperienceProps) {
+function Experience({ onSelectBook, flippedIsbns, readingStatus, onSetStatus, savedPlacements, onSavePlacements, collection, progress, currentBook, onReadBook, reading }: ExperienceProps) {
   // Sitio de cada libro: { book, wall, module, shelf, x }; cambia al arrastrarlo y se guarda en la base de datos
   const [placements, setPlacements] = useState<Placement[]>(() => loadPlacements(savedPlacements))
   // Libros arrastrados (el agarrado y, si era parte de una selección, el resto): el estado los pinta sacados de la
@@ -458,10 +471,13 @@ function Experience({ onSelectBook, flippedIsbns, readingStatus, onSetStatus, sa
         innerWidth,
         DRAG_BOOK_GAP
       )
-      list.forEach((p, i) => shown.push({ ...p, x: xs[i], flipped: flippedIsbns.has(p.book.isbn) }))
+      // Cinta del lomo en los libros empezados que no están marcados como acabados
+      list.forEach((p, i) =>
+        shown.push({ ...p, x: xs[i], flipped: flippedIsbns.has(p.book.isbn), progress: readingStatus[p.book.isbn] === 'finished' ? undefined : progress[p.book.isbn] })
+      )
     })
     return shown
-  }, [placements, flippedIsbns])
+  }, [placements, flippedIsbns, progress, readingStatus])
 
   // Lleva los libros agarrados (uno o una selección, seguidos y en su orden) al hueco libre más cercano a x en esa
   // balda; si no caben, se quedan donde estaban
@@ -543,7 +559,7 @@ function Experience({ onSelectBook, flippedIsbns, readingStatus, onSetStatus, sa
   return (
     <>
       {/* Cámara en primera persona limitada al interior de la sala */}
-      <FirstPersonControls heldBookRef={pressRef} />
+      <FirstPersonControls heldBookRef={pressRef} seat={reading ? SOFA_SEAT : null} />
 
       {/* Selección de varios libros con Ctrl + arrastrar */}
       <SelectionBox onSelect={addToSelection} />
@@ -580,7 +596,7 @@ function Experience({ onSelectBook, flippedIsbns, readingStatus, onSetStatus, sa
         <StorageCabinet position={[-ROOM_WIDTH / 2, FLOOR_Y, CABINET_CENTER_Z]} height={CABINET_HEIGHT} depth={BOOKSHELF_DEPTH} />
 
         {/* Rincón de lectura (Fase 4): sofá, mesa de café, libro abierto y accesorios */}
-        <SofaCorner />
+        <SofaCorner currentBook={currentBook} currentProgress={currentBook ? progress[currentBook.isbn] : undefined} onOpenCurrent={onReadBook} />
 
         {/* Puerta de entrada de madera antigua (door.glb) en la pared b */}
         <Door position={[DOOR_X, DOOR_Y, DOOR_Z]} rotation={DOOR_ROTATION} />

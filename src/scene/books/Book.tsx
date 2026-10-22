@@ -26,6 +26,15 @@ const LOCATED_SPARKLES = { count: 45, size: 5, speed: 0.6, opacity: 1, noise: 1.
 const LOCATED_SPARKLES_MARGIN = 0.05
 const LOCATED_SPARKLES_RISE = 0.06
 
+// Cinta de marcapáginas de los libros empezados: asoma por arriba y cuelga por el lomo, más larga cuanto más se lleva
+// (en fracción del alto del libro), estrecha y pegada al borde de la portada para no tapar el título
+const RIBBON_MIN_LENGTH = 0.1
+const RIBBON_MAX_LENGTH = 0.6
+const RIBBON_WIDTH = 0.007
+const RIBBON_THICKNESS = 0.0012
+const RIBBON_TOP_LENGTH = 0.02 // Lo que se ve sobre el canto de arriba, desde el lomo hacia dentro
+const ribbonMaterial = new MeshStandardMaterial({ color: '#9e1b2c', roughness: 0.55 })
+
 // Cantos de las hojas (arriba, abajo y detrás): la misma textura y el mismo material para todos los libros
 let pagesMaterial: MeshStandardMaterial | null = null
 const getPagesMaterial = () => (pagesMaterial ??= new MeshStandardMaterial({ map: generatePagesTexture() }))
@@ -67,10 +76,12 @@ interface BookProps {
   selected?: boolean
   /** Localizado desde la consola: brilla en azul con chispas hasta que se pulsa */
   located?: boolean
+  /** Cuánto se lleva leído (0 a 1): con un valor entre los dos, asoma la cinta de marcapáginas */
+  progress?: number
 }
 
 // En este archivo, "Book" es el componente; el tipo del libro se importa como BookData
-function Book({ position, rotationY = 0, width, height, depth, onSelect, onGrab, book, selected = false, located = false }: BookProps) {
+function Book({ position, rotationY = 0, width, height, depth, onSelect, onGrab, book, selected = false, located = false, progress }: BookProps) {
   // Carga reactiva de la textura de la portada con useTexture y espacio de color sRGB
   const coverTexture = useTexture(book.cover, (loadedTexture) => {
     loadedTexture.colorSpace = SRGBColorSpace
@@ -110,6 +121,10 @@ function Book({ position, rotationY = 0, width, height, depth, onSelect, onGrab,
     })
   }, [materials, selected, located])
 
+  // Cinta de marcapáginas: solo en libros empezados y sin acabar
+  const ribbonLength = progress !== undefined && progress > 0 && progress < 1 ? height * (RIBBON_MIN_LENGTH + progress * (RIBBON_MAX_LENGTH - RIBBON_MIN_LENGTH)) : 0
+  const ribbonX = width / 2 - RIBBON_WIDTH / 2 - 0.002
+
   // Manejador del evento de clic sobre el libro
   const handleClick = (event: ThreeEvent<MouseEvent>) => {
     // event.stopPropagation() detiene la propagación del raycasting de React Three Fiber;
@@ -145,6 +160,17 @@ function Book({ position, rotationY = 0, width, height, depth, onSelect, onGrab,
       // receiveShadow: la superficie del libro recibe las sombras de las baldas y del resto de la sala
       receiveShadow
     >
+      {/* Cinta de marcapáginas: sobre el canto de arriba y colgando por el lomo (+Z) */}
+      {ribbonLength > 0 && (
+        <>
+          <mesh position={[ribbonX, height / 2 - ribbonLength / 2 + RIBBON_THICKNESS, depth / 2 + RIBBON_THICKNESS / 2]} material={ribbonMaterial}>
+            <boxGeometry args={[RIBBON_WIDTH, ribbonLength, RIBBON_THICKNESS]} />
+          </mesh>
+          <mesh position={[ribbonX, height / 2 + RIBBON_THICKNESS / 2, depth / 2 - RIBBON_TOP_LENGTH / 2]} material={ribbonMaterial}>
+            <boxGeometry args={[RIBBON_WIDTH, RIBBON_THICKNESS, RIBBON_TOP_LENGTH]} />
+          </mesh>
+        </>
+      )}
       {/* Humillo de chispas azules alrededor del libro localizado. No recibe clics (raycast vacío): así los clics y el
           arrastre siguen siendo del libro */}
       {located && (

@@ -61,11 +61,17 @@ export async function createEpubEngine(container: HTMLElement, data: ArrayBuffer
       rect: { left: frame.left + inner.left, top: frame.top + inner.top, width: inner.width, height: inner.height },
     })
   })
+  // Cuánto se lleva: capítulos ya pasados más la página dentro del actual, sobre el total de capítulos (spine.length
+  // existe en epub.js, pero sus tipos no lo recogen). shortcut: cuenta todos los capítulos igual de largos; si se nota,
+  // usar book.locations.generate() (tarda unos segundos en libros grandes)
+  const chapters = Math.max(1, (book.spine as unknown as { length: number }).length)
+  const progressOf = ({ start, atEnd }: Location) =>
+    atEnd ? 1 : Math.min(1, (start.index + (start.displayed.page - 1) / Math.max(1, start.displayed.total)) / chapters)
   rendition.on('relocated', (location: Location) => {
     current = location
     handlers.onRelocate(
       { cfi: location.start.cfi },
-      { atStart: Boolean(location.atStart), atEnd: Boolean(location.atEnd), label: describe(location) }
+      { atStart: Boolean(location.atStart), atEnd: Boolean(location.atEnd), label: describe(location), progress: progressOf(location) }
     )
   })
   // Lo que pasa dentro del iframe no llega a la ventana: teclas y pulsaciones se reenvían

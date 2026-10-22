@@ -132,6 +132,11 @@ export function openLibraryDb(file: string): DatabaseSync {
   addColumnIfMissing(db, 'books', 'format', "TEXT DEFAULT 'book'")
   // Por dónde se va leyendo el libro electrónico (JSON: EPUB { cfi } · PDF { page })
   addColumnIfMissing(db, 'book_state', 'reading_position', 'TEXT')
+  // Cuánto se lleva leído (0 a 1) y cuándo se leyó por última vez (para la cinta del lomo y el libro de la mesa)
+  addColumnIfMissing(db, 'book_state', 'reading_progress', 'REAL')
+  addColumnIfMissing(db, 'book_state', 'read_at', 'TEXT')
+  // Página por la que se va, escrita a mano en el panel del libro (libros en papel)
+  addColumnIfMissing(db, 'book_state', 'current_page', 'INTEGER')
   return db
 }
 
@@ -584,11 +589,47 @@ export function deleteBookmark(db: DatabaseSync, id: number) {
   db.prepare('DELETE FROM bookmarks WHERE id = ?').run(id)
 }
 
-/** Guarda por dónde se va leyendo. */
-export function writePosition(db: DatabaseSync, isbn: string, location: unknown) {
+// Página más alta que se acepta en un libro sin número de páginas
+const MAX_PAGE = 100000
+
+/** Guarda por dónde se va leyendo y, si llega, cuánto se lleva (0 a 1). */
+export function writePosition(db: DatabaseSync, isbn: string, location: unknown, progress?: unknown) {
   assertKnownIsbn(db, isbn)
   if (!validLocation(location)) throw new ValidationError('Posición de lectura no válida')
-  db.prepare("UPDATE book_state SET reading_position = ?, updated_at = datetime('now') WHERE isbn = ?").run(JSON.stringify(location), isbn)
+  if (progress !== undefined && !(typeof progress === 'number' && progress >= 0 && progress <= 1)) {
+    throw new ValidationError('Progreso de lectura no válido')
+  }
+  db.prepare(
+    "UPDATE book_state SET reading_position = ?, reading_progress = COALESCE(?, reading_progress), read_at = datetime('now'), updated_at = datetime('now') WHERE isbn = ?"
+  ).run(JSON.stringify(location), progress ?? null, isbn)
+}
+
+/** Guarda la página por la que se va (escrita a mano) y, si se sabe cuántas tiene el libro, cuánto se lleva. */
+export function writePage(db: DatabaseSync, isbn: string, page: unknown) {
+  assertKnownIsbn(db, isbn)
+  const { pages } = db.prepare('SELECT pages FROM books WHERE isbn = ?').get(isbn) as { pages: number | null }
+  if (!Number.isInteger(page) || (page as number) < 0 || (page as number) > (pages || MAX_PAGE)) throw new ValidationError('Página no válida')
+  db.prepare("UPDATE book_state SET current_page = ?, reading_progress = COALESCE(?, reading_progress), updated_at = datetime('now') WHERE isbn = ?").run(
+    page as number,
+    pages ? (page as number) / pages : null,
+    isbn
+  )
+}
+
+/** Cuánto se lleva leído de cada libro ({ isbn: 0 a 1 }), la página escrita a mano ({ isbn: página }) y el último leído. */
+export function readProgress(db: DatabaseSync) {
+  const rows = db.prepare('SELECT isbn, reading_progress, current_page FROM book_state WHERE reading_progress IS NOT NULL OR current_page IS NOT NULL').all() as {
+    isbn: string
+    reading_progress: number | null
+    current_page: number | null
+  }[]
+  // rowid desempata dos lecturas en el mismo segundo (las pruebas lo hacen)
+  const last = db.prepare('SELECT isbn FROM book_state WHERE read_at IS NOT NULL ORDER BY read_at DESC, rowid DESC LIMIT 1').get() as { isbn: string } | undefined
+  return {
+    progress: Object.fromEntries(rows.filter((row) => row.reading_progress !== null).map((row) => [row.isbn, row.reading_progress])),
+    pages: Object.fromEntries(rows.filter((row) => row.current_page !== null).map((row) => [row.isbn, row.current_page])),
+    lastRead: last?.isbn ?? null,
+  }
 }
 
 function validNote(note: unknown): note is string | null | undefined {
@@ -675,7 +716,8 @@ export interface LibraryApiOptions {
  * Manejador de la API (montado en /api):
  * - GET /state, PUT /placements, PUT /flipped, PUT /reading-status (la sala)
  * - GET /ebooks (qué libros tienen libro electrónico), GET /ebooks/:isbn (el archivo)
- * - GET /reader/:isbn, PUT /reader/:isbn/position, POST /reader/:isbn/annotations, POST /reader/:isbn/bookmarks,
+ * - GET /progress (cuánto se lleva de cada libro y el último leído)
+ * - GET /reader/:isbn, PUT /reader/:isbn/position ({ location, progress }), PUT /reader/:isbn/page ({ page }), POST /reader/:isbn/annotations, POST /reader/:isbn/bookmarks,
  *   PATCH /annotations/:id, DELETE /annotations/:id, DELETE /bookmarks/:id (el lector)
  * - PUT /tags, PUT /wishlist, PUT /settings, PUT /goals (etiquetas, lista de deseos, ajustes y retos de la consola)
  * - GET /readings, POST /readings, PUT /readings/:id, DELETE /readings/:id (el diario de lecturas)
@@ -695,6 +737,7 @@ export function createLibraryApi(db: DatabaseSync, { ebooksDir, catalog }: Libra
     const route = url.split('?')[0]
     try {
       if (req.method === 'GET' && route === '/state') return send(res, 200, readState(db))
+      if (req.method === 'GET' && route === '/progress') return send(res, 200, readProgress(db))
       const writer = WRITERS[route]
       if (req.method === 'PUT' && writer) {
         writer(db, await readJsonBody(req))
@@ -762,12 +805,20 @@ export function createLibraryApi(db: DatabaseSync, { ebooksDir, catalog }: Libra
         return fs.createReadStream(file).pipe(res)
       }
 
-      match = /^\/reader\/([0-9X]+)(\/position|\/annotations|\/bookmarks)?$/i.exec(route)
+      match = /^\/reader\/([0-9X]+)(\/position|\/page|\/annotations|\/bookmarks)?$/i.exec(route)
       if (match) {
         const [, isbn, action] = match
         if (req.method === 'GET' && !action) return send(res, 200, readReader(db, isbn))
         if (req.method === 'PUT' && action === '/position') {
-          writePosition(db, isbn, await readJsonBody(req))
+          const body = await readJsonBody(req)
+          if (!isPlainObject(body)) throw new ValidationError('Se esperaba { location, progress }')
+          writePosition(db, isbn, body.location, body.progress)
+          return send(res, 200, { ok: true })
+        }
+        if (req.method === 'PUT' && action === '/page') {
+          const body = await readJsonBody(req)
+          if (!isPlainObject(body)) throw new ValidationError('Se esperaba { page }')
+          writePage(db, isbn, body.page)
           return send(res, 200, { ok: true })
         }
         if (req.method === 'POST' && action === '/annotations') return send(res, 201, createAnnotation(db, isbn, await readJsonBody(req)))
