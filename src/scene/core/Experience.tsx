@@ -383,9 +383,11 @@ interface ExperienceProps {
   onReadBook: (book: Book) => void
   /** El lector está abierto: la cámara se sienta en el sofá */
   reading: boolean
+  /** Modo concentración: el gato se duerme junto a la chimenea */
+  focus: boolean
 }
 
-function Experience({ onSelectBook, flippedIsbns, readingStatus, onSetStatus, savedPlacements, onSavePlacements, collection, progress, currentBook, onReadBook, reading }: ExperienceProps) {
+function Experience({ onSelectBook, flippedIsbns, readingStatus, onSetStatus, savedPlacements, onSavePlacements, collection, progress, currentBook, onReadBook, reading, focus }: ExperienceProps) {
   // Sitio de cada libro: { book, wall, module, shelf, x }; cambia al arrastrarlo y se guarda en la base de datos
   const [placements, setPlacements] = useState<Placement[]>(() => loadPlacements(savedPlacements))
   // Libros arrastrados (el agarrado y, si era parte de una selección, el resto): el estado los pinta sacados de la
@@ -642,7 +644,7 @@ function Experience({ onSelectBook, flippedIsbns, readingStatus, onSetStatus, sa
         <Gramophone height={GRAMOPHONE_HEIGHT} position={GRAMOPHONE_POSITION} sound={collection.settings.sound} />
 
         {/* Gato paseando por la sala */}
-        <Cat path={CAT_PATH} sound={collection.settings.sound} />
+        <Cat path={CAT_PATH} sound={collection.settings.sound} focus={focus} />
 
         {/* Farolillos en las baldas, con una luz cálida tenue */}
         {SHELF_LANTERNS.map(({ wall, x, shelf }) => (

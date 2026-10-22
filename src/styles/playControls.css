@@ -77,3 +77,120 @@
     font-size: 12px;
   }
 }
+
+/* Modo concentración: botón con reloj de arena (o la cuenta atrás) y aviso al acabar */
+.play-controls__focus {
+  flex: 0 0 auto;
+  min-width: 34px;
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--play-controls-border);
+  border-radius: 17px;
+  background: var(--play-controls-bg);
+  color: var(--play-controls-text);
+  font: 600 14px/1 Georgia, 'Times New Roman', serif;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+}
+
+.play-controls__focus:hover,
+.play-controls__focus.is-running {
+  border-color: var(--play-controls-accent);
+}
+
+.play-controls__focus:focus-visible {
+  outline: 2px solid var(--play-controls-accent);
+  outline-offset: 2px;
+}
+
+.play-controls__notice {
+  margin: 0;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: var(--play-controls-bg);
+  color: var(--play-controls-text);
+  font: 13px/1.3 Georgia, 'Times New Roman', serif;
+}
+
+/* Menú de duraciones del modo concentración: tarjeta encima del reloj de arena con un botón por duración */
+.focus-timer {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.focus-timer__menu {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 10px);
+  padding: 12px 14px 14px;
+  border: 1px solid var(--play-controls-border);
+  border-radius: 14px;
+  background: var(--play-controls-bg);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(10px);
+  animation: focus-timer-in 0.18s ease-out;
+}
+
+@keyframes focus-timer-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+.focus-timer__title {
+  margin: 0 0 10px;
+  color: var(--play-controls-text);
+  font: italic 14px/1.2 Georgia, 'Times New Roman', serif;
+  white-space: nowrap;
+}
+
+.focus-timer__options {
+  display: flex;
+  gap: 8px;
+}
+
+.focus-timer__option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 1px solid var(--play-controls-border);
+  border-radius: 50%;
+  background: rgba(255, 245, 225, 0.06);
+  color: var(--play-controls-text);
+  font: 700 16px/1 Georgia, 'Times New Roman', serif;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, transform 0.15s;
+}
+
+.focus-timer__option small {
+  margin-top: 2px;
+  font-size: 10px;
+  font-weight: 400;
+  opacity: 0.75;
+}
+
+.focus-timer__option:hover,
+.focus-timer__option:focus-visible {
+  border-color: var(--play-controls-accent);
+  background: rgba(214, 170, 100, 0.22);
+  transform: translateY(-2px);
+  outline: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .focus-timer__menu {
+    animation: none;
+  }
+
+  .focus-timer__option {
+    transition: none;
+  }
+}
