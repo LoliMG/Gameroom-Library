@@ -8,7 +8,8 @@ import type { ThreeEvent } from '@react-three/fiber'
 // Píxeles que se puede mover el ratón entre pulsar y soltar para que cuente como clic (más, era girar la vista)
 const CLICK_TOLERANCE = 5
 
-function Clickable({ onClick, children }: { onClick: () => void; children: ReactNode }) {
+// maxDistance: solo se puede pulsar (y sale la mano) a menos de esa distancia de la cámara, en metros
+function Clickable({ onClick, maxDistance = Infinity, children }: { onClick: () => void; maxDistance?: number; children: ReactNode }) {
   const [hovered, setHovered] = useState(false)
   useCursor(hovered)
   return (
@@ -16,11 +17,11 @@ function Clickable({ onClick, children }: { onClick: () => void; children: React
       onClick={(event: ThreeEvent<MouseEvent>) => {
         // Lo que haya detrás (un libro, otro objeto) no recibe este clic
         event.stopPropagation()
-        if (event.delta <= CLICK_TOLERANCE) onClick()
+        if (event.delta <= CLICK_TOLERANCE && event.distance <= maxDistance) onClick()
       }}
       onPointerOver={(event) => {
         event.stopPropagation()
-        setHovered(true)
+        setHovered(event.distance <= maxDistance)
       }}
       onPointerOut={() => setHovered(false)}
     >
