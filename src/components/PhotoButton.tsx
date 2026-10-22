@@ -2,7 +2,6 @@
 // esquinas redondeadas y, abajo, "Rincón de lectura" y la fecha) y lo enseña con un botón para guardarlo (PNG)
 import { useEffect, useState } from 'react'
 import type { RefObject } from 'react'
-import { todayIso } from '@/utils/readingCalendar'
 
 // Ancho de la foto en la postal (px), borde, franja de abajo para el texto y radio de las esquinas
 const PHOTO_WIDTH = 1600
@@ -46,8 +45,8 @@ function postcard(source: HTMLCanvasElement) {
  * @param canvasRef - Lienzo de la sala (el de WebGL)
  */
 function PhotoButton({ canvasRef }: { canvasRef: RefObject<HTMLCanvasElement | null> }) {
-  // Postal hecha (data: PNG) o null sin vista previa
-  const [photo, setPhoto] = useState<string | null>(null)
+  // Postal hecha (data: PNG) y cuándo se hizo, o null sin vista previa
+  const [photo, setPhoto] = useState<{ url: string; takenAt: string } | null>(null)
 
   // La vista previa se cierra con Esc
   useEffect(() => {
@@ -62,7 +61,9 @@ function PhotoButton({ canvasRef }: { canvasRef: RefObject<HTMLCanvasElement | n
   const take = () =>
     requestAnimationFrame(() => {
       const canvas = canvasRef.current
-      if (canvas) setPhoto(postcard(canvas))
+      // Fecha y hora como las guarda una base de datos ("2026-10-22 15:30:45": el formato sueco es justo ese), con
+      // guiones en la hora porque Windows no admite ":" en los nombres de archivo
+      if (canvas) setPhoto({ url: postcard(canvas), takenAt: new Date().toLocaleString('sv-SE').replaceAll(':', '-') })
     })
 
   return (
@@ -73,9 +74,9 @@ function PhotoButton({ canvasRef }: { canvasRef: RefObject<HTMLCanvasElement | n
       {photo && (
         <div className="photo-preview" role="dialog" aria-modal="true" aria-label="Foto del rincón" onPointerDown={(event) => event.target === event.currentTarget && setPhoto(null)}>
           <div className="photo-preview__card">
-            <img src={photo} alt="Foto del rincón de lectura en una postal con la fecha de hoy" />
+            <img src={photo.url} alt="Foto del rincón de lectura en una postal con la fecha de hoy" />
             <div className="photo-preview__actions">
-              <a className="photo-preview__save" href={photo} download={`rincon-de-lectura-${todayIso()}.png`}>
+              <a className="photo-preview__save" href={photo.url} download={`rincon-de-lectura-${photo.takenAt}.png`}>
                 Guardar
               </a>
               <button type="button" className="photo-preview__close" onClick={() => setPhoto(null)}>
