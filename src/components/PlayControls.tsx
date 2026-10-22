@@ -36,7 +36,8 @@ function PlayControls({ onLock, children }: { onLock: () => void; children?: Rea
 
   return (
     <>
-      <div className="play-controls">
+      {/* Ayuda arriba a la derecha (la ayuda sale a su izquierda) */}
+      <div className="play-controls is-help">
         <button type="button" className="play-controls__help" aria-label="Ayuda con los controles" aria-describedby="play-controls-hint">
           ?
         </button>
@@ -45,8 +46,9 @@ function PlayControls({ onLock, children }: { onLock: () => void; children?: Rea
             ? 'WASD para moverte · Z para agacharte · ratón para mirar · apunta y haz clic en un libro · mantén pulsado sobre un libro y suéltalo donde quieras de las estanterías · C o Esc para soltar'
             : 'C para bloquear la cámara · WASD para moverte · Z para agacharte · arrastra para mirar · clic en un libro para ver sus datos · arrastra un libro a cualquier sitio de las estanterías · Ctrl + arrastrar o Ctrl + clic para elegir varios (Esc los suelta)'}
         </p>
-        {children}
       </div>
+      {/* Abajo a la izquierda, el resto de controles (el modo concentración) */}
+      <div className="play-controls">{children}</div>
       {/* Mirilla: solo con el ratón capturado, marca el punto que se selecciona al hacer clic */}
       {locked && <div className="play-controls__crosshair" aria-hidden="true" />}
     </>

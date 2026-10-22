@@ -1,5 +1,5 @@
 // Búsqueda, filtro y selección del panel de la biblioteca, y sus pantallas: añadir, editar, lista de deseos y ajustes
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
 import type { AppSettings, Book, CatalogBook, Reading, ReadingStatus, WishItem } from '@/types'
 import { FAVORITE_TAG } from '@/types'
@@ -81,6 +81,22 @@ function BookDashboard({ books, readingStatus, onSetStatus, onOpenBook, onLocate
   const [view, setView] = useState<View>('books')
   const [editingIsbn, setEditingIsbn] = useState<string | null>(null)
   const [selected, setSelected] = useState(() => new Set<string>())
+  // Menú desplegable del tipo de libro (Todos, Mangas, Novelas): se cierra al elegir, al pulsar fuera o con Esc
+  const [typesOpen, setTypesOpen] = useState(false)
+  const typesRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!typesOpen) return
+    const onPointerDown = (event: PointerEvent) => !typesRef.current?.contains(event.target as Node) && setTypesOpen(false)
+    const onKey = (event: KeyboardEvent) => event.key === 'Escape' && setTypesOpen(false)
+    window.addEventListener('pointerdown', onPointerDown)
+    window.addEventListener('keydown', onKey)
+    return () => {
+      window.removeEventListener('pointerdown', onPointerDown)
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [typesOpen])
+  // "Elige por mí": libro sin leer propuesto al azar (brilla en azul en la estantería), o 'none' si no queda ninguno
+  const [suggestion, setSuggestion] = useState<Book | 'none' | null>(null)
   const editingBook = books.find((book) => book.isbn === editingIsbn) ?? null
 
   // Etiquetas que se usan en la colección, para filtrar: favoritos primero y el resto por orden alfabético
@@ -108,6 +124,19 @@ function BookDashboard({ books, readingStatus, onSetStatus, onOpenBook, onLocate
   }
 
   const statusOf = (book: Book) => readingStatus[book.isbn] ?? 'unread'
+
+  // "Elige por mí": un libro sin leer al azar (si hay más de uno, distinto del que se acaba de proponer); se enseña en la
+  // consola y brilla en azul en su estantería
+  const pickForMe = () => {
+    const previous = suggestion && suggestion !== 'none' ? suggestion.isbn : null
+    const unread = books.filter((book) => statusOf(book) === 'unread')
+    const options = unread.length > 1 ? unread.filter((book) => book.isbn !== previous) : unread
+    const book = options[Math.floor(Math.random() * options.length)]
+    setView('books')
+    setEditingIsbn(null)
+    setSuggestion(book ?? 'none')
+    if (book) onLocateBook(book)
+  }
 
   // Cuántos libros hay en cada estado (para las pestañas)
   const counts = useMemo(() => {
@@ -160,14 +189,9 @@ function BookDashboard({ books, readingStatus, onSetStatus, onOpenBook, onLocate
             Mi biblioteca
           </button>
         </h2>
-        <input
-          type="search"
-          className="dashboard-search"
-          placeholder="Buscar por título, autor o editorial…"
-          aria-label="Buscar libros"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-        />
+        <button type="button" className="dashboard-action is-quiet" onClick={pickForMe} title="Te propongo un libro sin leer al azar">
+          🎲 Elige por mí
+        </button>
         <button type="button" className="dashboard-action" aria-pressed={view === 'add'} onClick={() => setView(view === 'add' ? 'books' : 'add')}>
           Añadir libro
         </button>
@@ -215,33 +239,83 @@ function BookDashboard({ books, readingStatus, onSetStatus, onOpenBook, onLocate
 
       {!editingBook && view === 'books' && (
         <>
-          <div className="dashboard-filters" role="group" aria-label="Filtrar por estado de lectura">
-            {FILTERS.map(({ value, label }) => (
-              <button
-                key={value}
-                type="button"
-                className="dashboard-filter"
-                aria-pressed={filter === value}
-                onClick={() => setFilter(value)}
-              >
-                {label} <span className="dashboard-count">{counts[value]}</span>
+          {/* Libro propuesto por "Elige por mí" */}
+          {suggestion === 'none' && (
+            <p className="dashboard-suggestion" role="status">
+              No te queda ningún libro sin leer. ¡Enhorabuena!
+              <button type="button" className="dashboard-action is-quiet" onClick={() => setSuggestion(null)}>
+                Cerrar
               </button>
-            ))}
-          </div>
+            </p>
+          )}
+          {suggestion && suggestion !== 'none' && (
+            <div className="dashboard-suggestion" role="status">
+              <img src={suggestion.cover} alt="" />
+              <div>
+                <span>Te propongo leer…</span>
+                <strong>{suggestion.title}</strong>
+                <small>{suggestion.author} · brilla en azul en su estantería</small>
+              </div>
+              <button type="button" className="dashboard-action" onClick={() => onOpenBook(suggestion)}>
+                Ver ficha
+              </button>
+              <button type="button" className="dashboard-action is-quiet" onClick={pickForMe}>
+                Otro
+              </button>
+              <button type="button" className="dashboard-action is-quiet is-icon" aria-label="Cerrar la propuesta" onClick={() => setSuggestion(null)}>
+                ×
+              </button>
+            </div>
+          )}
 
-          <div className="dashboard-filters is-format" role="group" aria-label="Filtrar por tipo de libro">
-            {FORMAT_FILTERS.map(({ value, label }) => (
+          <input
+            type="search"
+            className="dashboard-search"
+            placeholder="Buscar por título, autor, editorial o saga…"
+            aria-label="Buscar libros"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+          />
+
+          {/* Filtros en una fila: estado de lectura, tipo y etiquetas (la estrella, los favoritos) */}
+          <div className="dashboard-filterbar">
+            <div className="dashboard-segmented" role="group" aria-label="Filtrar por estado de lectura">
+              {FILTERS.map(({ value, label }) => (
+                <button key={value} type="button" className="dashboard-filter" aria-pressed={filter === value} onClick={() => setFilter(value)}>
+                  {label} <span className="dashboard-count">{counts[value]}</span>
+                </button>
+              ))}
+            </div>
+            <div className="dashboard-type" ref={typesRef}>
               <button
-                key={value}
                 type="button"
                 className="dashboard-filter"
-                aria-pressed={formatFilter === value}
-                onClick={() => setFormatFilter(value)}
+                aria-haspopup="menu"
+                aria-expanded={typesOpen}
+                aria-pressed={formatFilter !== 'all'}
+                onClick={() => setTypesOpen(!typesOpen)}
               >
-                {label} <span className="dashboard-count">{formatCounts[value]}</span>
+                {formatFilter === 'all' ? 'Tipo' : FORMAT_FILTERS.find(({ value }) => value === formatFilter)!.label} ▾
               </button>
-            ))}
-            {/* Etiquetas en la misma fila: la estrella filtra los favoritos */}
+              {typesOpen && (
+                <div className="dashboard-type-menu" role="menu" aria-label="Filtrar por tipo de libro">
+                  {FORMAT_FILTERS.map(({ value, label }) => (
+                    <button
+                      key={value}
+                      type="button"
+                      role="menuitemradio"
+                      aria-checked={formatFilter === value}
+                      onClick={() => {
+                        setFormatFilter(value)
+                        setTypesOpen(false)
+                      }}
+                    >
+                      {label} <span className="dashboard-count">{formatCounts[value]}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
             {allTags.map((tag) => (
               <button
                 key={tag}
