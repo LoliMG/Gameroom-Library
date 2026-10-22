@@ -35,7 +35,7 @@ import Cat from '@/scene/decor/Cat'
 import FloorLamp from '@/scene/decor/FloorLamp'
 import Clickable from '@/scene/shared/Clickable'
 import Gramophone from '@/scene/decor/Gramophone'
-import Posters from '@/scene/decor/Posters'
+import Posters, { POSTER_FRAMED_HEIGHT } from '@/scene/decor/Posters'
 import BookPile from '@/scene/decor/BookPile'
 import Corkboard from '@/scene/decor/Corkboard'
 // Importación de la puerta de entrada de madera antigua (door.glb)
@@ -233,7 +233,7 @@ const CORKBOARD_POSITION: Vector3Tuple = [ROOM_WIDTH / 2 - 0.02, FLOOR_Y + 1.3, 
 // al ventanal (el sofá acaba en z ≈ 3.33 y la maceta está en x 2.3, z 3.63)
 const PILE_POSITION: Vector3Tuple = [1.6, FLOOR_Y, 3.5]
 // Pósters de favoritos: en la pared sobre la chimenea, con el borde de abajo por encima del gramófono (0.5 m)
-const POSTERS_CENTER: Vector3Tuple = [FIREPLACE_POSITION[0], FLOOR_Y + FIREPLACE_HEIGHT + 0.88, BACK_WALL_Z + 0.015]
+const POSTERS_CENTER: Vector3Tuple = [FIREPLACE_POSITION[0], FLOOR_Y + FIREPLACE_HEIGHT + GRAMOPHONE_HEIGHT + 0.06 + POSTER_FRAMED_HEIGHT / 2, BACK_WALL_Z + 0.015]
 // Lo que tapa la consola, en cajas: la chimenea por partes (medidas del modelo, desde su centro en planta y el suelo:
 // [mitad del ancho, alto desde, alto hasta, fondo desde, fondo hasta]; el zócalo no llega a la altura de la pantalla)
 // y el gramófono (0.3 × 0.32 m en planta)
