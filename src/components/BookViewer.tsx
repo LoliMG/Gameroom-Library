@@ -46,6 +46,8 @@ function BookViewer({ book, onClose }: { book: Book; onClose: () => void }) {
   useEffect(() => {
     if (book.spineGradient) return
     const image = new Image()
+    // Portadas de Supabase (otro dominio): sin esto el lienzo queda bloqueado y no se pueden leer sus colores
+    image.crossOrigin = 'anonymous'
     image.onload = () => setPalette(paletteFromCover(image))
     image.src = book.cover
   }, [book.cover, book.spineGradient])

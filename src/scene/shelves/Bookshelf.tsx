@@ -1,4 +1,5 @@
-import { Suspense } from 'react'
+// Cada libro espera a su portada y, si no carga, solo desaparece ese libro
+import CoverBoundary from '@/scene/shared/CoverBoundary'
 import type { ThreeEvent } from '@react-three/fiber'
 import type { Book as BookData, Placement } from '@/types'
 // Importación del componente Book usando el alias "@"
@@ -226,7 +227,7 @@ function Bookshelf({ slot, placements = [], width = BASE_SHELF_WIDTH, onSelectBo
 
         return (
           // Cada libro espera a su portada por su cuenta: un libro recién añadido no oculta la sala mientras carga
-          <Suspense key={book.id} fallback={null}>
+          <CoverBoundary key={book.id}>
             <Book
               book={book}
               onSelect={onSelectBook}
@@ -240,7 +241,7 @@ function Bookshelf({ slot, placements = [], width = BASE_SHELF_WIDTH, onSelectBo
               height={book.height}
               depth={book.depth}
             />
-          </Suspense>
+          </CoverBoundary>
         )
       })}
     </group>

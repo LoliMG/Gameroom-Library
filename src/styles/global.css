@@ -24,6 +24,17 @@ body,
   height: 100%;
 }
 
+.app-retry {
+  margin-top: 16px;
+  padding: 10px 16px;
+  font: inherit;
+  color: #1a1408;
+  background: #e2c070;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
 .reader-loading {
   position: fixed;
   inset: 0;

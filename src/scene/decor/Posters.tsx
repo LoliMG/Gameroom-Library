@@ -1,6 +1,7 @@
 // Pósters de los libros favoritos colgados sobre la chimenea: la portada en un marco fino de madera. Al pulsarlos, la
 // ficha del libro
-import { Suspense } from 'react'
+// Cada libro espera a su portada y, si no carga, solo desaparece ese libro
+import CoverBoundary from '@/scene/shared/CoverBoundary'
 import { useTexture } from '@react-three/drei'
 import { SRGBColorSpace } from 'three'
 import type { Vector3Tuple } from 'three'
@@ -49,9 +50,9 @@ function Posters({ books, center, onSelect }: { books: Book[]; center: Vector3Tu
     <>
       {books.map((book, i) => (
         // Cada póster espera a su portada por su cuenta
-        <Suspense key={book.isbn} fallback={null}>
+        <CoverBoundary key={book.isbn}>
           <Poster book={book} position={[center[0] + (i - (books.length - 1) / 2) * spread, center[1], center[2]]} onSelect={onSelect} />
-        </Suspense>
+        </CoverBoundary>
       ))}
     </>
   )
