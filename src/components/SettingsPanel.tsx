@@ -5,6 +5,7 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import type { AppSettings, SoundVolumes } from '@/types'
 import { MAX_SOUND_VOLUME } from '@/types'
+import { supabase } from '@/utils/supabase'
 
 // Cada sonido de fondo con su nombre y cuándo suena
 const SOUNDS: { key: keyof SoundVolumes; label: string; when: string }[] = [
@@ -130,6 +131,14 @@ function SettingsPanel({ settings, onSetSettings }: SettingsPanelProps) {
           ))}
         </ul>
       )}
+
+      <h3 className="settings-title">Cuenta</h3>
+      <div className="add-book-form">
+        {/* Al cerrar la sesión, App vuelve sola a la pantalla de entrada */}
+        <button type="button" className="dashboard-action is-quiet" onClick={() => supabase.auth.signOut()}>
+          Cerrar sesión
+        </button>
+      </div>
     </section>
   )
 }

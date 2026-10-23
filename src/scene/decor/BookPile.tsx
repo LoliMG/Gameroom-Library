@@ -1,6 +1,7 @@
 // Pila "por leer" en el suelo junto al sofá: los libros que se mandan a ella desde su ficha, tumbados uno encima de otro
 // (el primero abajo), cada uno algo girado y desplazado para que parezca un montón de verdad. Al pulsar uno, su ficha
-import { Suspense } from 'react'
+// Cada libro espera a su portada y, si no carga, solo desaparece ese libro
+import CoverBoundary from '@/scene/shared/CoverBoundary'
 import type { Vector3Tuple } from 'three'
 import type { Book as BookData } from '@/types'
 import Book from '@/scene/books/Book'
@@ -37,7 +38,7 @@ function BookPile({ books, position, onSelect }: { books: BookData[]; position: 
     <group position={position}>
       {placed.map(({ book, stack, y }) => (
         // Cada libro espera a su portada por su cuenta
-        <Suspense key={book.isbn} fallback={null}>
+        <CoverBoundary key={book.isbn}>
           <group
             position={[-stack * STACK_GAP + jitter(book.isbn, 1) * MAX_SHIFT, y + book.width / 2, jitter(book.isbn, 2) * MAX_SHIFT]}
             rotation={[0, jitter(book.isbn, 3) * MAX_TWIST, 0]}
@@ -56,7 +57,7 @@ function BookPile({ books, position, onSelect }: { books: BookData[]; position: 
               />
             </group>
           </group>
-        </Suspense>
+        </CoverBoundary>
       ))}
     </group>
   )

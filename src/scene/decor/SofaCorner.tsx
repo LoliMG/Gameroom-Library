@@ -1,5 +1,7 @@
-// Importación de useMemo de React para clonar y configurar los modelos 3D; Suspense para la portada del libro de la mesa
-import { Suspense, useMemo, useState } from 'react'
+// Importación de useMemo de React para clonar y configurar los modelos 3D
+import { useMemo, useState } from 'react'
+// El libro de la mesa espera a su portada y, si no carga, solo desaparece ese libro
+import CoverBoundary from '@/scene/shared/CoverBoundary'
 // useGLTF de @react-three/drei para cargar los modelos
 import { useGLTF } from '@react-three/drei'
 // Importación del manifiesto centralizado de modelos 3D
@@ -212,7 +214,7 @@ function SofaCorner({ currentBook, currentProgress, onOpenCurrent }: SofaCornerP
       {/* 7a. El libro que se está leyendo, tumbado (la portada, su +X, girada hacia arriba): al pulsarlo se sigue leyendo.
           Si no hay ninguno, el libro abierto */}
       {currentBook ? (
-        <Suspense fallback={null}>
+        <CoverBoundary>
           <group position={TABLE_BOOK_POSITION} rotation={[0, TABLE_BOOK_ROTATION_Y, 0]}>
             <group position={[0, currentBook.width / 2, 0]} rotation={[0, 0, Math.PI / 2]}>
               <Book
@@ -228,7 +230,7 @@ function SofaCorner({ currentBook, currentProgress, onOpenCurrent }: SofaCornerP
               />
             </group>
           </group>
-        </Suspense>
+        </CoverBoundary>
       ) : (
         <primitive
           object={bookTableScene}

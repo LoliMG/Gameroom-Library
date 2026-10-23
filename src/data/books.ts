@@ -1,25 +1,17 @@
-// Lista de libros de la sala. Junta tres fuentes:
-// - src/data/booksMeta.json: los datos de cada libro (los escribe la consola al añadir libros, o a mano)
-// - src/assets/covers/<isbn>.jpg: las portadas (Vite las importa y da su dirección)
+// Libros de la sala: los de la cuenta con la que se ha entrado. Junta tres fuentes:
+// - la tabla books de Supabase: los datos de cada libro (los escribe la consola al añadir libros)
+// - el cubo covers de Supabase Storage: las portadas (públicas por dirección, ver coverUrl)
 // - bookStyles, más abajo: retoques escritos a mano (colores del lomo, sinopsis, tamaño especial)
+// Es un pequeño almacén: loadBooks lo llena al entrar y tras cambiar un libro, y useBooks avisa a la sala
+import { useSyncExternalStore } from 'react'
 import type { Book, BookMeta, BookPalette } from '@/types'
-// Lectura de los metadatos (Vite importa el JSON como un objeto de JavaScript)
-import booksMetaJson from '@/data/booksMeta.json'
+import { supabase } from '@/utils/supabase'
 
-const booksMeta = booksMetaJson as BookMeta[]
-
-// Importación de todas las portadas guardadas en assets/covers con nombre ISBN.(jpg|png|jpeg|webp).
-// import.meta.glob es de Vite: con eager e import 'default' devuelve { ruta del archivo: dirección de la imagen }
-const coverModules = import.meta.glob<string>('@/assets/covers/*.{jpg,png,jpeg,webp}', { eager: true, import: 'default' })
-
-// Mapa dinámico de portadas indexado por ISBN
-const coverMap: Record<string, string> = {}
-for (const [filePath, url] of Object.entries(coverModules)) {
-  const match = filePath.match(/(\d{13})\.(jpg|png|jpeg|webp)$/)
-  if (match) {
-    coverMap[match[1]] = url
-  }
-}
+// Dirección pública de una portada (el cubo covers se puede leer por dirección; subir, borrar y listar solo su dueño).
+// Siempre la misma para la misma portada: el navegador la guarda en caché
+// shortcut: si se cambia la portada de un libro con la misma ruta, se puede seguir viendo la vieja hasta que caduque la
+// caché; si algún día se pueden cambiar portadas, añadir ?v=<fecha> a la dirección
+const coverUrl = (path: string) => supabase.storage.from('covers').getPublicUrl(path).data.publicUrl
 
 // Constantes para el cálculo dinámico del grosor del lomo en función de las páginas reales
 export const DEPTH_PER_PAGE = 0.00006
@@ -303,10 +295,8 @@ const MANGA_DEFAULT_DEPTH = 0.115
 const POCKET_DEFAULT_HEIGHT = 0.19
 const POCKET_DEFAULT_DEPTH = 0.125
 
-// Solo los libros con portada y título: sin portada useTexture falla y sin título no hay lomo; en ambos casos la escena
-// entera dejaría de cargar (pasa mientras se rellena booksMeta.json a mano)
-const books: Book[] = booksMeta.filter((item) => coverMap[item.isbn] && item.title).map((item, index) => {
-  const coverImage = coverMap[item.isbn]
+// Libro listo para la sala a partir de sus datos y la dirección de su portada
+function toBook(item: BookMeta, coverImage: string, index: number): Book {
   const style: BookStyle = bookStyles[item.isbn] || {}
 
   const isManga = item.format === 'manga' || item.type === 'manga' || item.saga === 'Pandora Hearts'
@@ -369,6 +359,33 @@ const books: Book[] = booksMeta.filter((item) => coverMap[item.isbn] && item.tit
     synopsis: style.synopsis || item.synopsis || '',
     spineTitle: SPINE_TITLES[item.isbn],
   }
-})
+}
 
-export default books
+let books: Book[] = []
+const listeners = new Set<() => void>()
+
+/**
+ * Carga los libros de la cuenta (con sus portadas) y avisa a la sala. Lanza un error si Supabase falla: la sala no
+ * debe montarse sin libros, porque guardaría su estado vacío encima del bueno.
+ */
+export async function loadBooks(): Promise<void> {
+  // Por ISBN: un orden fijo (solo decide dónde caen los libros que aún no tienen sitio en las estanterías)
+  const { data, error } = await supabase.from('books').select('*').order('isbn')
+  if (error) throw new Error(`No se pudieron cargar los libros: ${error.message}`)
+  // Solo los libros con portada y título: sin portada no hay textura y sin título no hay lomo
+  books = (data as (BookMeta & { cover_path: string | null })[])
+    .filter((row) => row.cover_path && row.title)
+    .map((row, index) => toBook(row, coverUrl(row.cover_path!), index))
+  listeners.forEach((listener) => listener())
+}
+
+/** Los libros cargados ahora mismo (para funciones fuera de React) */
+export const getBooks = () => books
+
+const subscribe = (listener: () => void) => {
+  listeners.add(listener)
+  return () => listeners.delete(listener)
+}
+
+/** Los libros de la sala; el componente se vuelve a dibujar cuando cambian */
+export const useBooks = () => useSyncExternalStore(subscribe, getBooks)

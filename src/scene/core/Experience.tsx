@@ -20,7 +20,7 @@ import { paletteForElevation } from '@/scene/core/ambiencePalette'
 // Importación del entorno exterior (jardín, árboles, flores y cielo)
 import Outside from '@/scene/garden/Outside'
 // Importación del listado de libros disponibles
-import books from '@/data/books'
+import { getBooks, useBooks } from '@/data/books'
 // Importación del componente de iluminación personalizada
 import Lights from '@/scene/core/Lights'
 // Importación de la estructura de la habitación y sus dimensiones clave
@@ -182,7 +182,7 @@ const SHELF_LANTERNS = [
 
 // Colocación inicial: los libros llenan en orden los tramos de la pared a, del fondo hacia el ventanal
 function layoutAllBooks() {
-  let remainingBooks = books
+  let remainingBooks = getBooks()
   const placements: Placement[] = []
   for (const wall of SHELF_WALLS) {
     const placement = getWallPlacement(remainingBooks, wall.length, { shelfCount: wall.shelfCount })
@@ -407,6 +407,7 @@ interface ExperienceProps {
 }
 
 function Experience({ onSelectBook, flippedIsbns, readingStatus, onSetStatus, savedPlacements, onSavePlacements, collection, progress, currentBook, onReadBook, reading, focus, posters, pile, board, onOpenBoard }: ExperienceProps) {
+  const books = useBooks()
   // Sitio de cada libro: { book, wall, module, shelf, x }; cambia al arrastrarlo y se guarda en la base de datos
   const [placements, setPlacements] = useState<Placement[]>(() => loadPlacements(savedPlacements))
   // Libros arrastrados (el agarrado y, si era parte de una selección, el resto): el estado los pinta sacados de la
@@ -416,8 +417,8 @@ function Experience({ onSelectBook, flippedIsbns, readingStatus, onSetStatus, sa
   const groupRef = useRef<number[]>([]) // ids de los libros que se mueven juntos, en su orden
   // Selección múltiple (Ctrl + arrastrar o Ctrl + clic): ids de los libros elegidos
   const [selectedIds, setSelectedIds] = useState(NO_BOOKS)
-  // Libro añadido, editado o quitado desde la consola: Vite actualiza la lista de libros sin recargar la página y vuelve a
-  // pintar la sala; los nuevos van al primer hueco libre (y se guardan como cualquier cambio de sitio). Al quitar uno, los
+  // Libro añadido, editado o quitado desde la consola: loadBooks vuelve a cargar la lista de libros y la sala se
+  // vuelve a pintar; los nuevos van al primer hueco libre (y se guardan como cualquier cambio de sitio). Al quitar uno, los
   // id (el orden en la lista) cambian: la selección se suelta para no quedarse con libros que no son
   // Libro localizado desde la consola (brilla en azul hasta que se pulsa)
   const [locatedId, setLocatedId] = useState<number | null>(null)
@@ -503,7 +504,7 @@ function Experience({ onSelectBook, flippedIsbns, readingStatus, onSetStatus, sa
   }, [])
 
   // Libros de la pila "por leer", de abajo arriba (los que ya no están en la colección no cuentan)
-  const pileBooks = useMemo(() => pile.map((isbn) => books.find((book) => book.isbn === isbn)).filter((book): book is Book => book !== undefined), [pile])
+  const pileBooks = useMemo(() => pile.map((isbn) => books.find((book) => book.isbn === isbn)).filter((book): book is Book => book !== undefined), [pile, books])
 
   // Lo que se pinta: cada libro con su volteo y, si al voltear alguno se pisan, apartados lo justo en su balda
   const shownPlacements = useMemo(() => {

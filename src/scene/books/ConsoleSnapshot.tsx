@@ -97,6 +97,8 @@ function ConsoleSnapshot({ books, width, z }: { books: Book[]; width: number; z:
     for (const book of books.slice(0, VISIBLE_BOOKS)) {
       if (covers.has(book.isbn)) continue
       const image = new Image()
+      // Portadas de Supabase (otro dominio): sin esto el lienzo queda bloqueado y no se pueden leer sus colores
+      image.crossOrigin = 'anonymous'
       image.onload = () => setCovers((loaded) => new Map(loaded).set(book.isbn, image))
       image.src = book.cover
     }

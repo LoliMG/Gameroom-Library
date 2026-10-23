@@ -1,7 +1,12 @@
-// Llamadas a la API del lector de libros electrónicos (rutas /api/ebooks, /api/reader, /api/annotations y
-// /api/bookmarks de server/library.ts, servidas por el servidor de Vite con la base de datos SQLite)
+// Datos del lector de libros electrónicos de la cuenta, en Supabase: por dónde se va (book_state), subrayados
+// (annotations) y marcadores (bookmarks).
+// Los archivos EPUB y PDF aún vienen de la API local (rutas /api/ebooks de server/library.ts).
+// shortcut: los archivos solo existen con `npm run dev`; pasarán al navegador de cada persona (IndexedDB) antes de publicar
 import type { Annotation, AnnotationColor, Bookmark, EbookFormat, Highlight, ReaderLocation } from '@/types'
-import { request, jsonBody as json } from '@/utils/apiRequest'
+import { request } from '@/utils/apiRequest'
+import { getBooks } from '@/data/books'
+import { currentUserId } from '@/utils/libraryApi'
+import { check, supabase } from '@/utils/supabase'
 
 /** Lo que necesita el lector de un libro: por dónde se iba, sus subrayados y sus marcadores */
 export interface ReaderData {
@@ -9,6 +14,22 @@ export interface ReaderData {
   annotations: Annotation[]
   bookmarks: Bookmark[]
 }
+
+
+const toAnnotation = (row: { id: number; location: ReaderLocation; text: string; note: string | null; color: AnnotationColor; created_at: string }): Annotation => ({
+  id: row.id,
+  location: row.location,
+  text: row.text,
+  note: row.note,
+  color: row.color,
+  createdAt: row.created_at,
+})
+const toBookmark = (row: { id: number; location: ReaderLocation; label: string; created_at: string }): Bookmark => ({
+  id: row.id,
+  location: row.location,
+  label: row.label,
+  createdAt: row.created_at,
+})
 
 /** Libros que tienen libro electrónico: { isbn: 'epub' | 'pdf' }. Sin servidor, ninguno. */
 export async function fetchEbooks(): Promise<Record<string, EbookFormat>> {
@@ -23,8 +44,19 @@ export async function fetchEbooks(): Promise<Record<string, EbookFormat>> {
 /** Archivo del libro electrónico (EPUB o PDF) como ArrayBuffer (los bytes del archivo). */
 export const fetchEbookFile = async (isbn: string): Promise<ArrayBuffer> => (await request(`/api/ebooks/${isbn}`)).arrayBuffer()
 
-/** Por dónde se iba leyendo, los subrayados y los marcadores. */
-export const fetchReaderData = async (isbn: string): Promise<ReaderData> => (await request(`/api/reader/${isbn}`)).json()
+/** Por dónde se iba leyendo, los subrayados y los marcadores (en orden de creación). */
+export async function fetchReaderData(isbn: string): Promise<ReaderData> {
+  const [state, annotations, bookmarks] = await Promise.all([
+    supabase.from('book_state').select('reading_position').eq('isbn', isbn).maybeSingle(),
+    supabase.from('annotations').select('id, location, text, note, color, created_at').eq('isbn', isbn).order('id'),
+    supabase.from('bookmarks').select('id, location, label, created_at').eq('isbn', isbn).order('id'),
+  ])
+  return {
+    position: check(state)?.reading_position ?? null,
+    annotations: check(annotations).map(toAnnotation),
+    bookmarks: check(bookmarks).map(toBookmark),
+  }
+}
 
 /** Cuánto se lleva leído: { progress: { isbn: 0 a 1 }, pages: { isbn: página escrita a mano }, lastRead }. */
 export interface ReadingProgress {
@@ -33,10 +65,16 @@ export interface ReadingProgress {
   lastRead: string | null
 }
 
-/** Cuánto se lleva leído de cada libro, las páginas escritas a mano y el último leído. Sin servidor, nada. */
+/** Cuánto se lleva leído de cada libro, las páginas escritas a mano y el último leído. Si falla, nada. */
 export async function fetchProgress(): Promise<ReadingProgress> {
   try {
-    return await (await request('/api/progress')).json()
+    const rows = check(await supabase.from('book_state').select('isbn, reading_progress, current_page, read_at'))
+    const last = rows.filter((row) => row.read_at).sort((a, b) => (a.read_at < b.read_at ? 1 : -1))[0]
+    return {
+      progress: Object.fromEntries(rows.filter((row) => row.reading_progress !== null).map((row) => [row.isbn, row.reading_progress])),
+      pages: Object.fromEntries(rows.filter((row) => row.current_page !== null).map((row) => [row.isbn, row.current_page])),
+      lastRead: last?.isbn ?? null,
+    }
   } catch (error) {
     console.warn('[lector] No se pudo saber cuánto se lleva leído:', (error as Error).message)
     return { progress: {}, pages: {}, lastRead: null }
@@ -44,36 +82,47 @@ export async function fetchProgress(): Promise<ReadingProgress> {
 }
 
 /** Todas las frases subrayadas en el lector (para pegarlas en el corcho), de la más nueva a la más antigua */
-export const fetchHighlights = async (): Promise<Highlight[]> => (await request('/api/highlights')).json()
+export const fetchHighlights = async (): Promise<Highlight[]> =>
+  check(await supabase.from('annotations').select('id, isbn, text').order('id', { ascending: false }))
 
-/** Guarda la página por la que se va (escrita a mano en el panel del libro). */
-export const saveCurrentPage = (isbn: string, page: number): Promise<Response> => request(`/api/reader/${isbn}/page`, json('PUT', { page }))
+/** Guarda la página por la que se va (escrita a mano en el panel del libro) y, si se sabe cuántas tiene, cuánto se lleva. */
+export async function saveCurrentPage(isbn: string, page: number): Promise<void> {
+  const pages = getBooks().find((book) => book.isbn === isbn)?.pages
+  if (!Number.isInteger(page) || page < 0 || (pages && page > pages)) throw new Error('Página no válida')
+  // upsert: un libro recién añadido aún puede no tener su fila (solo cambian estas columnas)
+  check(await supabase.from('book_state').upsert({ user_id: await currentUserId(), isbn, current_page: page, ...(pages ? { reading_progress: page / pages } : {}) }))
+}
 
 /** Guarda por dónde se va leyendo y cuánto se lleva (si falla solo se avisa: no es un dato que se pierda de forma grave). */
-export function saveReadingPosition(isbn: string, location: ReaderLocation, progress: number): Promise<unknown> {
-  return request(`/api/reader/${isbn}/position`, json('PUT', { location, progress })).catch((error: Error) =>
-    console.warn('[lector] No se pudo guardar la posición de lectura:', error.message)
-  )
+export async function saveReadingPosition(isbn: string, location: ReaderLocation, progress: number): Promise<void> {
+  try {
+    check(await supabase.from('book_state').upsert({ user_id: await currentUserId(), isbn, reading_position: location, reading_progress: progress, read_at: new Date().toISOString() }))
+  } catch (error) {
+    console.warn('[lector] No se pudo guardar la posición de lectura:', (error as Error).message)
+  }
 }
 
 /** Crea un subrayado y lo devuelve con su id. */
 export const createAnnotation = async (
   isbn: string,
   annotation: { location: ReaderLocation; text: string; color: AnnotationColor; note?: string | null }
-): Promise<Annotation> => (await request(`/api/reader/${isbn}/annotations`, json('POST', annotation))).json()
+): Promise<Annotation> =>
+  toAnnotation(check(await supabase.from('annotations').insert({ isbn, ...annotation, text: annotation.text.trim() }).select().single()))
 
 /** Cambia el comentario y/o el color de un subrayado. */
-export const updateAnnotation = async (
-  id: number,
-  changes: { note?: string | null; color?: AnnotationColor }
-): Promise<Annotation> => (await request(`/api/annotations/${id}`, json('PATCH', changes))).json()
+export const updateAnnotation = async (id: number, changes: { note?: string | null; color?: AnnotationColor }): Promise<Annotation> =>
+  toAnnotation(check(await supabase.from('annotations').update(changes).eq('id', id).select().single()))
 
 /** Guarda un marcador y lo devuelve con su id. */
 export const createBookmark = async (isbn: string, bookmark: { location: ReaderLocation; label: string }): Promise<Bookmark> =>
-  (await request(`/api/reader/${isbn}/bookmarks`, json('POST', bookmark))).json()
+  toBookmark(check(await supabase.from('bookmarks').insert({ isbn, location: bookmark.location, label: bookmark.label.trim() }).select().single()))
 
 /** Borra un marcador. */
-export const deleteBookmark = (id: number): Promise<Response> => request(`/api/bookmarks/${id}`, { method: 'DELETE' })
+export const deleteBookmark = async (id: number): Promise<void> => {
+  check(await supabase.from('bookmarks').delete().eq('id', id))
+}
 
 /** Borra un subrayado. */
-export const deleteAnnotation = (id: number): Promise<Response> => request(`/api/annotations/${id}`, { method: 'DELETE' })
+export const deleteAnnotation = async (id: number): Promise<void> => {
+  check(await supabase.from('annotations').delete().eq('id', id))
+}

@@ -21,7 +21,11 @@ import { loadLibrary, saveLibraryPart } from '@/utils/libraryApi'
 import { fetchEbooks, fetchProgress, saveCurrentPage } from '@/utils/readerApi'
 import { createReading, fetchReadings, updateReading } from '@/utils/diaryApi'
 import { todayIso } from '@/utils/readingCalendar'
-import books from '@/data/books'
+import { loadBooks, useBooks } from '@/data/books'
+// Cuentas de usuario: sin sesión se muestra la pantalla de entrada
+import type { Session } from '@supabase/supabase-js'
+import AuthScreen from '@/components/AuthScreen'
+import { supabase } from '@/utils/supabase'
 
 // Lector de libros electrónicos: se carga solo al abrir un libro (epub.js y PDF.js pesan bastante)
 const BookReader = lazy(() => import('@/components/reader/BookReader'))
@@ -50,6 +54,7 @@ const centerPointerWhenLocked: NonNullable<CanvasProps['events']> = (store) => {
  * Sala con la biblioteca ya cargada. library: { placements, flipped, readingStatus, tags, wishlist, settings } (ver libraryApi)
  */
 function Bookroom({ library }: { library: LibraryState }) {
+  const books = useBooks()
   // useState define el estado selectedBook que guarda el libro pulsado o null si no hay ninguno activo
   // (useState<Tipo>: TypeScript no puede deducirlo de null, así que se le dice qué puede guardar)
   const [selectedBook, setSelectedBook] = useState<Book | null>(null)
@@ -297,15 +302,55 @@ function Bookroom({ library }: { library: LibraryState }) {
   )
 }
 
-// Carga la biblioteca (base de datos o copia del navegador) antes de montar la sala: así nunca se guarda
-// el estado vacío por encima del guardado
-function App() {
+// Carga los libros y el estado de la biblioteca de la cuenta antes de montar la sala: así nunca se guarda el estado
+// vacío por encima del guardado. Si Supabase falla, la sala no se monta: se avisa y se puede reintentar
+function LoadedBookroom() {
   const [library, setLibrary] = useState<LibraryState | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [attempt, setAttempt] = useState(0)
   useEffect(() => {
-    loadLibrary().then(setLibrary)
-  }, [])
+    Promise.all([loadLibrary(), loadBooks()])
+      .then(([loaded]) => setLibrary(loaded))
+      .catch((failure: Error) => setError(failure.message))
+  }, [attempt])
+  if (error) {
+    return (
+      <div className="app-loading" role="alert">
+        <p>No se ha podido abrir tu biblioteca. {error}</p>
+        <button
+          type="button"
+          className="app-retry"
+          onClick={() => {
+            setError(null)
+            setAttempt((count) => count + 1)
+          }}
+        >
+          Reintentar
+        </button>
+      </div>
+    )
+  }
   if (!library) return <p className="app-loading">Abriendo la biblioteca…</p>
   return <Bookroom library={library} />
+}
+
+// Sin sesión, la pantalla de entrada; con sesión, la sala. Al volver del enlace de "he olvidado mi contraseña"
+// (PASSWORD_RECOVERY) se pide la nueva antes de entrar
+function App() {
+  // undefined: aún no se sabe si hay sesión guardada
+  const [session, setSession] = useState<Session | null | undefined>(undefined)
+  const [recovering, setRecovering] = useState(false)
+  useEffect(() => {
+    // Avisa al empezar (INITIAL_SESSION) y en cada cambio: entrar, salir, renovar la sesión…
+    const { data } = supabase.auth.onAuthStateChange((event, next) => {
+      setSession(next)
+      if (event === 'PASSWORD_RECOVERY') setRecovering(true)
+    })
+    return () => data.subscription.unsubscribe()
+  }, [])
+  if (session === undefined) return <p className="app-loading">Abriendo la biblioteca…</p>
+  if (!session || recovering) return <AuthScreen recovering={recovering} onRecovered={() => setRecovering(false)} />
+  return <LoadedBookroom />
 }
 
 export default App
