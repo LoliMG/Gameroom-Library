@@ -31,9 +31,11 @@ dist-ssr
 
 # Base de datos local de la biblioteca (datos personales: estados de lectura, sitio de los libros…)
 /data/*.sqlite*
+supabase
 
 # Libros electrónicos personales para el lector (no se suben al repositorio)
 /ebooks/
 
 # Archivos locales 
 credits-local.md
+PLAN-SUPABASE-VERCEL.md
