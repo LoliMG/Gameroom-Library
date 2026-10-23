@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
 import type { AppSettings, Book, CatalogBook, Reading, ReadingStatus, WishItem } from '@/types'
-import { FAVORITE_TAG } from '@/types'
+import { FAVORITE_TAG, READING_LABELS } from '@/types'
 import AddBookPanel from '@/components/AddBookPanel'
 import BookEditForm from '@/components/BookEditForm'
 import WishlistPanel from '@/components/WishlistPanel'
@@ -11,8 +11,6 @@ import DiaryPanel from '@/components/DiaryPanel'
 import { normalize } from '@/utils/normalize'
 import '@/styles/bookDashboard.css'
 
-// Estados de lectura (mismas claves que guarda App): etiqueta para filtros, botones e insignias
-const READING_LABELS: Record<ReadingStatus, string> = { finished: 'Acabado', reading: 'Leyendo', unread: 'Sin leer' }
 // Filtros: todos o uno de los estados
 type StatusFilter = ReadingStatus | 'all'
 const FILTERS: { value: StatusFilter; label: string }[] = [

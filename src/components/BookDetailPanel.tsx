@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { ButtonHTMLAttributes, ChangeEvent, FormEvent } from 'react'
 import { createPortal } from 'react-dom'
 import type { Book, EbookFormat, ReadingStatus } from '@/types'
+import { READING_LABELS } from '@/types'
 import BookViewer from '@/components/BookViewer'
 import { removeEbookFile, saveEbookFile } from '@/utils/readerApi'
 import '@/styles/bookDetailPanel.css'
@@ -226,6 +227,9 @@ function BookDetailPanel({ book, onClose, flipped, onToggleFlip, ebookFormat, on
         <div className="book-detail-info">
           <h2 className="book-detail-title">{book.title}</h2>
           <p className="book-detail-author">{book.author}</p>
+          <p className="book-detail-meta">
+            <strong>Estado:</strong> <span className={`book-detail-status is-${status}`}>{READING_LABELS[status]}</span>
+          </p>
           {book.saga && (
             <p className="book-detail-meta">
               <strong>Saga:</strong> {book.saga}{book.saga_index != null ? ` (${book.isManga ? 'Tomo' : 'Libro'} ${book.saga_index})` : ''}

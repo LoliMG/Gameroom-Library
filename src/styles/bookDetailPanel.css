@@ -54,15 +54,17 @@
   font-weight: 500;
 }
 
+/* La portada arriba, centrada, y los datos debajo */
 .book-detail-content {
   display: flex;
-  flex-direction: row;
-  align-items: flex-start;
+  flex-direction: column;
+  align-items: center;
   gap: var(--panel-spacing-md);
 }
 
 .book-detail-cover {
-  width: 120px;
+  width: 180px;
+  max-width: 100%;
   height: auto;
   border-radius: 6px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
@@ -74,7 +76,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--panel-spacing-sm);
-  flex: 1;
+  align-self: stretch;
 }
 
 .book-detail-title {
@@ -101,6 +103,15 @@
 
 .book-detail-meta strong {
   color: var(--panel-text-primary);
+}
+
+/* Estado de lectura, con los mismos colores que la lista de la consola */
+.book-detail-status.is-finished {
+  color: #7fb069;
+}
+
+.book-detail-status.is-reading {
+  color: var(--panel-accent);
 }
 
 /* Pie del panel: empujado al fondo, con el botón de volteo a la derecha */

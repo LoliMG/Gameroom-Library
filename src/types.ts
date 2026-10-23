@@ -4,6 +4,9 @@
 /** Estados de lectura (los mismos que acepta el servidor en server/library.ts) */
 export type ReadingStatus = 'finished' | 'reading' | 'unread'
 
+/** Nombre de cada estado de lectura en la consola y en el panel del libro */
+export const READING_LABELS: Record<ReadingStatus, string> = { finished: 'Acabado', reading: 'Leyendo', unread: 'Sin leer' }
+
 /** Formato físico del libro: decide su tamaño en la estantería (src/data/books.ts) */
 export type BookFormat = 'book' | 'manga' | 'bolsillo'
 
