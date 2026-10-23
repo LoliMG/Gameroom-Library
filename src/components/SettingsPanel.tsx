@@ -7,12 +7,12 @@ import type { AppSettings, SoundVolumes } from '@/types'
 import { MAX_SOUND_VOLUME } from '@/types'
 import { supabase } from '@/utils/supabase'
 
-// Cada sonido de fondo con su nombre y cuándo suena
-const SOUNDS: { key: keyof SoundVolumes; label: string; when: string }[] = [
-  { key: 'wind', label: 'Viento', when: 'siempre, de día y de noche' },
-  { key: 'rain', label: 'Lluvia', when: 'cuando llueve' },
-  { key: 'thunder', label: 'Tormenta', when: 'truenos cuando hay tormenta' },
-  { key: 'crickets', label: 'Grillos', when: 'de noche sin lluvia' },
+// Cada sonido de fondo con su nombre
+const SOUNDS: { key: keyof SoundVolumes; label: string }[] = [
+  { key: 'wind', label: 'Viento' },
+  { key: 'rain', label: 'Lluvia' },
+  { key: 'thunder', label: 'Tormenta' },
+  { key: 'crickets', label: 'Grillos' },
 ]
 
 /** Un resultado del geocodificador (https://open-meteo.com/en/docs/geocoding-api): solo los campos que se usan */
@@ -69,16 +69,14 @@ function SettingsPanel({ settings, onSetSettings }: SettingsPanelProps) {
         >
           {settings.sound ? '🔇 Silenciar todos' : '🔊 Activar los sonidos'}
         </button>
-        <span className="add-book-message">{settings.sound ? 'El volumen de cada sonido (100 % es el normal):' : 'Los sonidos de fondo están silenciados.'}</span>
+        {!settings.sound && <span className="add-book-message">Los sonidos de fondo están silenciados.</span>}
       </div>
       <div className="settings-volumes">
-        {SOUNDS.map(({ key, label, when }) => {
+        {SOUNDS.map(({ key, label }) => {
           const percent = Math.round(settings.volumes[key] * 100)
           return (
             <label key={key} className="settings-volume">
-              <span>
-                {label} <small>({when})</small>
-              </span>
+              <span>{label}</span>
               <input
                 type="range"
                 min={0}
@@ -97,8 +95,7 @@ function SettingsPanel({ settings, onSetSettings }: SettingsPanelProps) {
 
       <h3 className="settings-title">Tiempo de la sala</h3>
       <p className="add-book-message">
-        Ciudad: <strong>{settings.city}</strong> ({settings.latitude.toFixed(2)}, {settings.longitude.toFixed(2)}). La luz, el cielo y
-        el clima tras el ventanal siguen la hora y el tiempo de esta ciudad.
+        Ciudad: <strong>{settings.city}</strong> ({settings.latitude.toFixed(2)}, {settings.longitude.toFixed(2)})
       </p>
       <form className="add-book-form" onSubmit={search}>
         <input

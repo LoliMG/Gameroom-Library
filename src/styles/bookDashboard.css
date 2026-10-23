@@ -687,11 +687,6 @@
   font-size: 17px;
 }
 
-.settings-volume small {
-  font-size: 13px;
-  color: var(--dash-muted);
-}
-
 .settings-volume input {
   width: 100%;
   accent-color: var(--dash-accent);
