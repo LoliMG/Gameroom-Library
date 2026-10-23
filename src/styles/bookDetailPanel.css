@@ -227,3 +227,12 @@
 .book-detail-finish:focus-visible {
   filter: brightness(1.1);
 }
+
+/* Error al añadir o quitar el PDF o EPUB (archivo que no es PDF/EPUB, demasiado grande…) */
+.book-detail-ebook-error {
+  margin-top: var(--panel-spacing-sm);
+  color: #e8968a;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  text-align: right;
+}

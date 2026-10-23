@@ -269,6 +269,15 @@ function Bookroom({ library }: { library: LibraryState }) {
         onToggleFlip={() => selectedBook && toggleFlip(selectedBook.isbn)}
         ebookFormat={selectedBook ? ebooks[selectedBook.isbn] : undefined}
         onRead={() => setReadingBook(selectedBook)}
+        onEbookChange={(format) =>
+          selectedBook &&
+          setEbooks((all) => {
+            const next = { ...all }
+            if (format) next[selectedBook.isbn] = format
+            else delete next[selectedBook.isbn]
+            return next
+          })
+        }
         status={selectedBook ? (readingStatus[selectedBook.isbn] ?? 'unread') : 'unread'}
         currentPage={selectedBook ? pages[selectedBook.isbn] : undefined}
         onSetPage={(page) => selectedBook && setCurrentPage(selectedBook, page)}

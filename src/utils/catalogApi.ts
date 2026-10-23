@@ -6,6 +6,7 @@ import type { BookFormat, BookMeta, CatalogBook } from '@/types'
 import { request, jsonBody } from '@/utils/apiRequest'
 import { loadBooks } from '@/data/books'
 import { currentUserId } from '@/utils/libraryApi'
+import { removeEbookFile } from '@/utils/readerApi'
 import { check, supabase } from '@/utils/supabase'
 
 /** Formatos que se pueden elegir al añadir un libro y su nombre en la consola */
@@ -128,6 +129,8 @@ export async function deleteBook(isbn: string): Promise<void> {
     const { error } = await supabase.storage.from('covers').remove(paths)
     if (error) console.warn('[catálogo] No se pudo borrar la portada:', error.message)
   }
+  // Su PDF o EPUB de este navegador, si lo tenía
+  await removeEbookFile(isbn).catch((error: Error) => console.warn('[catálogo] No se pudo quitar su libro electrónico:', error.message))
   await loadBooks()
 }
 

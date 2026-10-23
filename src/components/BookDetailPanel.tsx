@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
-import type { ButtonHTMLAttributes, FormEvent } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import type { ButtonHTMLAttributes, ChangeEvent, FormEvent } from 'react'
 import { createPortal } from 'react-dom'
 import type { Book, EbookFormat, ReadingStatus } from '@/types'
 import BookViewer from '@/components/BookViewer'
+import { removeEbookFile, saveEbookFile } from '@/utils/readerApi'
 import '@/styles/bookDetailPanel.css'
 
 // Iconos de los botones del pie (trazos SVG: heredan el color del botón)
@@ -35,6 +36,22 @@ const ICONS = {
       <rect x="3" y="15" width="18" height="5" rx="1" />
       <rect x="5" y="10" width="15" height="5" rx="1" />
       <rect x="4" y="5" width="16" height="5" rx="1" />
+    </>
+  ),
+  // Flecha hacia una bandeja: añadir su PDF o EPUB
+  upload: (
+    <>
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="17 8 12 3 7 8" />
+      <line x1="12" y1="3" x2="12" y2="15" />
+    </>
+  ),
+  // Papelera: quitar su PDF o EPUB
+  remove: (
+    <>
+      <polyline points="3 6 5 6 21 6" />
+      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+      <path d="M10 11v6M14 11v6M9 6V4h6v2" />
     </>
   ),
   // Cuadro colgado de un clavo: póster sobre la chimenea
@@ -97,7 +114,8 @@ function ReadingProgressForm({ book, page, onSetPage, onFinish }: { book: Book; 
  * Panel con los datos del libro pulsado. El botón de volteo (abajo a la derecha) lo pone en la estantería
  * con la portada hacia la sala, o lo devuelve de canto con el lomo.
  *
- * Si el libro tiene libro electrónico (ebooks/<isbn>.epub o .pdf), el botón "Leer" abre el lector. "Ver el libro" lo
+ * Si el libro tiene su PDF o EPUB en este navegador, el botón "Leer" abre el lector; si no, se puede añadir (se guarda
+ * solo en este navegador, ver ebookStore.ts) y también quitar. "Ver el libro" lo
  * muestra en grande para girarlo y leer la sinopsis de la contraportada.
  *
  */
@@ -113,6 +131,8 @@ interface BookDetailPanelProps {
   ebookFormat: EbookFormat | undefined
   /** Abre el lector */
   onRead: () => void
+  /** Se ha añadido (con su formato) o quitado (undefined) su PDF o EPUB */
+  onEbookChange: (format: EbookFormat | undefined) => void
   /** Estado de lectura del libro: si se está leyendo, se puede apuntar la página y marcarlo como terminado */
   status: ReadingStatus
   /** Página por la que se va (escrita aquí antes), si la hay */
@@ -128,8 +148,11 @@ interface BookDetailPanelProps {
   onTogglePile: () => void
 }
 
-function BookDetailPanel({ book, onClose, flipped, onToggleFlip, ebookFormat, onRead, status, currentPage, onSetPage, onFinish, favorite, posterOn, onTogglePoster, inPile, onTogglePile }: BookDetailPanelProps) {
+function BookDetailPanel({ book, onClose, flipped, onToggleFlip, ebookFormat, onRead, onEbookChange, status, currentPage, onSetPage, onFinish, favorite, posterOn, onTogglePoster, inPile, onTogglePile }: BookDetailPanelProps) {
   const [viewing, setViewing] = useState<string | null>(null) // ISBN del libro que se está viendo en grande
+  // Añadir o quitar su PDF o EPUB: selector de archivos oculto y aviso del libro al que se refiere ('saving' o el error)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [ebookNotice, setEbookNotice] = useState<{ isbn: string; text: string } | null>(null)
   // useEffect para escuchar la pulsación de la tecla Escape y cerrar el panel
   useEffect(() => {
     // Función que evalúa si la tecla pulsada es "Escape" para invocar onClose
@@ -154,6 +177,32 @@ function BookDetailPanel({ book, onClose, flipped, onToggleFlip, ebookFormat, on
 
   // Si no hay ningún libro seleccionado, el panel no renderiza nada en el DOM
   if (!book) return null
+  // El aviso solo se muestra en el libro al que se refiere
+  const ebookStatus = ebookNotice?.isbn === book.isbn ? ebookNotice.text : null
+  const setEbookStatus = (text: string | null) => setEbookNotice(text && book ? { isbn: book.isbn, text } : null)
+
+  async function addEbook(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    event.target.value = '' // Así se puede volver a elegir el mismo archivo
+    if (!file || !book) return
+    setEbookStatus('saving')
+    try {
+      onEbookChange(await saveEbookFile(book.isbn, file))
+      setEbookStatus(null)
+    } catch (error) {
+      setEbookStatus((error as Error).message)
+    }
+  }
+
+  async function removeEbook() {
+    if (!book || !window.confirm(`¿Quitar el ${ebookFormat?.toUpperCase()} de «${book.title}» de este navegador? Sus subrayados y marcadores se quedan.`)) return
+    try {
+      await removeEbookFile(book.isbn)
+      onEbookChange(undefined)
+    } catch (error) {
+      setEbookStatus((error as Error).message)
+    }
+  }
 
   return (
     <aside className="book-detail-panel" aria-label="Detalle del libro seleccionado">
@@ -210,6 +259,17 @@ function BookDetailPanel({ book, onClose, flipped, onToggleFlip, ebookFormat, on
       <div className="book-detail-footer">
         <IconButton icon="view" label="Ver el libro en grande y leer su contraportada" onClick={() => setViewing(book.isbn)} />
         {ebookFormat && <IconButton icon="read" label={`Leer el libro (${ebookFormat.toUpperCase()})`} className="is-primary" onClick={onRead} />}
+        {ebookFormat ? (
+          <IconButton icon="remove" label={`Quitar el ${ebookFormat.toUpperCase()} de este navegador`} onClick={removeEbook} />
+        ) : (
+          <IconButton
+            icon="upload"
+            label={ebookStatus === 'saving' ? 'Guardando el archivo…' : 'Añadir su PDF o EPUB (se guarda solo en este navegador)'}
+            disabled={ebookStatus === 'saving'}
+            onClick={() => fileInputRef.current?.click()}
+          />
+        )}
+        <input ref={fileInputRef} type="file" accept=".pdf,.epub,application/pdf,application/epub+zip" hidden onChange={addEbook} />
         <IconButton
           icon="flip"
           label={flipped ? 'Voltear: dejarlo de canto, con el lomo a la vista' : 'Voltear: ponerlo de frente, con la portada a la vista'}
@@ -231,6 +291,12 @@ function BookDetailPanel({ book, onClose, flipped, onToggleFlip, ebookFormat, on
           />
         )}
       </div>
+
+      {ebookStatus && ebookStatus !== 'saving' && (
+        <p className="book-detail-ebook-error" role="alert">
+          {ebookStatus}
+        </p>
+      )}
 
       {/* Si se elige otro libro en la sala, la vista en grande se cierra. Va en document.body: el desenfoque del panel
           (backdrop-filter) haría que su posición fija se midiera dentro del panel y no en toda la pantalla */}

@@ -32,7 +32,7 @@ export interface BookMeta {
   complete?: boolean
 }
 
-/** Formato del libro electrónico de un ISBN (ebooks/<isbn>.epub o .pdf; lo lista GET /api/ebooks) */
+/** Formato del libro electrónico de un ISBN (su PDF o EPUB guardado en el navegador: src/utils/ebookStore.ts) */
 export type EbookFormat = 'epub' | 'pdf'
 
 /** Degradado del lomo, de arriba abajo (colores CSS) */

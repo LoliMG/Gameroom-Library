@@ -1,9 +1,8 @@
 // Datos del lector de libros electrónicos de la cuenta, en Supabase: por dónde se va (book_state), subrayados
 // (annotations) y marcadores (bookmarks).
-// Los archivos EPUB y PDF aún vienen de la API local (rutas /api/ebooks de server/library.ts).
-// shortcut: los archivos solo existen con `npm run dev`; pasarán al navegador de cada persona (IndexedDB) antes de publicar
+// Los archivos EPUB y PDF están en el navegador de cada persona (ebookStore.ts), no en Supabase.
 import type { Annotation, AnnotationColor, Bookmark, EbookFormat, Highlight, ReaderLocation } from '@/types'
-import { request } from '@/utils/apiRequest'
+import { deleteEbook, getEbook, listEbooks, saveEbook } from '@/utils/ebookStore'
 import { getBooks } from '@/data/books'
 import { currentUserId } from '@/utils/libraryApi'
 import { check, supabase } from '@/utils/supabase'
@@ -31,10 +30,10 @@ const toBookmark = (row: { id: number; location: ReaderLocation; label: string; 
   createdAt: row.created_at,
 })
 
-/** Libros que tienen libro electrónico: { isbn: 'epub' | 'pdf' }. Sin servidor, ninguno. */
+/** Libros que tienen libro electrónico en este navegador: { isbn: 'epub' | 'pdf' }. Si falla, ninguno. */
 export async function fetchEbooks(): Promise<Record<string, EbookFormat>> {
   try {
-    return await (await request('/api/ebooks')).json()
+    return await listEbooks(await currentUserId())
   } catch (error) {
     console.warn('[lector] No se pudo saber qué libros tienen libro electrónico:', (error as Error).message)
     return {}
@@ -42,7 +41,13 @@ export async function fetchEbooks(): Promise<Record<string, EbookFormat>> {
 }
 
 /** Archivo del libro electrónico (EPUB o PDF) como ArrayBuffer (los bytes del archivo). */
-export const fetchEbookFile = async (isbn: string): Promise<ArrayBuffer> => (await request(`/api/ebooks/${isbn}`)).arrayBuffer()
+export const fetchEbookFile = async (isbn: string): Promise<ArrayBuffer> => (await getEbook(await currentUserId(), isbn)).arrayBuffer()
+
+/** Guarda en este navegador el PDF o EPUB de un libro y devuelve su formato (error si no es un PDF o EPUB). */
+export const saveEbookFile = async (isbn: string, file: File): Promise<EbookFormat> => saveEbook(await currentUserId(), isbn, file)
+
+/** Quita de este navegador el PDF o EPUB de un libro. */
+export const removeEbookFile = async (isbn: string): Promise<void> => deleteEbook(await currentUserId(), isbn)
 
 /** Por dónde se iba leyendo, los subrayados y los marcadores (en orden de creación). */
 export async function fetchReaderData(isbn: string): Promise<ReaderData> {
