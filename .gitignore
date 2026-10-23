@@ -34,6 +34,7 @@ dist-ssr
 
 # Libros electrónicos personales para el lector (no se suben al repositorio)
 /ebooks/
+/pdfs/*.pdf
 
 # Archivos locales 
 credits-local.md
