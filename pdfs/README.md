@@ -1,14 +1,17 @@
 # 📚 Libros electrónicos para el lector
 
-Esta carpeta (igual que `ebooks/`) sirve para que el lector de la sala abra tus propios libros electrónicos cuando ejecutas la app en tu ordenador.
+El lector integrado en la sala permite abrir y leer libros electrónicos en formatos **EPUB** y **PDF**.
 
-> ⚠️ Pon aquí solo libros que tengas derecho a usar. Son para uso personal: no los subas al repositorio, que es público. En la versión publicada en Vercel el lector no está disponible.
+> ⚠️ Pon solo libros que tengas derecho a usar para uso personal. No subas archivos de libros con derechos al repositorio de Git.
 
-## Cómo añadir un libro
+## Cómo añadir un libro electrónico
 
-1. Consigue el libro en **PDF** o **EPUB**.
-2. Ponle como nombre su **ISBN de 13 dígitos**, por ejemplo `9788467550030.pdf`. También vale el título del libro, como `Donde los arboles cantan.pdf`, pero con el ISBN no hay errores.
-3. Guárdalo en esta carpeta o en `ebooks/`.
-4. Arranca la app con `npm run dev`: en la ficha de ese libro aparecerá el botón **Leer**.
+### Desde la aplicación (Recomendado)
+1. Inicia sesión en la sala y haz clic en el libro que quieras leer para abrir su ficha.
+2. Pulsa el botón de subida (**Añadir PDF o EPUB** con icono de bandeja y flecha).
+3. Selecciona el archivo PDF o EPUB desde tu equipo.
+4. El archivo se guardará de forma segura y privada en el almacenamiento local de tu propio navegador (**IndexedDB**), tanto en desarrollo local como en la web publicada. A partir de ese momento, la ficha mostrará el botón **Leer** (icono de libro abierto).
 
-Los ISBN de todos los libros de la colección están en [docs/BOOKS.md](../docs/BOOKS.md).
+### En desarrollo local (Carpeta `pdfs/` o `ebooks/`)
+También puedes colocar los archivos directamente en esta carpeta o en `ebooks/` con su ISBN como nombre (por ejemplo `9788467550030.pdf` o `9788467550030.epub`).
+
