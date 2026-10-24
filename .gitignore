@@ -36,6 +36,7 @@ dist-ssr
 /ebooks/
 /pdfs/*.pdf
 
-# Archivos locales 
+# Archivos locales
 credits-local.md
 PLAN-SUPABASE-VERCEL.md
+docs/BOOKS.md
