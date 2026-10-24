@@ -30,6 +30,37 @@
   font-size: 18px;
   overflow: hidden;
   user-select: none;
+  /* Para colocar la etiqueta flotante (.dashboard-tooltip) en píxeles del panel */
+  position: relative;
+}
+
+/* Etiqueta flotante de los elementos con data-tooltip: encima del elemento, o debajo con is-below */
+.dashboard-tooltip {
+  position: absolute;
+  z-index: 10;
+  max-width: 240px;
+  padding: 6px 10px;
+  transform: translate(-50%, calc(-100% - 8px));
+  background: var(--dash-surface);
+  border: 1px solid var(--dash-border);
+  border-radius: 8px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+  color: var(--dash-text);
+  font-size: 14px;
+  line-height: 1.35;
+  text-align: center;
+  pointer-events: none;
+  animation: dashboard-tooltip-in 0.12s ease-out;
+}
+
+.dashboard-tooltip.is-below {
+  transform: translate(-50%, 8px);
+}
+
+@keyframes dashboard-tooltip-in {
+  from {
+    opacity: 0;
+  }
 }
 
 .dashboard *,

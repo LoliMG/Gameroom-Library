@@ -1,6 +1,6 @@
 // Búsqueda, filtro y selección del panel de la biblioteca, y sus pantallas: añadir, editar, lista de deseos y ajustes
 import { useEffect, useMemo, useRef, useState } from 'react'
-import type { Dispatch, SetStateAction } from 'react'
+import type { Dispatch, SetStateAction, SyntheticEvent } from 'react'
 import type { AppSettings, Book, CatalogBook, Reading, ReadingStatus, WishItem } from '@/types'
 import { FAVORITE_TAG, READING_LABELS } from '@/types'
 import AddBookPanel from '@/components/AddBookPanel'
@@ -28,6 +28,38 @@ const FORMAT_FILTERS: { value: FormatFilter; label: string }[] = [
   { value: 'novel', label: 'Novelas' },
 ]
 const formatGroup = (book: Book): FormatGroup => (book.format === 'manga' ? 'manga' : 'novel')
+
+// Etiqueta flotante de la casa para los elementos con data-tooltip (el title del navegador no se puede estilizar y sale
+// mal colocado en la consola 3D). Su sitio se cuenta en píxeles del panel con offsetLeft/offsetTop, a los que no les
+// afecta la perspectiva, restando lo que se haya desplazado cada contenedor con scroll
+interface Tooltip {
+  text: string
+  x: number
+  y: number
+  below: boolean
+}
+// La mitad de su max-width en el CSS: así no se sale por los lados del panel
+const TOOLTIP_HALF_WIDTH = 120
+function tooltipFor(target: HTMLElement, root: HTMLElement): Tooltip {
+  let x = target.offsetWidth / 2
+  let y = 0
+  for (let node: Element | null = target; node instanceof HTMLElement && node !== root; node = node.offsetParent) {
+    x += node.offsetLeft
+    y += node.offsetTop
+  }
+  for (let node = target.parentElement; node && node !== root; node = node.parentElement) {
+    x -= node.scrollLeft
+    y -= node.scrollTop
+  }
+  // Encima del elemento; si no cabe (la cabecera), debajo
+  const below = y < 48
+  return {
+    text: target.dataset.tooltip ?? '',
+    x: Math.min(Math.max(x, TOOLTIP_HALF_WIDTH), root.offsetWidth - TOOLTIP_HALF_WIDTH),
+    y: below ? y + target.offsetHeight : y,
+    below,
+  }
+}
 
 /** Etiquetas, lista de deseos y ajustes: los guarda App como el resto del estado de la biblioteca */
 export interface CollectionTools {
@@ -72,6 +104,15 @@ interface BookDashboardProps {
 
 function BookDashboard({ books, readingStatus, onSetStatus, onOpenBook, onLocateBook, collection }: BookDashboardProps) {
   const { tags, onSetTags, wishlist, onSetWishlist, settings, onSetSettings, goals, onSetGoal, readings, readingsError, onReadingsChange } = collection
+  // Se guarda el elemento (no su texto) y la etiqueta se cuenta al pintar: así sigue al texto si cambia (la estrella de
+  // favorito al pulsarla) y desaparece si el elemento se quita (al abrir Editar)
+  const [hovered, setHovered] = useState<{ target: HTMLElement; root: HTMLElement } | null>(null)
+  const showTooltip = (event: SyntheticEvent<HTMLDivElement>) => {
+    const target = (event.target as Element).closest<HTMLElement>('[data-tooltip]')
+    setHovered(target ? { target, root: event.currentTarget } : null)
+  }
+  const hideTooltip = () => setHovered(null)
+  const tooltip = hovered?.target.isConnected ? tooltipFor(hovered.target, hovered.root) : null
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<StatusFilter>('all')
   const [formatFilter, setFormatFilter] = useState<FormatFilter>('all')
@@ -180,14 +221,14 @@ function BookDashboard({ books, readingStatus, onSetStatus, onOpenBook, onLocate
   }
 
   return (
-    <div className="dashboard">
+    <div className="dashboard" onMouseOver={showTooltip} onFocus={showTooltip} onMouseLeave={hideTooltip} onBlur={hideTooltip} onScrollCapture={hideTooltip}>
       <header className="dashboard-header">
         <h2 className="dashboard-title">
-          <button type="button" onClick={goHome} title="Volver al inicio">
+          <button type="button" onClick={goHome} data-tooltip="Volver al inicio">
             Mi biblioteca
           </button>
         </h2>
-        <button type="button" className="dashboard-action is-quiet" onClick={pickForMe} title="Te propongo un libro sin leer al azar">
+        <button type="button" className="dashboard-action is-quiet" onClick={pickForMe} data-tooltip="Te propongo un libro sin leer al azar">
           🎲 Elige por mí
         </button>
         <button type="button" className="dashboard-action" aria-pressed={view === 'add'} onClick={() => setView(view === 'add' ? 'books' : 'add')}>
@@ -198,7 +239,7 @@ function BookDashboard({ books, readingStatus, onSetStatus, onOpenBook, onLocate
           className="dashboard-action is-quiet is-icon"
           aria-pressed={view === 'diary'}
           aria-label="Diario de lecturas"
-          title="Diario de lecturas"
+          data-tooltip="Diario de lecturas"
           onClick={() => setView(view === 'diary' ? 'books' : 'diary')}
         >
           📖
@@ -208,7 +249,7 @@ function BookDashboard({ books, readingStatus, onSetStatus, onOpenBook, onLocate
           className="dashboard-action is-quiet is-icon"
           aria-pressed={view === 'wishlist'}
           aria-label={`Lista de deseos (${wishlist.length})`}
-          title={`Lista de deseos (${wishlist.length})`}
+          data-tooltip={`Lista de deseos (${wishlist.length})`}
           onClick={() => setView(view === 'wishlist' ? 'books' : 'wishlist')}
         >
           ♡
@@ -218,7 +259,7 @@ function BookDashboard({ books, readingStatus, onSetStatus, onOpenBook, onLocate
           className="dashboard-action is-quiet is-icon"
           aria-pressed={view === 'settings'}
           aria-label="Ajustes"
-          title="Ajustes"
+          data-tooltip="Ajustes"
           onClick={() => setView(view === 'settings' ? 'books' : 'settings')}
         >
           ⚙
@@ -321,7 +362,7 @@ function BookDashboard({ books, readingStatus, onSetStatus, onOpenBook, onLocate
                 className="dashboard-filter is-tag"
                 aria-pressed={tagFilter === tag}
                 aria-label={tag === FAVORITE_TAG ? 'Ver solo los favoritos' : `Ver solo los libros con la etiqueta ${tag}`}
-                title={tag === FAVORITE_TAG ? 'Favoritos' : tag}
+                data-tooltip={tag === FAVORITE_TAG ? 'Favoritos' : tag}
                 onClick={() => setTagFilter(tagFilter === tag ? null : tag)}
               >
                 {tag === FAVORITE_TAG ? '★' : tag}
@@ -372,7 +413,7 @@ function BookDashboard({ books, readingStatus, onSetStatus, onOpenBook, onLocate
                       className={`dashboard-card-star${isFavorite(book) ? ' is-on' : ''}`}
                       aria-pressed={isFavorite(book)}
                       aria-label={`${isFavorite(book) ? 'Quitar de favoritos' : 'Marcar como favorito'}: ${book.title}`}
-                      title={isFavorite(book) ? 'Quitar de favoritos' : 'Marcar como favorito'}
+                      data-tooltip={isFavorite(book) ? 'Quitar de favoritos' : 'Marcar como favorito'}
                       onClick={() => toggleFavorite(book)}
                     >
                       {isFavorite(book) ? '★' : '☆'}
@@ -384,14 +425,14 @@ function BookDashboard({ books, readingStatus, onSetStatus, onOpenBook, onLocate
                     </button>
                     {/* Iconos junto al estado de lectura: localizar en la sala (diana) y editar (lápiz) */}
                     <div className="dashboard-card-actions">
-                      <button type="button" onClick={() => onLocateBook(book)} aria-label={`Localizar ${book.title} en la sala`} title="Localizar en la sala">
+                      <button type="button" onClick={() => onLocateBook(book)} aria-label={`Localizar ${book.title} en la sala`} data-tooltip="Localizar en la sala">
                         <svg viewBox="0 0 24 24" aria-hidden="true">
                           <circle cx="12" cy="12" r="7" />
                           <circle cx="12" cy="12" r="2" />
                           <path d="M12 1v4M12 19v4M1 12h4M19 12h4" />
                         </svg>
                       </button>
-                      <button type="button" onClick={() => setEditingIsbn(book.isbn)} aria-label={`Editar ${book.title}`} title="Editar">
+                      <button type="button" onClick={() => setEditingIsbn(book.isbn)} aria-label={`Editar ${book.title}`} data-tooltip="Editar">
                         <svg viewBox="0 0 24 24" aria-hidden="true">
                           <path d="M4 20h4L19 9l-4-4L4 16z" />
                           <path d="M14 6l4 4" />
@@ -404,6 +445,11 @@ function BookDashboard({ books, readingStatus, onSetStatus, onOpenBook, onLocate
             </ul>
           )}
         </>
+      )}
+      {tooltip && (
+        <div className={`dashboard-tooltip${tooltip.below ? ' is-below' : ''}`} style={{ left: tooltip.x, top: tooltip.y }} aria-hidden="true">
+          {tooltip.text}
+        </div>
       )}
     </div>
   )

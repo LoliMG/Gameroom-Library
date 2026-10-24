@@ -136,7 +136,7 @@ function DiaryPanel({ books, onSetStatus, goals, onSetGoal, readings, error, onR
         {allDays.map((day) => {
           const isbns = days.get(day) ?? []
           const titles = isbns.map((isbn) => booksByIsbn.get(isbn)?.title ?? isbn).join(', ')
-          return <span key={day} className={`diary-day level-${dayLevel(isbns.length)}`} title={`${shortDate(day, year)}${titles ? `: ${titles}` : ''}`} />
+          return <span key={day} className={`diary-day level-${dayLevel(isbns.length)}`} data-tooltip={`${shortDate(day, year)}${titles ? `: ${titles}` : ''}`} />
         })}
       </div>
 
