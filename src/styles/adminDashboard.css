@@ -1,0 +1,263 @@
+/* Panel de administración: botón arriba a la izquierda y modal grande encima de la sala */
+:root {
+  --admin-bg: rgba(20, 17, 15, 0.97);
+  --admin-surface: #1f1a16;
+  --admin-border: rgba(226, 192, 112, 0.25);
+  --admin-text: #f3ece0;
+  --admin-muted: #a99d8c;
+  --admin-accent: #e2c070;
+  --admin-danger: #e8968a;
+}
+
+/* Con el mismo aspecto que los botones de la sala (ayuda "?", temporizador) */
+.admin-dashboard-button {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  z-index: 900;
+  padding: 8px 14px;
+  border: 1px solid rgba(214, 190, 150, 0.35);
+  border-radius: 999px;
+  background: rgba(23, 20, 19, 0.72);
+  color: #eadfcb;
+  font: 600 14px/1 Georgia, 'Times New Roman', serif;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+}
+
+.admin-dashboard-button:hover {
+  border-color: var(--admin-accent);
+}
+
+.admin-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200; /* Encima del panel del libro (1000) y del corcho (1100) */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(10, 8, 6, 0.7);
+  backdrop-filter: blur(4px);
+}
+
+.admin-modal {
+  width: min(1000px, 100%);
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 24px;
+  background: var(--admin-bg);
+  border: 1px solid var(--admin-border);
+  border-radius: 14px;
+  color: var(--admin-text);
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+.admin-modal:focus {
+  outline: none;
+}
+
+.admin-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.admin-header h2 {
+  font-size: 1.4rem;
+  font-weight: normal;
+  color: var(--admin-accent);
+}
+
+.admin-modal h3 {
+  margin-bottom: 10px;
+  font-size: 1.05rem;
+  color: var(--admin-accent);
+}
+
+.admin-close {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--admin-border);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--admin-text);
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.admin-muted {
+  color: var(--admin-muted);
+  font-size: 0.9rem;
+}
+
+.admin-error {
+  color: var(--admin-danger);
+}
+
+.admin-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.admin-stats div {
+  padding: 14px;
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: 10px;
+}
+
+.admin-stats dt {
+  color: var(--admin-muted);
+  font-size: 0.85rem;
+}
+
+.admin-stats dd {
+  margin-top: 4px;
+  font-size: 1.6rem;
+  color: var(--admin-text);
+}
+
+.admin-usage {
+  margin-bottom: 12px;
+}
+
+.admin-usage-label {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+  font-size: 0.9rem;
+}
+
+.admin-usage-bar {
+  height: 8px;
+  background: rgba(226, 192, 112, 0.15);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.admin-usage-fill {
+  height: 100%;
+  background: var(--admin-accent);
+}
+
+.admin-usage-fill.is-high {
+  background: var(--admin-danger);
+}
+
+.admin-search {
+  width: 100%;
+  max-width: 360px;
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  font: inherit;
+  color: var(--admin-text);
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+}
+
+.admin-table-wrap {
+  overflow-x: auto;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.admin-table th,
+.admin-table td {
+  padding: 8px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--admin-border);
+  vertical-align: top;
+}
+
+.admin-table th {
+  color: var(--admin-muted);
+  font-weight: normal;
+}
+
+.admin-table tr.is-blocked td {
+  color: var(--admin-muted);
+}
+
+.admin-actions {
+  white-space: nowrap;
+}
+
+.admin-actions button,
+.admin-confirm button {
+  margin-right: 6px;
+  padding: 6px 10px;
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--admin-text);
+  background: transparent;
+  border: 1px solid var(--admin-border);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.admin-actions button.is-danger,
+.admin-confirm button.is-danger {
+  color: var(--admin-danger);
+  border-color: var(--admin-danger);
+}
+
+.admin-actions button:disabled,
+.admin-confirm button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.admin-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  white-space: normal;
+  max-width: 320px;
+}
+
+.admin-confirm label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.admin-confirm input {
+  padding: 8px 10px;
+  font: inherit;
+  color: var(--admin-text);
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: 6px;
+}
+
+.admin-dashboard-button:focus-visible,
+.admin-close:focus-visible,
+.admin-search:focus-visible,
+.admin-actions button:focus-visible,
+.admin-confirm button:focus-visible,
+.admin-confirm input:focus-visible {
+  outline: 2px solid var(--admin-accent);
+  outline-offset: 2px;
+}
+
+/* Texto solo para lectores de pantalla (cabecera de la columna de botones) */
+.admin-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

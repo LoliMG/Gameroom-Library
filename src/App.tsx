@@ -26,6 +26,8 @@ import { loadBooks, useBooks } from '@/data/books'
 import type { Session } from '@supabase/supabase-js'
 import AuthScreen from '@/components/AuthScreen'
 import LoadingScreen from '@/components/LoadingScreen'
+// Botón y panel de administración (solo se dibuja para la cuenta admin)
+import AdminDashboard from '@/components/AdminDashboard'
 import { supabase } from '@/utils/supabase'
 
 // Lector de libros electrónicos: se carga solo al abrir un libro (epub.js y PDF.js pesan bastante)
@@ -293,6 +295,7 @@ function Bookroom({ library }: { library: LibraryState }) {
 
       {/* Foto del rincón, abajo a la derecha */}
       <PhotoButton canvasRef={canvasRef} />
+      <AdminDashboard />
 
       {boardOpen && <BoardEditor items={board} books={books} onChange={setBoard} onClose={() => setBoardOpen(false)} />}
 

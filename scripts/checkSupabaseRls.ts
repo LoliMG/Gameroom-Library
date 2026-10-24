@@ -1,6 +1,7 @@
 // Comprobación de las migraciones de Supabase en un Postgres local (PGlite, sin conexión): node scripts/checkSupabaseRls.ts
 // Lo importante son las reglas RLS: la web usa la clave pública, así que son lo único que impide que una cuenta lea o
-// cambie la biblioteca de otra. Simula lo mínimo de Supabase: los roles anon y authenticated, auth.uid() y storage.
+// cambie la biblioteca de otra. Y que las funciones del panel de administración solo funcionen para la admin.
+// Simula lo mínimo de Supabase: los roles anon y authenticated, auth.uid(), auth.jwt() y storage.
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -11,14 +12,16 @@ const MIGRATIONS_DIR = path.resolve(import.meta.dirname, '../supabase/migrations
 const db = new PGlite()
 await db.exec(`
   create role anon; create role authenticated;
-  create schema auth; create table auth.users (id uuid primary key);
-  -- Como en Supabase: el id de la cuenta sale del token de la petición (aquí, de un ajuste de la sesión)
-  create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
-  grant usage on schema auth to anon, authenticated; grant execute on function auth.uid() to anon, authenticated;
+  create schema auth;
+  create table auth.users (id uuid primary key, email text, created_at timestamptz default now(), last_sign_in_at timestamptz, banned_until timestamptz);
+  -- Como en Supabase: el id de la cuenta y su app_metadata salen del token de la petición (aquí, de un ajuste de la sesión)
+  create function auth.jwt() returns jsonb language sql stable as $$ select coalesce(nullif(current_setting('request.jwt.claims', true), ''), '{}')::jsonb $$;
+  create function auth.uid() returns uuid language sql stable as $$ select nullif(auth.jwt() ->> 'sub', '')::uuid $$;
+  grant usage on schema auth to anon, authenticated; grant execute on function auth.uid(), auth.jwt() to anon, authenticated;
   grant usage on schema public to anon, authenticated;
   create schema storage;
   create table storage.buckets (id text primary key, name text, public boolean, file_size_limit bigint, allowed_mime_types text[]);
-  create table storage.objects (id serial primary key, bucket_id text, name text);
+  create table storage.objects (id serial primary key, bucket_id text, name text, metadata jsonb);
   alter table storage.objects enable row level security;
   create function storage.foldername(name text) returns text[] language sql immutable as $$ select (string_to_array(name, '/'))[1:array_length(string_to_array(name, '/'), 1) - 1] $$;
   grant usage on schema storage to authenticated; grant select, insert, update, delete on storage.objects to authenticated; grant usage on sequence storage.objects_id_seq to authenticated;
@@ -30,12 +33,14 @@ for (const file of fs.readdirSync(MIGRATIONS_DIR).filter((name) => name.endsWith
 
 const A = '00000000-0000-0000-0000-00000000000a'
 const B = '00000000-0000-0000-0000-00000000000b'
-await db.exec(`insert into auth.users values ('${A}'), ('${B}')`)
+const ADMIN = '00000000-0000-0000-0000-0000000000ad'
+await db.exec(`insert into auth.users (id, email, last_sign_in_at) values ('${A}', 'a@test', now()), ('${B}', 'b@test', now() - interval '20 days'), ('${ADMIN}', 'admin@test', now())`)
 const TABLES = ['books', 'book_state', 'annotations', 'bookmarks', 'readings', 'app_data']
 
-// Consulta como una cuenta (o sin sesión, con null), con las reglas RLS activas
+// Consulta como una cuenta (o sin sesión, con null), con las reglas RLS activas; la cuenta ADMIN lleva role 'admin'
 async function as(user: string | null, sql: string) {
-  await db.exec(`reset role; select set_config('request.jwt.claim.sub', '${user ?? ''}', false); set role ${user ? 'authenticated' : 'anon'};`)
+  const claims = user ? JSON.stringify({ sub: user, app_metadata: user === ADMIN ? { role: 'admin' } : {} }) : ''
+  await db.exec(`reset role; select set_config('request.jwt.claims', '${claims}', false); set role ${user ? 'authenticated' : 'anon'};`)
   try {
     return await db.query(sql)
   } finally {
@@ -78,6 +83,22 @@ await fails(A, `insert into storage.objects (bucket_id, name) values ('covers', 
 assert.equal((await as(B, 'select * from storage.objects')).rows.length, 0, 'B lista portadas de A')
 assert.equal((await as(B, 'delete from storage.objects')).affectedRows, 0, 'B borra portadas de A')
 
+// Panel de administración: solo la admin, y sin ver las bibliotecas
+for (const sql of ['select public.admin_summary()', 'select * from public.admin_users()', `select public.admin_set_blocked('${B}', true)`]) {
+  await fails(A, sql, `una cuenta normal usa el panel: ${sql}`)
+  await fails(null, sql, `sin sesión se usa el panel: ${sql}`)
+}
+const summary = (await as(ADMIN, 'select public.admin_summary() as s')).rows[0] as { s: { users: number; active7: number; active30: number; books: number } }
+assert.deepEqual([summary.s.users, summary.s.active7, summary.s.active30, summary.s.books], [3, 2, 3, 1], 'resumen del panel')
+const users = (await as(ADMIN, 'select email, books, blocked from public.admin_users()')).rows
+assert.deepEqual(users, [{ email: 'a@test', books: 1, blocked: false }, { email: 'b@test', books: 0, blocked: false }, { email: 'admin@test', books: 0, blocked: false }], 'lista de usuarios')
+for (const table of TABLES) assert.equal((await as(ADMIN, `select * from ${table}`)).rows.length, 0, `la admin ve ${table} de otra cuenta`)
+await as(ADMIN, `select public.admin_set_blocked('${B}', true)`)
+assert.equal(((await as(ADMIN, `select blocked from public.admin_users() where email = 'b@test'`)).rows[0] as { blocked: boolean }).blocked, true, 'bloquear')
+await as(ADMIN, `select public.admin_set_blocked('${B}', false)`)
+assert.equal(((await as(ADMIN, `select blocked from public.admin_users() where email = 'b@test'`)).rows[0] as { blocked: boolean }).blocked, false, 'desbloquear')
+await fails(ADMIN, `select public.admin_set_blocked('${ADMIN}', true)`, 'la admin se bloquea a sí misma')
+
 // Borrar la cuenta borra todo lo suyo
 await db.exec(`delete from auth.users where id = '${A}'`)
 for (const table of TABLES) {
@@ -85,4 +106,4 @@ for (const table of TABLES) {
 }
 
 await db.close()
-console.log('Reglas de Supabase (RLS, restricciones, portadas y borrado de cuenta): OK')
+console.log('Reglas de Supabase (RLS, restricciones, portadas, panel de administración y borrado de cuenta): OK')
