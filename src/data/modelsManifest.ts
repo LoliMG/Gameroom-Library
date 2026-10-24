@@ -17,9 +17,6 @@ import doorUrl from '@/assets/models/furniture/door.glb?url'
 import shelfUrl from '@/assets/models/furniture/repisalarga.glb?url'
 import skirtingUrl from '@/assets/models/other/wall_skirting_board.glb?url'
 import cabinetUrl from '@/assets/models/furniture/old_storage_cabinet.glb?url'
-import ivyUrl from '@/assets/models/flowers/ivy.glb?url'
-import ponytaUrl from '@/assets/models/other/ponyta.glb?url'
-import bakugoUrl from '@/assets/models/furniture/bakugo.glb?url'
 import grassGroundUrl from '@/assets/models/flowers/grass_texture.glb?url'
 import gardenBenchUrl from '@/assets/models/furniture/jap_bench.glb?url'
 import plushieSharkUrl from '@/assets/models/other/plushie_shark.glb?url'
@@ -193,42 +190,6 @@ export const modelsManifest = {
       author: 'Daniyal Malik',
       license: 'CC-BY-4.0',
       url: 'https://sketchfab.com/3d-models/old-storage-cabinet-feddab14991f4f368466fd6116161562',
-    },
-  },
-
-  // Hiedra colgante en maceta (repisa izquierda sobre el sofá). Licencia NO comercial (CC-BY-NC)
-  ivy: {
-    url: ivyUrl,
-    file: 'flowers/ivy.glb',
-    credit: {
-      title: 'ivy',
-      author: 'heyyodd',
-      license: 'CC-BY-NC-4.0',
-      url: 'https://sketchfab.com/3d-models/ivy-b4b0419ec9ac4a71ae454145dbc88037',
-    },
-  },
-
-  // Figura de Ponyta (repisa izquierda); su material "Hair" brilla como fuego
-  ponyta: {
-    url: ponytaUrl,
-    file: 'other/ponyta.glb',
-    credit: {
-      title: 'Ponyta - Pokemon',
-      author: 'Locur',
-      license: 'CC-BY-4.0',
-      url: 'https://sketchfab.com/3d-models/ponyta-pokemon-e4e73f5a6b174e2d8fa957d7b720c7aa',
-    },
-  },
-
-  // Figura de Bakugo (repisa derecha). Con esqueleto (postura en T de origen; ~27 000 triángulos)
-  bakugo: {
-    url: bakugoUrl,
-    file: 'furniture/bakugo.glb',
-    credit: {
-      title: 'Bakugo - My Hero Ultra Rumble',
-      author: 'Ye ye AI sh1t',
-      license: 'CC-BY-4.0',
-      url: 'https://sketchfab.com/3d-models/bakugo-my-hero-ultra-rumble-6e150076998047e185825153361400e0',
     },
   },
 

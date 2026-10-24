@@ -21,16 +21,13 @@ import Candlestick from '@/scene/decor/Candlestick'
 import MugSteam from '@/scene/decor/MugSteam'
 // Repisas de pared sobre el sofá
 import WallShelf, { WALL_SHELF_DEPTH_PER_LENGTH } from '@/scene/decor/WallShelf'
-// Figuras sobre las repisas (hiedra, Ponyta y Bakugo)
+// Adornos de las repisas: rosal y tiburón de peluche (con sombras) y un farolillo de papel
 import ShelfFigure from '@/scene/decor/ShelfFigure'
+import { ModelProp } from '@/scene/garden/GardenProps'
 import Clickable from '@/scene/shared/Clickable'
 // El libro que se está leyendo, tumbado en la mesa (el mismo libro de las baldas)
 import Book from '@/scene/books/Book'
 import type { Book as BookData } from '@/types'
-// Postura relajada para personajes en postura en T
-import { relaxArms, spreadLegs } from '@/utils/pose'
-import { Vector3 } from 'three'
-import type { Mesh, MeshStandardMaterial, Object3D } from 'three'
 // Vector3Tuple: [x, y, z] en metros (el formato que aceptan position y rotation en React Three Fiber)
 import type { Vector3Tuple } from 'three'
 
@@ -81,52 +78,17 @@ const SHELF_CANDLE_POSITION: Vector3Tuple = [WALL_B_X - WALL_SHELF_DEPTH / 2, WA
 // Línea central de las repisas (mitad de su fondo): ahí se apoyan las figuras
 const SHELF_ITEMS_X = WALL_B_X - WALL_SHELF_DEPTH / 2
 
-// Hiedra colgante: la maceta va sobre el extremo izquierdo de la repisa de arriba y las ramas caen por debajo.
-// En ivy.glb la base de la maceta está al 64.5 % de la altura total (las ramas cuelgan 41 de sus 63.6 unidades)
-const IVY_HEIGHT = 0.83                 // Altura total con ramas (maceta ≈ 0.13 m de ancho)
-const IVY_VASE_BASE_FRACTION = 0.645
-const IVY_POSITION: Vector3Tuple = [SHELF_ITEMS_X, WALL_SHELVES[0].y - IVY_VASE_BASE_FRACTION * IVY_HEIGHT, WALL_SHELVES[0].z - 0.37]
-// Ponyta de perfil sobre la repisa de arriba (la cabeza mira hacia el ventanal, +Z, como en el modelo)
-const PONYTA_HEIGHT = 0.22
-const PONYTA_POSITION: Vector3Tuple = [SHELF_ITEMS_X, WALL_SHELVES[0].y, WALL_SHELVES[0].z + 0.11]
-// Crin y cola (material "Hair") brillando como fuego; intensidad > 1 para que el Bloom las haga resplandecer
-// Brillo suave: más fuerte, el halo del Bloom se come el cuerpo blanco y la figura entera parece naranja
-const PONYTA_GLOW = { material: 'Hair', color: '#ff7a1f', intensity: 0.5 }
-// Figura de Bakugo en la parte izquierda de la repisa de abajo (el candelabro queda a su derecha)
-const BAKUGO_HEIGHT = 0.32
-const BAKUGO_POSITION: Vector3Tuple = [SHELF_ITEMS_X, WALL_SHELVES[1].y, WALL_SHELVES[1].z - 0.23]
-const BAKUGO_ROTATION_Y = -Math.PI / 2 // El modelo mira hacia +Z; girado mira a la sala (-X)
-// Postura alerta desde la postura en T: huesos de brazos y piernas de bakugo.glb y hacia dónde mira el modelo
-const BAKUGO_ARMS = [
-  { arm: 'L_arm_079', elbow: 'L_elbow_080', hand: 'L_hand_081' },
-  { arm: 'R_arm_0107', elbow: 'R_elbow_0108', hand: 'R_hand_0109' },
-]
-const BAKUGO_LEGS = [
-  { leg: 'L_leg_0139', knee: 'L_knee_0140' },
-  { leg: 'R_leg_0148', knee: 'R_knee_0149' },
-]
-const BAKUGO_FORWARD = new Vector3(0, 0, 1)
-// Ángulos (radianes): brazos separados del cuerpo, codos doblados y piernas abiertas
-const BAKUGO_ARM_SPREAD = 0.45
-const BAKUGO_ELBOW_BEND = 0.6
-const BAKUGO_LEG_SPREAD = 0.14
-// ivy.glb trae las hojas con brillo propio (de noche relucen verdes en la oscuridad) y la maceta de metal puro sin mapa
-// que lo matice (sale oscura y de un color raro): sin brillo y sin metal. Los materiales son los del modelo cargado, pero
-// solo hay una hiedra
-const matteIvy = (root: Object3D) =>
-  root.traverse((node) => {
-    const mesh = node as Mesh
-    if (!mesh.isMesh) return
-    const material = mesh.material as MeshStandardMaterial
-    material.emissive.set('#000000')
-    material.emissiveMap = null
-    material.metalness = 0
-    material.needsUpdate = true
-  })
-const poseBakugo = (root: Object3D) => {
-  relaxArms(root, BAKUGO_ARMS, BAKUGO_FORWARD, { armSpread: BAKUGO_ARM_SPREAD, elbowBend: BAKUGO_ELBOW_BEND })
-  spreadLegs(root, BAKUGO_LEGS, BAKUGO_LEG_SPREAD)
-}
+// Rosal en maceta en el extremo izquierdo de la repisa de arriba (el mismo modelo que la maceta grande del rincón)
+const SHELF_ROSE_HEIGHT = 0.32
+const SHELF_ROSE_POSITION: Vector3Tuple = [SHELF_ITEMS_X, WALL_SHELVES[0].y, WALL_SHELVES[0].z - 0.3]
+// Farolillo de papel encendido en la repisa de arriba, con una luz pequeña (como los de las estanterías)
+const SHELF_LANTERN_HEIGHT = 0.22
+const SHELF_LANTERN_POSITION: Vector3Tuple = [SHELF_ITEMS_X, WALL_SHELVES[0].y, WALL_SHELVES[0].z + 0.15]
+const SHELF_LANTERN_LIGHT = '#ffb36b'
+// Tiburón de peluche tumbado en la repisa de abajo, a la izquierda del candelabro (en plushie_shark.glb la cabeza va
+// hacia +Z: mira hacia el ventanal)
+const SHELF_SHARK_HEIGHT = 0.16
+const SHELF_SHARK_POSITION: Vector3Tuple = [SHELF_ITEMS_X, WALL_SHELVES[1].y, WALL_SHELVES[1].z - 0.2]
 
 // Constante para la única maceta decorativa situada en la esquina entre el sofá y el ventanal
 // Extremo del sofá hacia el ventanal: el modelo llega a +1.613 unidades en su eje X local (× escala),
@@ -266,11 +228,13 @@ function SofaCorner({ currentBook, currentProgress, onOpenCurrent }: SofaCornerP
         <Candlestick position={SHELF_CANDLE_POSITION} rotationY={-0.4} withLight={false} lit={candlesLit} />
       </Clickable>
 
-      {/* Figuras de las repisas */}
-      <ShelfFigure model="ivy" height={IVY_HEIGHT} position={IVY_POSITION} adjust={matteIvy} />
-      <ShelfFigure model="ponyta" height={PONYTA_HEIGHT} position={PONYTA_POSITION} glow={PONYTA_GLOW} />
-      {/* Bakugo en postura alerta (el modelo viene en postura en T) */}
-      <ShelfFigure model="bakugo" height={BAKUGO_HEIGHT} position={BAKUGO_POSITION} rotationY={BAKUGO_ROTATION_Y} adjust={poseBakugo} />
+      {/* Adornos de las repisas */}
+      <ShelfFigure model="roseInAPot" height={SHELF_ROSE_HEIGHT} position={SHELF_ROSE_POSITION} />
+      <group position={SHELF_LANTERN_POSITION}>
+        <ModelProp model="paperLanterns" node="paper lantern4" height={SHELF_LANTERN_HEIGHT} position={[0, 0, 0]} />
+        <pointLight position={[0, SHELF_LANTERN_HEIGHT * 0.5, 0]} color={SHELF_LANTERN_LIGHT} intensity={0.25} distance={0.9} decay={2} />
+      </group>
+      <ShelfFigure model="plushieShark" height={SHELF_SHARK_HEIGHT} position={SHELF_SHARK_POSITION} />
     </group>
   )
 }

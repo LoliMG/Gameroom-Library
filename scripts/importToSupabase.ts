@@ -3,6 +3,8 @@
 //
 //   node scripts/importToSupabase.ts <correo>             importa (pide la contraseña de esa cuenta, sin mostrarla)
 //   node scripts/importToSupabase.ts <correo> --dry-run   solo cuenta lo que se importaría, sin conectarse
+//   node scripts/importToSupabase.ts <correo> --solo <isbn>   sube solo ese libro de booksMeta.json y su portada (para
+//                                                            libros añadidos después de importar: no toca nada más)
 //
 // Se puede repetir sin duplicar: libros, estado, datos de la sala y portadas se sobrescriben; subrayados, marcadores
 // y diario solo se suben si la cuenta aún no tiene ninguno. Al final comprueba que en la cuenta está todo.
@@ -18,10 +20,11 @@ const BOOKS_META_FILE = path.join(ROOT, 'src/data/booksMeta.json')
 const COVERS_DIR = path.join(ROOT, 'src/assets/covers')
 const COVER_TYPES: Record<string, string> = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp' }
 
-const [email, flag] = process.argv.slice(2)
+const [email, flag, onlyIsbn] = process.argv.slice(2)
 const dryRun = flag === '--dry-run'
-if (!email?.includes('@')) {
-  console.error('Uso: node scripts/importToSupabase.ts <correo> [--dry-run]')
+const only = flag === '--solo'
+if (!email?.includes('@') || (only && !onlyIsbn)) {
+  console.error('Uso: node scripts/importToSupabase.ts <correo> [--dry-run | --solo <isbn>]')
   process.exit(1)
 }
 
@@ -119,7 +122,16 @@ function rows(userId: string) {
   }
 }
 
-const unusedCovers = [...coverFiles.keys()].filter((isbn) => !booksMeta.some((book) => book.isbn === isbn))
+if (only && !booksMeta.some((book) => book.isbn === onlyIsbn)) {
+  console.error(`El ISBN ${onlyIsbn} no está en booksMeta.json`)
+  process.exit(1)
+}
+if (only && !coverFiles.has(onlyIsbn)) {
+  console.error(`El libro ${onlyIsbn} no tiene portada en src/assets/covers (la sala no muestra libros sin portada)`)
+  process.exit(1)
+}
+
+const unusedCovers =[...coverFiles.keys()].filter((isbn) => !booksMeta.some((book) => book.isbn === isbn))
 if (unusedCovers.length) console.log(`Portadas sin libro en booksMeta.json (no se suben): ${unusedCovers.join(', ')}`)
 
 if (dryRun) {
@@ -176,6 +188,23 @@ function check<T>(result: { data: T; error: { message: string } | null }, what: 
     process.exit(1)
   }
   return result.data
+}
+
+// --solo: ese libro y su portada, sin tocar el estado ni los datos de la cuenta (que ya pueden haber cambiado en la web)
+if (only) {
+  const book = data.books.find((row) => row.isbn === onlyIsbn)!
+  const file = coverFiles.get(onlyIsbn)!
+  check(
+    await supabase.storage
+      .from('covers')
+      .upload(book.cover_path!, fs.readFileSync(path.join(COVERS_DIR, file)), { contentType: COVER_TYPES[file.split('.').pop()!.toLowerCase()], upsert: true }),
+    `la portada ${file}`
+  )
+  check(await supabase.from('books').upsert(book), 'el libro')
+  const { data: stored } = await supabase.from('books').select('title').eq('isbn', onlyIsbn).maybeSingle()
+  await supabase.auth.signOut()
+  console.log(stored ? `✔ «${stored.title}» ya está en la cuenta. Recarga la web para verlo.` : '✘ El libro no aparece en la cuenta.')
+  process.exit(stored ? 0 : 1)
 }
 
 // Libros antes que su estado (el estado cuelga del libro)

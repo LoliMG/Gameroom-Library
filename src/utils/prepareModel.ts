@@ -1,7 +1,7 @@
 // Clases de Three.js para medir y centrar el modelo
 import { Box3, Vector3, Group, PropertyBinding } from 'three'
 import type { Object3D } from 'three'
-// Clonado que respeta esqueletos: con clone() normal, un modelo con esqueleto (como bakugo.glb) dibuja todas sus copias
+// Clonado que respeta esqueletos: con clone() normal, un modelo con esqueleto (como toon_cat_free.glb) dibuja todas sus copias
 // amontonadas en el sitio del original; así fue como apareció una "flor flotante" dentro de la sala
 import { clone as cloneWithSkeleton } from 'three/examples/jsm/utils/SkeletonUtils.js'
 // Recorte por alfa para las hojas con transparencia (evita fallos de orden de dibujo)

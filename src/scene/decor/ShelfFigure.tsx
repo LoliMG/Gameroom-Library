@@ -1,85 +1,38 @@
-// Importación de useMemo, useRef y useEffect de React para preparar el modelo una vez y animar el brillo
-import { useMemo, useRef, useEffect } from 'react'
-// useFrame para el parpadeo del brillo; useGLTF para cargar el modelo
-import { useFrame } from '@react-three/fiber'
+// Importación de useMemo de React para preparar el modelo una vez
+import { useMemo } from 'react'
+// useGLTF para cargar el modelo
 import { useGLTF } from '@react-three/drei'
 // Manifiesto de modelos 3D
 import { modelsManifest } from '@/data/modelsManifest'
 import type { ModelName } from '@/data/modelsManifest'
-import type { Material, Mesh, MeshStandardMaterial, Object3D } from 'three'
 // Vector3Tuple: [x, y, z] en metros (el formato que aceptan position y rotation en React Three Fiber)
 import type { Vector3Tuple } from 'three'
 // Mide, centra y escala el modelo a su altura objetivo
 import { prepareModel } from '@/utils/prepareModel'
-// Soporte de la extensión antigua de materiales (si no, bakugo.glb sale sin colores)
+// Soporte de la extensión antigua de materiales (si no, los modelos que la usan salen sin colores)
 import { withSpecularGlossiness } from '@/utils/specularGlossiness'
 // Activa sombras en todas las mallas
 import { enableShadows } from '@/utils/shadows'
 
-// Parpadeo del brillo: suma de dos senos para que no se note el ciclo (como las velas)
-const GLOW_SPEED_A = 5.1
-const GLOW_SPEED_B = 8.7
-const GLOW_FLICKER = 0.25 // ±25 % de intensidad
-
-
 /**
- * Figura u objeto decorativo apoyado sobre una repisa, escalado a una altura sin deformarlo.
- * `position` es el punto de apoyo (centro de la base); `glow` = { material, color, intensity } hace brillar
- * un material del modelo con su propia textura y un parpadeo suave (el Bloom de Effects le da el halo).
- * `alphaCutout = false` conserva la transparencia mezclada (para cristal).
- * `adjust` es una función que recibe el clon (con su propio esqueleto) para colocarlo en una postura (p. ej. relaxArms) o
- * corregir sus materiales.
+ * Figura u objeto decorativo apoyado sobre una repisa, escalado a una altura sin deformarlo y con sombras.
+ * `position` es el punto de apoyo (centro de la base).
  */
 interface ShelfFigureProps {
   model: ModelName
   height: number
   position: Vector3Tuple
   rotationY?: number
-  /** Material del modelo que brilla, su color y su intensidad */
-  glow?: { material: string; color: string; intensity: number }
-  alphaCutout?: boolean
-  /** Ajusta el clon: postura o materiales (recibe el modelo con su propio esqueleto) */
-  adjust?: (root: Object3D) => void
 }
 
-function ShelfFigure({ model, height, position, rotationY = 0, glow, alphaCutout = true, adjust }: ShelfFigureProps) {
+function ShelfFigure({ model, height, position, rotationY = 0 }: ShelfFigureProps) {
   // Draco y Meshopt como en el resto de cargas (valores por defecto de drei) más el plugin de materiales antiguos
   const { scene } = useGLTF(modelsManifest[model].url, true, true, withSpecularGlossiness)
-  const { wrapper, scale, glowMaterial } = useMemo(() => {
-    const prepared = prepareModel(scene, undefined, height, { alphaCutout })
-    // Postura o materiales: se aplica al clon antes de colocarlo en la escena (sin escala ni giro todavía)
-    if (adjust) adjust(prepared.wrapper)
+  const { wrapper, scale } = useMemo(() => {
+    const prepared = prepareModel(scene, undefined, height)
     enableShadows(prepared.wrapper)
-    // Material que brilla: usa su propia textura como mapa de emisión para que el brillo siga el dibujo
-    // "null as …": si se escribiera "= null", TypeScript creería que sigue siendo null tras el traverse
-    let material = null as MeshStandardMaterial | null
-    if (glow) {
-      prepared.wrapper.traverse((node) => {
-        const mesh = node as Mesh
-        if (mesh.isMesh && (mesh.material as Material).name === glow.material) material = mesh.material as MeshStandardMaterial
-      })
-      if (!material) throw new Error(`[ShelfFigure] El modelo "${model}" no tiene el material "${glow.material}"`)
-      material.emissive.set(glow.color)
-      material.emissiveMap = material.map
-      material.needsUpdate = true
-    }
-    return { ...prepared, glowMaterial: material }
-  }, [scene, height, alphaCutout, glow, model, adjust])
-
-  // Referencia al material que brilla para animarlo en cada fotograma
-  const glowRef = useRef<MeshStandardMaterial | null>(null)
-  useEffect(() => {
-    glowRef.current = glowMaterial
-  }, [glowMaterial])
-
-  // useFrame: parpadeo del brillo como una llama
-  useFrame(({ clock }) => {
-    if (!glowRef.current || !glow) return
-    const t = clock.elapsedTime
-    const flicker = Math.sin(t * GLOW_SPEED_A) * 0.6 + Math.sin(t * GLOW_SPEED_B) * 0.4
-    glowRef.current.emissiveIntensity = glow.intensity * (1 + flicker * GLOW_FLICKER)
-  })
-
+    return prepared
+  }, [scene, height])
   return <primitive object={wrapper} position={position} rotation={[0, rotationY, 0]} scale={scale} />
 }
 
