@@ -272,19 +272,5 @@ export interface Bookmark {
   createdAt: string
 }
 
-/** Resultado de buscar un libro en los catálogos desde la consola (GET /api/catalog/search) */
-export interface CatalogBook {
-  isbn: string
-  title: string
-  author: string | null
-  publisher: string | null
-  pages: number | null
-  coverUrl: string
-  format: BookFormat
-  /** Idioma de la edición ("Español", "Inglés"…), si el catálogo lo dice */
-  language: string | null
-  saga: string | null
-  saga_index: number | null
-  /** Catálogo del que sale: "Open Library" o "Google Books" */
-  source: string
-}
+/** Resultado de buscar un libro en los catálogos desde la consola (lo define la Edge Function catalog) */
+export type { CatalogBook } from '../supabase/functions/catalog/catalog.ts'

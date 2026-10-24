@@ -40,3 +40,5 @@ dist-ssr
 credits-local.md
 PLAN-SUPABASE-VERCEL.md
 docs/BOOKS.md
+# Caché de la herramienta de Supabase (npx supabase …)
+supabase/.temp/

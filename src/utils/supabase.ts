@@ -11,3 +11,13 @@ export function check<T>({ data, error }: { data: T | null; error: { message: st
   if (error) throw new Error(error.message)
   return data as T
 }
+
+/** Llama a una Edge Function con la sesión actual; si responde con error, lanza su mensaje ({ error: '…' }) */
+export async function invoke<T>(name: string, body: Record<string, unknown>): Promise<T> {
+  const { data, error } = await supabase.functions.invoke(name, { body })
+  if (error) {
+    const reply = await (error as { context?: Response }).context?.json?.().catch(() => null)
+    throw new Error(reply?.error ?? error.message)
+  }
+  return data as T
+}

@@ -1,7 +1,7 @@
 // Llamadas del panel de administración: funciones de la base de datos (supabase/migrations/…_admin.sql, que comprueban
 // que quien llama es la admin) y la Edge Function que borra cuentas (supabase/functions/admin-delete-user)
 import type { Session } from '@supabase/supabase-js'
-import { check, supabase } from '@/utils/supabase'
+import { check, invoke, supabase } from '@/utils/supabase'
 
 /** ¿Es la cuenta de administración? Solo decide si se dibuja el botón: lo que protege es la comprobación del servidor */
 export const isAdminSession = (session: Session | null) => session?.user.app_metadata?.role === 'admin'
@@ -37,11 +37,6 @@ export async function setUserBlocked(id: string, blocked: boolean): Promise<void
 
 /** Borra una cuenta con todos sus datos y portadas (no se puede deshacer) */
 export async function deleteUserAccount(id: string): Promise<void> {
-  const { data, error } = await supabase.functions.invoke('admin-delete-user', { body: { userId: id } })
-  // Si la función responde con error, su mensaje viene en el cuerpo de la respuesta
-  if (error) {
-    const body = await (error as { context?: Response }).context?.json?.().catch(() => null)
-    throw new Error(body?.error ?? error.message)
-  }
-  if (!data?.ok) throw new Error('No se pudo borrar la cuenta')
+  const { ok } = await invoke<{ ok?: boolean }>('admin-delete-user', { userId: id })
+  if (!ok) throw new Error('No se pudo borrar la cuenta')
 }

@@ -29,6 +29,7 @@ import {
 // de funciones: así la importación circular entre los dos archivos no da problemas)
 import { searchBooks, addBook, setSynopsis, updateBook, deleteBook, CatalogConflictError } from './bookCatalog.ts'
 import type { CatalogOptions } from './bookCatalog.ts'
+import { ValidationError, isPlainObject } from '../supabase/functions/catalog/catalog.ts'
 
 export const READING_STATUSES: readonly ReadingStatus[] = ['finished', 'reading', 'unread']
 // Colores de subrayado del lector
@@ -125,8 +126,9 @@ type BookmarkRow = { id: number; location: string; label: string; created_at: st
 type TitleRow = { isbn: string; title: string | null }
 type ReadingRow = { id: number; isbn: string; start_date: string | null; end_date: string | null; rating: number | null; comment: string | null }
 
-// Error de datos recibidos: el servidor responde 400 con su mensaje
-export class ValidationError extends Error {}
+// Error de datos recibidos (el servidor responde 400 con su mensaje) y comprobación de objetos: los mismos que usa la
+// búsqueda de libros compartida con la Edge Function catalog
+export { ValidationError, isPlainObject }
 
 /**
  * Abre (o crea) la base de datos con sus tablas. file puede ser ':memory:' (pruebas).
@@ -238,10 +240,9 @@ export function readState(db: DatabaseSync): LibraryState {
 // ISBN que existen en el catálogo (los demás se ignoran: libros que ya no están)
 const knownIsbns = (db: DatabaseSync) => new Set((db.prepare('SELECT isbn FROM books').all() as TitleRow[]).map((row) => row.isbn))
 
-// Lo que llega en el cuerpo de una petición es "unknown": estas funciones comprueban su forma antes de usarlo.
-// Las que acaban en "value is …" le dicen además a TypeScript qué tipo tiene el valor si devuelven true.
-export const isPlainObject = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value)
+// Lo que llega en el cuerpo de una petición es "unknown": estas funciones comprueban su forma antes de usarlo
+// (isPlainObject viene de catalog.ts). Las que acaban en "value is …" le dicen además a TypeScript qué tipo tiene el
+// valor si devuelven true.
 const integerBelow = (value: unknown, max: number): value is number => Number.isInteger(value) && (value as number) >= 0 && (value as number) < max
 const isReadingStatus = (value: unknown): value is ReadingStatus => (READING_STATUSES as readonly unknown[]).includes(value)
 const isAnnotationColor = (value: unknown): value is AnnotationColor => (ANNOTATION_COLORS as readonly unknown[]).includes(value)
