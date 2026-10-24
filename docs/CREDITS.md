@@ -57,4 +57,5 @@ Este documento recoge todas las atribuciones de autoría y licencias de los mode
 
 ## 🧱 Texturas PBR (`src/assets/textures/`)
 
+- **Papel pintado (`src/assets/textures/wall/wallpaper.jpg`)**: [Jasmine](https://www.metmuseum.org/art/collection/search/383485), diseño de William Morris (1872) para Morris & Company, fotografía de The Metropolitan Museum of Art, distribuida bajo licencia [CC0 (Dominio Público)](https://creativecommons.org/publicdomain/zero/1.0/). Recortado para quitar los bordes del rollo.
 - **Suelo de madera oscura (`src/assets/textures/floor/`)**: [Dark Wooden Planks](https://polyhaven.com/a/dark_wooden_planks) por [Poly Haven](https://polyhaven.com/), distribuido bajo licencia [CC0 (Dominio Público)](https://creativecommons.org/publicdomain/zero/1.0/).

@@ -2,9 +2,9 @@
 import { useMemo } from 'react'
 // useTexture de drei: carga la imagen (suspende hasta que está lista)
 import { useTexture } from '@react-three/drei'
-// Repetición continua y espacio de color de la textura
-import { RepeatWrapping, SRGBColorSpace } from 'three'
-// Papel pintado botánico (800 × 800 px, repetible)
+// Repetición en espejo y espacio de color de la textura
+import { MirroredRepeatWrapping, SRGBColorSpace } from 'three'
+// Papel pintado "Jasmine" de William Morris (1872), recortado de la foto del Met (dominio público, CC0): 1024 × 1024 px
 // (Vite convierte el import de una imagen en su dirección: un string, tipo declarado en vite/client)
 import wallpaperUrl from '@/assets/textures/wall/wallpaper.jpg'
 // Tipo de three.js: textura
@@ -25,8 +25,9 @@ export default function useWallpaper(repeatX: number, repeatY: number): Texture 
   const loaded = useTexture(wallpaperUrl)
   return useMemo(() => {
     const texture = loaded.clone()
-    texture.wrapS = RepeatWrapping
-    texture.wrapT = RepeatWrapping
+    // En espejo: el recorte no está hecho para repetirse borde con borde, y así no se ven las juntas
+    texture.wrapS = MirroredRepeatWrapping
+    texture.wrapT = MirroredRepeatWrapping
     texture.repeat.set(repeatX, repeatY)
     texture.colorSpace = SRGBColorSpace
     texture.needsUpdate = true
