@@ -8,19 +8,16 @@ import { Box3, MathUtils, Vector3 } from 'three'
 // Vector3Tuple: [x, y, z] en metros (el formato que aceptan position y rotation en React Three Fiber)
 import type { Vector3Tuple } from 'three'
 // Dimensiones de la habitación para limitar el paseo al interior
-import { ROOM_WIDTH, BACK_WALL_Z, FRONT_WALL_INNER_Z, FLOOR_Y } from '@/scene/room/Room'
+import { ROOM_WIDTH, BACK_WALL_Z, FRONT_WALL_INNER_Z, FLOOR_Y, DOOR_Z } from '@/scene/room/Room'
 // Fondo de las estanterías de las paredes a y d (el jugador no puede meterse en ellas)
 import { BOOKSHELF_DEPTH } from '@/scene/shelves/Bookshelf'
 
-// Altura de los ojos sobre el suelo y punto de partida (junto al ventanal, mirando a las estanterías del fondo)
+// Altura de los ojos sobre el suelo
 const EYE_HEIGHT = 1.25 // Altura de una persona pequeña
 // Agacharse: mientras se mantiene pulsada la Z los ojos bajan a esta altura, con una transición suave
 const CROUCH_KEY = 'KeyZ'
 const CROUCH_EYE_HEIGHT = 0.8
 const CROUCH_DAMPING = 10 // Rapidez de la transición (mayor = más rápida)
-const START_POSITION: Vector3Tuple = [-0.4, FLOOR_Y + EYE_HEIGHT, 3.0]
-const START_YAW = 0       // Giro horizontal: 0 = mirando hacia la pared d (-Z)
-const START_PITCH = -0.08 // Ligeramente hacia abajo
 
 // Movimiento y vista
 const WALK_SPEED = 1.6                  // Metros por segundo
@@ -40,6 +37,12 @@ const MIN_X = -ROOM_WIDTH / 2 + BOOKSHELF_DEPTH + PLAYER_RADIUS // Frente de las
 const MAX_X = ROOM_WIDTH / 2 - PLAYER_RADIUS                     // Pared b
 const MIN_Z = BACK_WALL_Z + PLAYER_RADIUS                        // Pared del fondo d (sin estanterías)
 const MAX_Z = FRONT_WALL_INNER_Z - PLAYER_RADIUS                 // Muro del ventanal
+
+// Punto de partida: recién entrado por la puerta (pared b), mirando al interior de la sala. Algo hacia el fondo del
+// centro de la puerta para no rozar el sofá, que empieza justo al lado
+const START_POSITION: Vector3Tuple = [MAX_X, FLOOR_Y + EYE_HEIGHT, DOOR_Z - 0.15]
+const START_YAW = Math.PI / 2 // Giro horizontal: 0 = mirando a la pared d (-Z); π/2 = mirando a la pared a (-X)
+const START_PITCH = -0.08     // Ligeramente hacia abajo
 
 // Teclas (código físico, igual en cualquier distribución de teclado): [lateral, adelante/atrás]
 // shortcut: sin controles táctiles para caminar; añadir un joystick virtual si se usa en móvil

@@ -49,3 +49,44 @@ body,
   background: rgba(226, 192, 112, 0.15);
   pointer-events: none;
 }
+
+/* Pantalla de carga (LoadingScreen): tapa la sala hasta que están todos sus modelos y texturas */
+.loading-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 2000; /* Por encima de los controles (900) y del panel del libro (1000) */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 16px;
+  background: #171413;
+  color: #e2c070;
+  font-family: Georgia, serif;
+}
+
+.loading-screen-title {
+  font-size: 1.3rem;
+  text-align: center;
+}
+
+.loading-screen-bar {
+  width: min(320px, 80vw);
+  height: 4px;
+  background: rgba(226, 192, 112, 0.2);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.loading-screen-fill {
+  height: 100%;
+  background: #e2c070;
+  transition: width 0.3s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-screen-fill {
+    transition: none;
+  }
+}

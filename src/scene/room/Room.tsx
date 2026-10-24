@@ -38,6 +38,9 @@ export const FRONT_WALL_INNER_Z = FRONT_WALL_Z - FRONT_WALL_THICKNESS / 2 // 4.0
 // Nivel del suelo coincidente con la base de la estantería (Y = -1.0)
 export const FLOOR_Y = -1.0
 
+// Centro de la puerta de entrada a lo largo de la pared b (+X); la coloca Experience.tsx y ahí empieza el jugador
+export const DOOR_Z = -0.3
+
 // Posición Y central de las paredes verticales
 export const WALL_CENTER_Y = FLOOR_Y + ROOM_HEIGHT / 2 // -1.0 + 1.4 = 0.4
 

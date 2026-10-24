@@ -24,7 +24,7 @@ import { getBooks, useBooks } from '@/data/books'
 // Importación del componente de iluminación personalizada
 import Lights from '@/scene/core/Lights'
 // Importación de la estructura de la habitación y sus dimensiones clave
-import Room, { ROOM_WIDTH, BACK_WALL_Z, FLOOR_Y, FRONT_WALL_INNER_Z } from '@/scene/room/Room'
+import Room, { ROOM_WIDTH, BACK_WALL_Z, FLOOR_Y, FRONT_WALL_INNER_Z, DOOR_Z } from '@/scene/room/Room'
 // Importación del componente de pared de estanterías
 import BookshelfWall from '@/scene/shelves/BookshelfWall'
 import type { BookDrag, ShelfSlot, ShownPlacement } from '@/scene/shelves/Bookshelf'
@@ -74,6 +74,8 @@ import DustParticles from '@/scene/room/DustParticles'
 // Cámara en primera persona: WASD para caminar dentro de la sala, ratón para mirar
 import FirstPersonControls from '@/scene/core/FirstPersonControls'
 import type { Seat } from '@/scene/core/FirstPersonControls'
+// Avisa a la pantalla de carga de que la sala ya está montada
+import SceneReady from '@/scene/shared/SceneReady'
 
 // Posición y orientación de la puerta de entrada (door.glb) en la pared b (+X):
 // Situada entre la pared del fondo d y el sofá (Z = +1.06 m)
@@ -83,7 +85,6 @@ const DOOR_FRAME_HALF_DEPTH = 0.147
 const DOOR_CASING_PROTRUSION = 0.01
 const DOOR_X = ROOM_WIDTH / 2 + DOOR_FRAME_HALF_DEPTH - DOOR_CASING_PROTRUSION // +2.737 m
 const DOOR_Y = FLOOR_Y // -1.0 m (apoyada a ras de suelo)
-const DOOR_Z = -0.30 // Centrada en el hueco de la pared
 const DOOR_ROTATION: Vector3Tuple = [0, -Math.PI / 2, 0] // Su hoja mira hacia el interior (-X)
 // Hueco que ocupa la puerta con su marco a lo largo de la pared b (caja de door.glb × 0.009: de -0.592 a +0.548 m)
 const DOOR_FRAME_MIN_Z = DOOR_Z - 0.592 // -0.89 m
@@ -718,6 +719,7 @@ function Experience({ onSelectBook, flippedIsbns, readingStatus, onSetStatus, sa
         {/* Al terminar de cargar, sube a la tarjeta gráfica todas las texturas y compila todos los materiales: si no, se
             hace la primera vez que cada cosa entra en la vista y la cámara da tirones al moverse */}
         <Preload all />
+        <SceneReady part="room" />
       </Suspense>
     </>
   )

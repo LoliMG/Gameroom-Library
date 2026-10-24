@@ -25,6 +25,7 @@ import { loadBooks, useBooks } from '@/data/books'
 // Cuentas de usuario: sin sesión se muestra la pantalla de entrada
 import type { Session } from '@supabase/supabase-js'
 import AuthScreen from '@/components/AuthScreen'
+import LoadingScreen from '@/components/LoadingScreen'
 import { supabase } from '@/utils/supabase'
 
 // Lector de libros electrónicos: se carga solo al abrir un libro (epub.js y PDF.js pesan bastante)
@@ -245,6 +246,7 @@ function Bookroom({ library }: { library: LibraryState }) {
           onOpenBoard={() => setBoardOpen(true)}
         />
       </Canvas>
+      <LoadingScreen />
 
       {/* Controles de juego: HTML fuera del Canvas, por encima del lienzo */}
       {/* Algunos visores (iframes sin permiso) rechazan la captura: se avisa y se sigue con arrastrar para mirar */}
@@ -339,7 +341,8 @@ function LoadedBookroom() {
       </div>
     )
   }
-  if (!library) return <p className="app-loading">Abriendo la biblioteca…</p>
+  // La misma pantalla de carga que la sala: mientras llegan los datos sigue en 0 %
+  if (!library) return <LoadingScreen />
   return <Bookroom library={library} />
 }
 

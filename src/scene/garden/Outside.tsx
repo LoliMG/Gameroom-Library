@@ -20,6 +20,8 @@ import type { PathStone } from '@/scene/garden/GardenProps'
 // Muchas copias de un modelo en una sola llamada de dibujo (por malla)
 import InstancedModel from '@/scene/shared/InstancedModel'
 import type { ModelItem } from '@/scene/shared/InstancedModel'
+// Avisa a la pantalla de carga de que el jardín ya está montado
+import SceneReady from '@/scene/shared/SceneReady'
 
 // Generador de números al azar entre 0 y 1 (createRandom, con semilla)
 type Random = () => number
@@ -297,6 +299,7 @@ function Outside({ night, snow }: { night: boolean; snow: number }) {
         ))}
         {/* Sube texturas y compila materiales al cargar, para que no lo haga al entrar cada cosa en la vista (ver Experience) */}
         <Preload all />
+        <SceneReady part="garden" />
       </Suspense>
     </group>
   )
