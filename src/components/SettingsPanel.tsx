@@ -7,6 +7,12 @@ import type { AppSettings, SoundVolumes } from '@/types'
 import { MAX_SOUND_VOLUME } from '@/types'
 import { supabase } from '@/utils/supabase'
 import { exportLibrary, importLibrary } from '@/utils/backup'
+import { modelsManifest } from '@/data/modelsManifest'
+
+// Créditos de los modelos 3D (sus licencias CC BY piden nombrar al autor dentro de la web), por título
+const MODEL_CREDITS = Object.values(modelsManifest)
+  .map((model) => model.credit)
+  .sort((a, b) => a.title.localeCompare(b.title, 'es'))
 
 // Cada sonido de fondo con su nombre
 const SOUNDS: { key: keyof SoundVolumes; label: string }[] = [
@@ -193,6 +199,21 @@ function SettingsPanel({ settings, onSetSettings }: SettingsPanelProps) {
 
       <h3 className="settings-title">Copia de seguridad</h3>
       <BackupButtons />
+
+      <h3 className="settings-title">Créditos</h3>
+      <details className="settings-credits">
+        <summary>Modelos 3D ({MODEL_CREDITS.length})</summary>
+        <ul>
+          {MODEL_CREDITS.map((credit) => (
+            <li key={credit.url}>
+              <a href={credit.url} target="_blank" rel="noreferrer">
+                {credit.title}
+              </a>
+              , de {credit.author} ({credit.license.replace(/-/g, ' ')})
+            </li>
+          ))}
+        </ul>
+      </details>
 
       <h3 className="settings-title">Cuenta</h3>
       <div className="add-book-form">
