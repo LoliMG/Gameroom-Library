@@ -30,17 +30,6 @@ const PAPER_LANTERN_HEIGHTS = [0.45, 0.6, 0.35, 0.5]
 
 // Banco japonés de madera (jap_bench.glb mira a +Z, con el respaldo en -Z): altura total con respaldo
 const BENCH_HEIGHT = 0.95
-// Altura del asiento con esa escala (asiento del modelo a 0.469 de 1.101 de alto)
-const BENCH_SEAT_Y = BENCH_HEIGHT * (0.469 / 1.101)
-// Peluches sobre el asiento, en coordenadas del banco: el cojín pez apoyado en el respaldo y el tiburón mirándolo
-// (en plushie_shark.glb la cabeza va hacia +Z: el giro lleva +Z hacia el pez)
-const FISH_POSITION: Vector3Tuple = [-0.4, BENCH_SEAT_Y, -0.12]
-const SHARK_POSITION: Vector3Tuple = [0.5, BENCH_SEAT_Y, 0.02]
-const SHARK_ROTATION_Y = Math.atan2(FISH_POSITION[0] - SHARK_POSITION[0], FISH_POSITION[2] - SHARK_POSITION[2])
-const BENCH_PLUSHIES: { model: ModelName; height: number; position: Vector3Tuple; rotation: Vector3Tuple }[] = [
-  { model: 'plushieShark', height: 0.28, position: SHARK_POSITION, rotation: [0, SHARK_ROTATION_Y, 0] },
-  { model: 'pillowFish', height: 0.27, position: FISH_POSITION, rotation: [-0.25, 0.2, 0] },
-]
 // Cuello del guerrero (warrior.glb), en fracción de su altura: los hombros llegan a 0.82 y la cabeza empieza en 0.88.
 // El giro de la cabeza va de 0 a completo entre estas dos alturas, para que el cuello no se parta
 const WARRIOR_NECK = { start: 0.83, end: 0.87 }
@@ -307,17 +296,10 @@ export function StoneWall({ path, groundY }: { path: [number, number][]; groundY
 }
 
 /**
- * Banco japonés de madera (jap_bench.glb) con un tiburón de peluche y un cojín pez encima.
+ * Banco japonés de madera (jap_bench.glb).
  */
 export function Bench({ position, rotationY = 0 }: { position: Vector3Tuple; rotationY?: number }) {
-  return (
-    <group position={position} rotation={[0, rotationY, 0]}>
-      <ModelProp model="gardenBench" height={BENCH_HEIGHT} position={[0, 0, 0]} />
-      {BENCH_PLUSHIES.map((plushie) => (
-        <ModelProp key={plushie.model} {...plushie} />
-      ))}
-    </group>
-  )
+  return <ModelProp model="gardenBench" height={BENCH_HEIGHT} position={position} rotation={[0, rotationY, 0]} />
 }
 
 /**

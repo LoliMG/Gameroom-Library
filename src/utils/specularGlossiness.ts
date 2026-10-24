@@ -6,7 +6,7 @@ import type { Color, ColorSpace } from 'three'
 import type { GLTFLoader, GLTFLoaderPlugin, GLTFParser } from 'three-stdlib'
 
 // Extensión antigua de materiales glTF (sustituida por metallic-roughness). three.js ya no la soporta: sin este
-// plugin los modelos que la usan (fountain.glb, pillow_fish.glb) pierden sus texturas y salen grises.
+// plugin los modelos que la usan (fountain.glb) pierden sus texturas y salen grises.
 const EXTENSION_NAME = 'KHR_materials_pbrSpecularGlossiness'
 
 // Lo que trae la extensión en el JSON del .glb (todo es opcional en el formato)

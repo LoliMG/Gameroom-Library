@@ -20,7 +20,6 @@ import cabinetUrl from '@/assets/models/furniture/old_storage_cabinet.glb?url'
 import grassGroundUrl from '@/assets/models/flowers/grass_texture.glb?url'
 import gardenBenchUrl from '@/assets/models/furniture/jap_bench.glb?url'
 import plushieSharkUrl from '@/assets/models/other/plushie_shark.glb?url'
-import pillowFishUrl from '@/assets/models/other/pillow_fish.glb?url'
 import fountainUrl from '@/assets/models/other/fountain.glb?url'
 import paperLanternsUrl from '@/assets/models/other/japanese_paper_lanterns.glb?url'
 import stoneWallUrl from '@/assets/models/other/stone_wall.glb?url'
@@ -205,7 +204,7 @@ export const modelsManifest = {
     },
   },
 
-  // Tiburón de peluche sobre el banco del jardín
+  // Tiburón de peluche tumbado en la repisa de abajo, sobre el sofá
   plushieShark: {
     url: plushieSharkUrl,
     file: 'other/plushie_shark.glb',
@@ -214,18 +213,6 @@ export const modelsManifest = {
       author: 'QuazrSCI',
       license: 'CC-BY-4.0',
       url: 'https://sketchfab.com/3d-models/plushie-shark-875414d5e45c42f9a5323ba8a8beed19',
-    },
-  },
-
-  // Cojín con forma de pez sobre el banco del jardín
-  pillowFish: {
-    url: pillowFishUrl,
-    file: 'other/pillow_fish.glb',
-    credit: {
-      title: 'pillow fish',
-      author: 'bintangprabulukita',
-      license: 'CC-BY-4.0',
-      url: 'https://sketchfab.com/3d-models/pillow-fish-40dc80cd0bbd4cf68f5ece871ceebbf0',
     },
   },
 
