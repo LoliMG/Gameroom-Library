@@ -6,9 +6,9 @@ El Rincón de Lectura es una sala de lectura inmersiva en 3D donde vive tu bibli
 
 ## 🔐 Tu cuenta y privacidad
 
-- **Registro e inicio de sesión**: entra con tu correo electrónico y contraseña.
-- **Tu espacio privado**: gracias a las políticas de seguridad (RLS) en la base de datos Supabase, tu colección, tus estanterías, tus notas, tu diario y tu corcho son completamente privados y solo accesibles desde tu cuenta.
-- **Recuperación de contraseña**: si olvidas tu clave, puedes solicitar un enlace de restablecimiento desde la pantalla de entrada.
+- **Registro e inicio de sesión**: crea tu cuenta con tu correo electrónico y una contraseña, y entra con ellos. Al entrar verás una pantalla de carga mientras se prepara la sala, y aparecerás junto a la puerta.
+- **Tu espacio privado**: tu colección, tus estanterías, tus notas, tu diario y tu corcho son solo tuyos: nadie más puede verlos.
+- **Recuperación de contraseña**: si olvidas tu contraseña, pide desde la pantalla de entrada un enlace por correo. Al abrirlo, podrás escribir una nueva.
 - **Cerrar sesión**: puedes cerrar sesión en cualquier momento desde la pestaña de *Ajustes* (icono de engranaje ⚙) en la pantalla de la biblioteca.
 
 ---
@@ -29,30 +29,30 @@ La habitación cuenta con colisiones reales: no puedes atravesar paredes ni mueb
 
 ## 📚 Tus libros en las estanterías
 
-- **Ver la ficha de un libro**: haz clic en cualquier libro de las estanterías o de la sala. Verás su portada, título, autor, saga, editorial, número de páginas y su estado de lectura.
+- **Ver la ficha de un libro**: haz clic en cualquier libro de las estanterías o de la sala. Verás su portada arriba y, debajo, su título, autor, saga, editorial, número de páginas y su estado de lectura.
 - **Cambiarlo de sitio**: mantén pulsado el libro con el ratón y arrástralo hasta cualquier hueco de las estanterías. Si lo sueltas en una zona no válida, vuelve suavemente a su posición anterior.
 - **Mover varios a la vez**: con `Ctrl` pulsado, haz clic en varios libros o arrastra un recuadro de selección sobre ellos para mover el grupo junto. Pulsa `Esc` para deseleccionar.
 - **Ponerlo de frente**: desde la ficha del libro, pulsa el botón de las flechas circulares para mostrarlo de frente en la balda con la portada visible, o devuélvelo a su posición de canto.
 - **Verlo en 3D en grande**: el botón del ojo abre un visor 3D en primer plano. Arrastra con el ratón o usa las flechas para girarlo y leer la sinopsis de la contraportada. Si no tiene sinopsis o quieres personalizarla, puedes redactarla y guardarla directamente ahí.
-- **Dejarlo para leer pronto**: desde su ficha, pulsa el botón de la pila para mandarlo a la pila «por leer» que descansa en el suelo junto al sofá (hasta 5 libros). Desde su ficha puedes devolverlo a la estantería, o volverá solo cuando lo marques como leído.
-- **Colgarlo como póster**: si es una de tus portadas predilectas, pulsa el icono del cuadro en su ficha para enmarcarlo sobre la repisa de la chimenea (caben 2 cuadros).
-- **Subir tu libro electrónico (EPUB o PDF)**: en la ficha del libro, pulsa el botón de subida (bandeja con flecha) para seleccionar un archivo PDF o EPUB de tu ordenador. El archivo se almacena en el almacenamiento privado de tu navegador (**IndexedDB**), sin subir tus documentos a ningún servidor y sin límites de espacio.
-- **Quitar el libro electrónico**: si ya no necesitas el archivo en ese equipo, el botón de la papelera en la ficha lo elimina del almacenamiento local de tu navegador.
-- **Apuntar por dónde vas**: si estás leyendo un libro en papel, escribe en su ficha la página en la que vas. Al terminarlo, pulsa **¡Terminado!**: el libro pasa a estado leído y se registra automáticamente en tu diario con la fecha actual.
-- **Ver tu progreso en la sala**: los libros que estás leyendo llevan una cinta en el lomo indicando visualmente tu porcentaje de avance. Además, el libro que estés leyendo en ese momento reposa sobre la mesa de centro junto al café.
+- **Dejarlo para leer pronto**: desde su ficha, pulsa el botón de la pila para mandarlo a la pila «por leer» que descansa en el suelo junto al sofá (caben hasta 40). Desde su ficha puedes devolverlo a la estantería, o volverá solo cuando lo marques como leído.
+- **Colgarlo como póster**: si lo has marcado como favorito (★), pulsa el icono del cuadro en su ficha para enmarcar su portada sobre la chimenea. Caben dos; si cuelgas un tercero, se descuelga el más antiguo.
+- **Añadir tu libro electrónico (EPUB o PDF)**: en la ficha del libro, pulsa el botón de la bandeja con flecha y elige el archivo en tu ordenador (hasta 300 MB). Se guarda solo en este navegador: no se sube a ningún sitio. Si entras desde otro ordenador u otro navegador, tendrás que añadirlo allí también.
+- **Quitar el libro electrónico**: el botón de la papelera de la ficha lo quita de este navegador. El libro, tus subrayados y tus marcadores siguen en tu cuenta.
+- **Apuntar por dónde vas**: si un libro está marcado como *Leyendo*, escribe en su ficha la página en la que vas. Al terminarlo, pulsa **¡Terminado!**: el libro pasa a estado leído y se registra automáticamente en tu diario con la fecha actual.
+- **Ver tu progreso en la sala**: los libros que estás leyendo llevan una cinta en el lomo indicando visualmente tu porcentaje de avance. Además, el último libro electrónico que hayas abierto, si aún no lo has terminado, reposa sobre la mesa de café.
 
 ---
 
 ## 📖 Leer en el sofá
 
-Cuando un libro tiene asociado un archivo digital (EPUB o PDF) en tu navegador, su ficha muestra el botón **Leer** (icono de libro abierto). Al pulsarlo, te sientas cómodamente en el sofá frente a la chimenea y el libro se abre a doble página.
+Cuando has añadido el EPUB o PDF de un libro en este navegador, su ficha muestra el botón **Leer** (icono de libro abierto). Al pulsarlo, te sientas cómodamente en el sofá frente a la chimenea y el libro se abre a doble página.
 
 - **Pasar de página**: haz clic en los bordes de la página, arrástrala como una hoja real o utiliza las teclas `←` y `→`.
 - **Subrayar citas**: selecciona cualquier fragmento de texto con el cursor y elige tu color preferido: amarillo, rosa, verde o azul.
 - **Añadir notas y comentarios**: haz clic sobre cualquier subrayado para escribirle una nota. Los comentarios se muestran como notas flotantes en el margen.
-- **Marcar páginas**: pulsa la cinta de la esquina superior del libro para dejar un marcapáginas.
-- **Índice de notas y marcadores**: en los laterales dispones de paneles desplegables con todos tus subrayados, notas y marcadores para saltar a ellos con un solo clic.
-- **Memoria de lectura**: el lector recuerda siempre con exactitud por qué página ibas.
+- **Marcar páginas**: pulsa la cinta de la esquina del libro para dejar un marcapáginas.
+- **Índice de notas y marcadores**: en los laterales tienes la lista de todos tus subrayados, notas y marcadores para saltar a ellos con un solo clic.
+- **Memoria de lectura**: el libro se abre siempre por donde lo dejaste, aunque entres desde otro navegador (si allí también has añadido el archivo).
 - **Levantarte**: pulsa `Esc` o el botón de cierre para cerrar el libro y volver a explorar la sala.
 
 ---
@@ -70,11 +70,11 @@ En la pared, junto a la chimenea, se encuentra la pantalla mural de gestión de 
 - **🎲 Elige por mí**: si dudas sobre qué empezar a leer, pulsa este botón. Te seleccionará al azar un libro pendiente de tu biblioteca y lo iluminará con un resplandor azul en su estantería correspondiente.
 - **Cambio de estado por lotes**: marca las casillas de varios libros y asígnales de una vez el estado *Acabado*, *Leyendo* o *Sin leer*.
 - **Localizar en la sala (icono de diana)**: pulsa la diana de cualquier libro para que su volumen brille en azul dentro de la habitación 3D.
-- **Editar libro (icono de lápiz)**: modifica título, autor, editorial, páginas, formato (novela o manga), saga, número de tomo y etiquetas. Incluye un botón para eliminar el libro de tu colección si lo deseas.
+- **Editar libro (icono de lápiz)**: modifica título, autor, editorial, páginas, formato (novela, bolsillo o manga), saga, número de tomo y etiquetas. Incluye un botón para quitar el libro de tu colección (se borran también sus subrayados, marcadores, lecturas del diario y estado).
 - Pulsa el título *Mi biblioteca* en la cabecera para limpiar los filtros y volver a la vista inicial.
 
 ### Añadir libro
-- **Búsqueda automática**: escribe el ISBN o el título de la obra y pulsa *Buscar*. El sistema consulta los catálogos de Open Library y Google Books, recupera sus datos, descarga su portada oficial y añade el libro directamente en el primer hueco libre de tus estanterías.
+- **Búsqueda automática**: escribe el ISBN o el título de la obra y pulsa *Buscar*. Elige el resultado correcto, indica si es novela o manga y pulsa *Añadir*: se guardan sus datos y su portada, y el libro aparece al momento en el primer hueco libre de tus estanterías.
 - **Alta manual**: si el libro no aparece en los catálogos o se trata de una edición especial, pulsa *Añadir a mano* para rellenar sus datos y adjuntar una imagen de portada desde tu equipo.
 - **♡ Lo quiero**: si encuentras un libro que aún no posees, guárdalo directamente en tu lista de deseos desde los resultados de búsqueda.
 
@@ -90,8 +90,8 @@ En la pared, junto a la chimenea, se encuentra la pantalla mural de gestión de 
 - Navega cómodamente entre diferentes años con las flechas `‹` y `›`.
 
 ### Ajustes (⚙)
-- **Sonidos ambientales**: activa o silencia todos los sonidos con un solo botón, o gradúa de forma individual el volumen del viento, la lluvia, los truenos y los grillos (0 a 100%).
-- **Ciudad y clima real**: busca cualquier ciudad del mundo con el geocodificador integrado de Open-Meteo. La sala ajustará la hora solar y la climatología exterior a dicha ubicación.
+- **Sonidos ambientales**: activa o silencia todos los sonidos con un solo botón, o gradúa de forma individual el volumen del viento, la lluvia, los truenos y los grillos (de 0 a 150 %; 100 % es el normal).
+- **Ciudad y clima real**: busca cualquier ciudad del mundo y elígela. La luz, el cielo y el tiempo tras el ventanal seguirán los de esa ciudad.
 - **Cuenta**: botón para cerrar tu sesión de forma segura.
 
 ---
@@ -119,33 +119,33 @@ Un espacio creativo para plasmar notas, recuerdos e ideas. Haz clic en el corcho
 
 - **Notas adhesivas (pósits)**: elige entre varios colores y escribe recordatorios o pensamientos.
 - **Pegatinas decorativas**: lunas, estrellas, dragones, flores, gatos y motivos de fantasía.
-- **Frases célebres**: importa frases que hayas subrayado previamente en el lector o escribe citas propias con autoría.
-- **Interacción fluida**: arrastra los elementos para distribuirlos, gíralos o elimínalos con facilidad. Todo lo que coloques se traslada de inmediato al corcho 3D de la pared.
+- **Frases**: elige una que hayas subrayado en el lector o escribe la tuya, y si quieres indica de qué libro es.
+- **Colocar**: arrastra cada cosa para moverla y púlsala para girarla o quitarla (con el teclado, las flechas la mueven y `Supr` la quita). Todo lo que coloques se traslada de inmediato al corcho 3D de la pared.
 
 ---
 
 ## ⏳ Modo concentración
 
-Pulsa el botón del reloj de arena en la barra inferior izquierda y selecciona una duración de 10 a 60 minutos. Aparecerá una cuenta atrás visual en pantalla y el gato acudirá a dormir plácidamente junto al calor de la chimenea. Al expirar el tiempo, sonará una suave campanilla de aviso y el gato se desperezará.
+Pulsa el botón del reloj de arena en la barra inferior izquierda y selecciona una duración de 10 a 60 minutos. Verás la cuenta atrás en el propio botón (púlsalo otra vez para cancelarla) y el gato acudirá a dormir plácidamente junto al calor de la chimenea. Al expirar el tiempo, sonará una suave campanilla (si tienes los sonidos activados), saldrá un aviso y el gato se desperezará.
 
 ---
 
 ## 📷 Foto postal del rincón
 
-El botón de la cámara fotográfica en la esquina inferior derecha captura la perspectiva 3D exacta que estás observando en ese instante. Genera una imagen en formato postal vintage con fecha y marco, lista para descargar y guardar en tu ordenador.
+El botón de la cámara fotográfica en la esquina inferior derecha captura la perspectiva 3D exacta que estás observando en ese instante. Genera una imagen en formato postal con marco y fecha, lista para guardar en tu ordenador. La pantalla de la biblioteca también sale en la foto.
 
 ---
 
 ## 🌦️ Una sala viva y conectada
 
-- **Ciclo solar fidedigno**: amanecer, mañana luminosa, atardecer dorado y noche estrellada calculados matemáticamente según las coordenadas de la ciudad seleccionada.
+- **La luz sigue tu día**: amanecer, mañana luminosa, atardecer dorado y noche estrellada, según la hora real de la ciudad elegida.
 - **Meteorología real**: si en tu ciudad llueve, hay tormenta eléctrica, niebla o nieva, el ventanal mostrará esos mismos fenómenos. Con nieve, el jardín exterior y las colinas se cubren de un manto blanco.
-- **Acústica espacial**: el sonido del viento, la lluvia y los grillos responde a la distancia de la cámara respecto al ventanal.
-- **Pequeños detalles**: partículas de polvo en suspensión bajo los rayos de luz y secretos que aguardan en el jardín durante la noche.
+- **Sonidos del jardín**: viento, grillos por la noche, lluvia y truenos cuando toca. Se oyen más cuanto más cerca estás del ventanal, y más aún con él abierto. Empiezan a sonar con tu primer clic.
+- **Pequeños detalles**: motas de polvo flotando en la luz del día y una figura que aparece en el jardín al caer la noche.
 
 ---
 
 ## 💾 Guardado continuo
 
-No es necesario guardar manualmente: cada cambio de sitio de un libro, cada nota del diario, cada pósit del corcho, tu lista de deseos y tus ajustes quedan sincronizados en tiempo real en la nube asociados a tu cuenta de Supabase. Los archivos de tus libros electrónicos permanecen seguros y privados en el almacenamiento local de tu navegador.
+No es necesario guardar manualmente: cada cambio de sitio de un libro, cada nota del diario, cada pósit del corcho, tu lista de deseos y tus ajustes se guardan solos en tu cuenta, así que los encontrarás igual desde cualquier ordenador. Lo único que se queda en cada navegador son los archivos de tus libros electrónicos.
 

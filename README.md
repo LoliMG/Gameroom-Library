@@ -13,8 +13,8 @@ Todas las funciones y controles detallados están explicados en [docs/FUNCIONALI
 - **Salón en 3D interactivo**: camina en primera persona, explora las estanterías, siéntate junto al fuego, interactúa con la chimenea, la lámpara, las velas, el ventanal, el gramófono o acaricia al gato.
 - **Cuentas y privacidad con Supabase**: registro e inicio de sesión seguros (Supabase Auth). Cada persona tiene su propia biblioteca independiente y privada gracias a reglas RLS (Row Level Security) en Postgres.
 - **Gestión completa de la colección**: pantalla integrada en la pared para buscar libros, filtrar por estado (acabados, leyendo, sin leer), por formato (novela o manga) o etiquetas, marcar favoritos, cambiar estados en lote y localizar cualquier libro en la sala con una diana que lo ilumina.
-- **Añadir y editar libros**: buscador por ISBN o título conectado a catálogos (Google Books y Open Library) o formulario manual con subida de imagen de portada. Edita datos o elimina libros con facilidad.
-- **Lector de libros digitales integrado**: añade tus propios archivos **EPUB** o **PDF** a cualquier libro desde su ficha. Se guardan en tu propio navegador (**IndexedDB**), de forma privada y sin límites de servidor. Incluye cambio de página natural, subrayados con notas de colores y marcadores de página.
+- **Añadir y editar libros**: buscador por ISBN o título conectado a catálogos (Open Library y, con clave, Google Books) o formulario manual con subida de imagen de portada. Edita datos o elimina libros con facilidad.
+- **Lector de libros digitales integrado**: añade tus propios archivos **EPUB** o **PDF** a cualquier libro desde su ficha. Se guardan solo en tu propio navegador (**IndexedDB**, hasta 300 MB por archivo), sin subirse a ningún servidor. Incluye cambio de página natural, subrayados con notas de colores y marcadores de página.
 - **Diario de lecturas y retos**: fija tu reto de lectura anual, consulta tu calendario de lecturas con días coloreados, anota valoraciones (1 a 5 estrellas), reseñas y relecturas, y genera el resumen estadístico «✨ Ver mi año».
 - **Tablero de corcho decorativo**: cuelga notas adhesivas de colores, pegatinas temáticas y frases favoritas de tus lecturas. Todo lo que pongas se refleja en el corcho 3D de la pared.
 - **Modo concentración**: temporizador de lectura (10 a 60 min) con cuenta atrás, campana al finalizar y gato durmiendo junto al fuego durante la sesión.
@@ -32,20 +32,32 @@ Necesitas [Node.js](https://nodejs.org/) 22.18 o superior (compatible con TypeSc
    npm install
    ```
 
-2. **Configura las variables de entorno**:
+2. **Prepara Supabase**: crea un proyecto en [Supabase](https://supabase.com/) y aplica, en orden, las migraciones de `supabase/migrations/` (por ejemplo, pegándolas en el *SQL Editor*). Crean las tablas, las reglas RLS y el cubo `covers` de las portadas.
+
+3. **Configura las variables de entorno**:
    Crea un archivo `.env.local` en la raíz del proyecto con la URL y la clave publicable de tu proyecto de Supabase:
    ```env
    VITE_SUPABASE_URL=https://tu-proyecto.supabase.co
    VITE_SUPABASE_PUBLISHABLE_KEY=tu-clave-publicable-anon
-   # Opcional: para ampliar las búsquedas de libros nuevos con Google Books
+   # Opcional: Google Books en la búsqueda de libros nuevos (solo la usa el servidor local de npm run dev)
    GOOGLE_BOOKS_API_KEY=tu_clave_de_google_books
    ```
 
-3. **Inicia el servidor de desarrollo**:
+4. **Inicia el servidor de desarrollo**:
    ```bash
    npm run dev
    ```
    Abre la dirección indicada en tu navegador. Si no has iniciado sesión, verás la pantalla de acceso donde puedes crear tu cuenta o iniciar sesión para entrar a tu sala.
+
+### Pasar una biblioteca local a una cuenta
+
+`scripts/importToSupabase.ts` sube a una cuenta los libros, el estado y las portadas de la biblioteca local antigua (`data/bookroom.sqlite`, `src/data/booksMeta.json` y `src/assets/covers/`), sin modificar esos archivos:
+
+```bash
+node scripts/importToSupabase.ts tu@correo.com --dry-run
+```
+
+Sin `--dry-run` hace la importación (pide la contraseña de la cuenta). Con `--solo <isbn>` sube un único libro añadido después.
 
 ---
 
@@ -58,6 +70,7 @@ Necesitas [Node.js](https://nodejs.org/) 22.18 o superior (compatible con TypeSc
 3. En la sección **Environment Variables** de Vercel, añade:
    - `VITE_SUPABASE_URL`: la URL de tu proyecto de Supabase.
    - `VITE_SUPABASE_PUBLISHABLE_KEY`: tu clave publicable (*anon/publishable*) de Supabase.
+4. En Supabase, en *Authentication > URL Configuration*, añade la dirección de la web de Vercel: los enlaces de confirmación de cuenta y de cambio de contraseña vuelven a ella.
 
 Las reglas RLS de Supabase garantizan que ningún usuario pueda acceder a las bibliotecas o datos de otros usuarios, incluso usando la clave pública en el frontend.
 
@@ -78,7 +91,7 @@ npm run preview
 # Comprobar tipos de TypeScript
 npm run typecheck
 
-# Ejecutar batería de comprobaciones automáticas (estanterías, colisiones, ciclo solar, diario y reglas RLS)
+# Pruebas automáticas: estanterías, geometría, ciclo solar, diario, base de datos local y reglas RLS (en un Postgres local, sin conexión)
 npm run check
 ```
 
@@ -117,11 +130,11 @@ src/
     ├── readerApi.ts    # Lecturas, subrayados y marcadores en Supabase
     ├── diaryApi.ts     # Gestión del diario de lecturas en Supabase
     ├── catalogApi.ts   # Búsqueda, alta, edición y baja de libros
-    └── weatherApi.ts   # Integración con el clima y cálculo solar (Open-Meteo)
+    └── weatherApi.ts   # Tiempo real de la ciudad (Open-Meteo)
 supabase/
 └── migrations/         # Migraciones SQL para Supabase (tablas, RLS y Storage)
-server/                 # Servidor de utilidades de catálogo y desarrollo
-scripts/                # Pruebas automatizadas y herramientas de migración
+server/                 # API local de npm run dev (por ahora, buscar y añadir libros)
+scripts/                # Pruebas automáticas e importación a Supabase
 docs/                   # Documentación detallada del proyecto
 ```
 
