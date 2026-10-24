@@ -36,6 +36,12 @@ dist-ssr
 /ebooks/
 /pdfs/*.pdf
 
+# Tu biblioteca de antes de Supabase (portadas, datos e ISBN de tus libros): se quedan en tu carpeta, pero no en Git.
+# La web ya no los usa; solo el servidor local y scripts/importToSupabase.ts
+/src/assets/covers/
+/src/data/booksMeta.json
+/src/data/isbns.json
+
 # Archivos locales
 credits-local.md
 PLAN-SUPABASE-VERCEL.md

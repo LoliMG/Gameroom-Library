@@ -1,0 +1,178 @@
+/* Información legal: modal con pestañas encima de la sala, con los colores de la consola */
+.legal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(10, 8, 6, 0.7);
+  backdrop-filter: blur(4px);
+}
+
+/* Alto fijo: al cambiar de pestaña el modal no salta de tamaño; solo se desplaza el contenido */
+.legal-modal {
+  width: min(760px, 100%);
+  height: min(680px, calc(100dvh - 32px));
+  display: flex;
+  flex-direction: column;
+  background: rgba(20, 17, 15, 0.97);
+  border: 1px solid rgba(226, 192, 112, 0.25);
+  border-radius: 14px;
+  color: #f3ece0;
+  font-family: Georgia, 'Times New Roman', serif;
+  line-height: 1.5;
+  overflow: hidden;
+}
+
+.legal-modal:focus {
+  outline: none;
+}
+
+.legal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 24px 12px;
+}
+
+.legal-header h2 {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: normal;
+  color: #e2c070;
+}
+
+.legal-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 0 24px;
+  border-bottom: 1px solid rgba(226, 192, 112, 0.2);
+  /* En el móvil las pestañas pasan a una segunda línea en vez de quedar ocultas */
+  flex-wrap: wrap;
+}
+
+.legal-tab {
+  flex: 0 0 auto;
+  padding: 10px 14px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  background: transparent;
+  color: #a99d8c;
+  font: inherit;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.legal-tab:hover {
+  color: #f3ece0;
+}
+
+.legal-tab[aria-selected='true'] {
+  color: #e2c070;
+  border-bottom-color: #e2c070;
+}
+
+.legal-body {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px 24px 24px;
+  scroll-behavior: smooth;
+}
+
+/* Barra de desplazamiento dorada y redondeada. Chrome, Edge y Safari usan ::-webkit-scrollbar (si se pone
+   scrollbar-color lo ignoran), así que las propiedades estándar van solo para Firefox */
+.legal-body::-webkit-scrollbar {
+  width: 12px;
+}
+
+.legal-body::-webkit-scrollbar-track {
+  margin: 8px 0;
+  border-radius: 6px;
+  background: rgba(226, 192, 112, 0.06);
+}
+
+/* Borde transparente + background-clip: el pulgar queda más fino que la pista y separado de los bordes */
+.legal-body::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 6px;
+  background: linear-gradient(rgba(226, 192, 112, 0.55), rgba(184, 140, 70, 0.55)) padding-box;
+}
+
+.legal-body::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(#e2c070, #b88c46) padding-box;
+}
+
+@supports not selector(::-webkit-scrollbar) {
+  .legal-body {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(226, 192, 112, 0.55) rgba(226, 192, 112, 0.06);
+  }
+}
+
+.legal-body h3 {
+  margin: 0 0 6px;
+  font-size: 1.05rem;
+  color: #e2c070;
+}
+
+.legal-body p,
+.legal-body li {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #d8cfc0;
+}
+
+.legal-body ul {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Aire entre una lista y el párrafo que la sigue */
+.legal-body ul + p {
+  margin-top: 8px;
+}
+
+.legal-body strong {
+  color: #f3ece0;
+}
+
+.legal-body a {
+  color: #e2c070;
+}
+
+.legal-close {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(226, 192, 112, 0.25);
+  border-radius: 50%;
+  background: transparent;
+  color: #f3ece0;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.legal-close:focus-visible,
+.legal-tab:focus-visible,
+.legal-body:focus-visible,
+.legal-body a:focus-visible {
+  outline: 2px solid #e2c070;
+  outline-offset: 2px;
+}
+
+/* Fecha al pie del panel (más específico que .legal-body p) */
+.legal-body .legal-updated {
+  margin-top: auto;
+  font-size: 0.85rem;
+  color: #a99d8c;
+}

@@ -1,12 +1,13 @@
-// Importación de useEffect y useState de React para seguir si el ratón está capturado
-import { useEffect, useState } from 'react'
+// Hooks de React para seguir si el ratón está capturado y si está abierta la información legal
+import { useCallback, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
-// Estilos del botón, la mirilla y la ayuda
+import LegalInfo from '@/components/LegalInfo'
+// Estilos del botón y la mirilla
 import '@/styles/playControls.css'
 
 /**
- * Controles HTML sobre el lienzo: botón "?" que muestra la ayuda al pasar el puntero (o al llegar con el teclado) y
- * mirilla en el centro mientras el ratón está capturado. C captura o suelta el ratón; Esc también lo suelta.
+ * Controles HTML sobre el lienzo: botón "?" que abre la información legal (privacidad, cookies y créditos; los
+ * controles están en los ajustes) y mirilla en el centro mientras el ratón está capturado. C captura o suelta el ratón; Esc también lo suelta.
  *
  * @param onLock - Pide al lienzo que capture el ratón
  * @param children - Más controles en la misma fila (el modo concentración)
@@ -14,6 +15,9 @@ import '@/styles/playControls.css'
 function PlayControls({ onLock, children }: { onLock: () => void; children?: ReactNode }) {
   // ¿Está el ratón capturado ahora mismo?
   const [locked, setLocked] = useState(false)
+  // ¿Está abierta la información legal? (closeLegal estable: LegalInfo vuelve a registrar su Esc si cambia)
+  const [legalOpen, setLegalOpen] = useState(false)
+  const closeLegal = useCallback(() => setLegalOpen(false), [])
 
   // El navegador avisa cuando se captura o se suelta el ratón (también al pulsar Esc)
   useEffect(() => {
@@ -26,27 +30,30 @@ function PlayControls({ onLock, children }: { onLock: () => void; children?: Rea
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       // event.target es el elemento con el foco (puede no ser un Element: entonces no tiene closest)
-      if (event.code !== 'KeyC' || event.repeat || (event.target as Element | null)?.closest?.('input, textarea')) return
+      // Con la información legal abierta, C no bloquea la cámara detrás del modal
+      if (event.code !== 'KeyC' || event.repeat || legalOpen || (event.target as Element | null)?.closest?.('input, textarea')) return
       if (document.pointerLockElement) document.exitPointerLock()
       else onLock()
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [onLock])
+  }, [onLock, legalOpen])
 
   return (
     <>
-      {/* Ayuda arriba a la derecha (la ayuda sale a su izquierda) */}
+      {/* Arriba a la derecha, el "?" de la información legal */}
       <div className="play-controls is-help">
-        <button type="button" className="play-controls__help" aria-label="Ayuda con los controles" aria-describedby="play-controls-hint">
+        <button
+          type="button"
+          className="play-controls__help"
+          aria-label="Información legal y créditos"
+          title="Información legal y créditos"
+          onClick={() => setLegalOpen(true)}
+        >
           ?
         </button>
-        <p id="play-controls-hint" role="tooltip" className="play-controls__hint">
-          {locked
-            ? 'WASD para moverte · Z para agacharte · ratón para mirar · apunta y haz clic en un libro · mantén pulsado sobre un libro y suéltalo donde quieras de las estanterías · C o Esc para soltar'
-            : 'C para bloquear la cámara · WASD para moverte · Z para agacharte · arrastra para mirar · clic en un libro para ver sus datos · arrastra un libro a cualquier sitio de las estanterías · Ctrl + arrastrar o Ctrl + clic para elegir varios (Esc los suelta)'}
-        </p>
       </div>
+      {legalOpen && <LegalInfo onClose={closeLegal} />}
       {/* Abajo a la izquierda, el resto de controles (el modo concentración) */}
       <div className="play-controls">{children}</div>
       {/* Mirilla: solo con el ratón capturado, marca el punto que se selecciona al hacer clic */}

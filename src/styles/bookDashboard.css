@@ -947,22 +947,27 @@
   text-transform: capitalize;
 }
 
-/* Créditos de los modelos 3D (ajustes): lista plegable */
-.settings-credits summary {
-  cursor: pointer;
-  color: var(--dash-muted);
-}
-
-.settings-credits ul {
-  margin: 8px 0 0;
-  padding-left: 18px;
+/* Controles de la sala (ajustes): tecla o gesto y lo que hace */
+.settings-controls {
+  margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  font-size: 13px;
-  color: var(--dash-muted);
+  gap: 6px;
+  font-size: 14px;
 }
 
-.settings-credits a {
+.settings-controls div {
+  display: flex;
+  gap: 10px;
+}
+
+.settings-controls dt {
+  flex: 0 0 auto;
+  min-width: 9em;
   color: var(--dash-accent);
+}
+
+.settings-controls dd {
+  margin: 0;
+  color: var(--dash-muted);
 }
