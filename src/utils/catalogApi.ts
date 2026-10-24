@@ -58,7 +58,14 @@ const clean = (text: string | null | undefined) => text?.trim() || null
 
 /** Añade un libro a la colección: la API local busca su portada y sinopsis, y se guarda en la cuenta */
 export async function addBookToCollection(book: NewBook): Promise<AddedBook> {
-  const entry = await requestJson<AddedBook & BookMeta>('/api/books', jsonBody('POST', book))
+  // shortcut: un libro que ya está en booksMeta.json (añadido en local antes de pasar a Supabase) no se pide a la API
+  // local, que lo rechazaría por repetido: se sube a la cuenta con sus datos y su portada de allí. Solo en desarrollo
+  // (así booksMeta.json no entra en la web publicada); sobra cuando añadir pase a la Edge Function catalog
+  const isbn = book.isbn.replace(/[^\dX]/gi, '')
+  const known = import.meta.env.DEV ? ((await import('@/data/booksMeta.json')).default as BookMeta[]).find((entry) => entry.isbn === isbn) : undefined
+  const entry = known
+    ? { ...known, title: known.title || book.title, synopsis: known.synopsis ?? null, synopsisInSpanish: true }
+    : await requestJson<AddedBook & BookMeta>('/api/books', jsonBody('POST', book))
   const userId = await currentUserId()
   const cover = await localCover(entry.isbn)
   const coverPath = `${userId}/${entry.isbn}.${cover.extension}`
