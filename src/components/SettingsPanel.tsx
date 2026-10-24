@@ -1,11 +1,12 @@
 // Ajustes de la consola: los sonidos de fondo (silenciarlos o el volumen de cada uno) y la ciudad del tiempo de la sala. La ciudad se busca con el
 // geocodificador de Open-Meteo (gratis y sin clave), que da sus coordenadas: con ellas la sala calcula la hora del sol
 // y pedirá el clima
-import { useState } from 'react'
-import type { FormEvent } from 'react'
+import { useRef, useState } from 'react'
+import type { ChangeEvent, FormEvent } from 'react'
 import type { AppSettings, SoundVolumes } from '@/types'
 import { MAX_SOUND_VOLUME } from '@/types'
 import { supabase } from '@/utils/supabase'
+import { exportLibrary, importLibrary } from '@/utils/backup'
 
 // Cada sonido de fondo con su nombre
 const SOUNDS: { key: keyof SoundVolumes; label: string }[] = [
@@ -23,6 +24,67 @@ interface Place {
   longitude: number
   country?: string
   admin1?: string
+}
+
+/**
+ * Copia de seguridad: descargar toda la biblioteca en un archivo y volver a cargarla (en esta cuenta o en otra). Tras
+ * importar se recarga la página para que la sala lea la biblioteca al día
+ */
+function BackupButtons() {
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  // null | 'exporting' | 'importing' | mensaje (error o resultado)
+  const [status, setStatus] = useState<{ text: string; error: boolean } | 'exporting' | 'importing' | null>(null)
+  const busy = status === 'exporting' || status === 'importing'
+
+  async function download() {
+    setStatus('exporting')
+    try {
+      const url = URL.createObjectURL(await exportLibrary())
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `biblioteca-${new Date().toISOString().slice(0, 10)}.json`
+      link.click()
+      // Se libera un momento después: si no, en algunos navegadores la descarga sale vacía
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000)
+      setStatus({ text: 'Copia descargada (sin los PDF y EPUB, que están en este navegador). Guárdala en un sitio seguro.', error: false })
+    } catch (error) {
+      setStatus({ text: (error as Error).message, error: true })
+    }
+  }
+
+  async function upload(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    event.target.value = '' // Así se puede volver a elegir el mismo archivo
+    if (!file) return
+    if (!window.confirm('¿Importar esta copia? Los libros, su estado y los ajustes de la copia sustituyen a los que ya tengas con el mismo ISBN; los subrayados, marcadores y lecturas se añaden.')) return
+    setStatus('importing')
+    try {
+      const { books, covers } = await importLibrary(file)
+      setStatus({ text: `Importados ${books} libros y ${covers} portadas. Recargando la sala…`, error: false })
+      window.setTimeout(() => window.location.reload(), 1500)
+    } catch (error) {
+      setStatus({ text: (error as Error).message, error: true })
+    }
+  }
+
+  return (
+    <>
+      <div className="add-book-form">
+        <button type="button" className="dashboard-action is-quiet" disabled={busy} onClick={download}>
+          {status === 'exporting' ? 'Preparando la copia…' : 'Exportar mi biblioteca'}
+        </button>
+        <button type="button" className="dashboard-action is-quiet" disabled={busy} onClick={() => fileInputRef.current?.click()}>
+          {status === 'importing' ? 'Importando…' : 'Importar una copia'}
+        </button>
+        <input ref={fileInputRef} type="file" accept=".json,application/json" hidden onChange={upload} />
+      </div>
+      {status && typeof status === 'object' && (
+        <p className={`add-book-message${status.error ? ' is-error' : ''}`} role={status.error ? 'alert' : 'status'}>
+          {status.text}
+        </p>
+      )}
+    </>
+  )
 }
 
 interface SettingsPanelProps {
@@ -128,6 +190,9 @@ function SettingsPanel({ settings, onSetSettings }: SettingsPanelProps) {
           ))}
         </ul>
       )}
+
+      <h3 className="settings-title">Copia de seguridad</h3>
+      <BackupButtons />
 
       <h3 className="settings-title">Cuenta</h3>
       <div className="add-book-form">
