@@ -104,6 +104,14 @@ const KATANA_ROTATION: Vector3Tuple = [0, Math.PI / 2, 0]
 const FLOOR_LAMP_HEIGHT = 1.6
 const FLOOR_LAMP_POSITION: Vector3Tuple = [0, FLOOR_Y, FRONT_WALL_INNER_Z - 0.3]
 
+// Luz cálida de las estanterías de la pared a, sin foco visible (como una tira de luz en lo alto): de noche la lámpara
+// solo llega a los módulos junto al ventanal y los del centro y los de la chimenea quedaban a oscuras. Se enciende con
+// la lámpara. Delante de los módulos, a la altura de las baldas altas, entre el centro de la pared y la chimenea
+const SHELF_LIGHT_POSITION: Vector3Tuple = [-ROOM_WIDTH / 2 + BOOKSHELF_DEPTH + 0.7, FLOOR_Y + 2.0, SHELF_WALL_A_Z - 1.2]
+const SHELF_LIGHT_COLOR = '#ffc98a'
+const SHELF_LIGHT_INTENSITY = 2
+const SHELF_LIGHT_DISTANCE = 4.5
+
 
 // Rodapiés: solo donde se ve muro. La pared a está tapada por estanterías hasta el suelo, y el trozo
 // izquierdo del muro del ventanal queda detrás de ellas.
@@ -320,6 +328,13 @@ function DayCycle({ settings, windowOpen }: { settings: AppSettings; windowOpen:
         </Clickable>
         <Preload all />
       </Suspense>
+      <pointLight
+        position={SHELF_LIGHT_POSITION}
+        color={SHELF_LIGHT_COLOR}
+        intensity={lampLit ? SHELF_LIGHT_INTENSITY : 0}
+        distance={SHELF_LIGHT_DISTANCE}
+        decay={2}
+      />
 
       {/* Postprocesado (Bloom, viñeta, color) y niebla ligera; ENABLE_EFFECTS los apaga todos */}
       <Effects fogColor={palette.fogColor} fog={weather.fog} rain={weather.rain} />
