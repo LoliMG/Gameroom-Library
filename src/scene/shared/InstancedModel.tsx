@@ -25,6 +25,8 @@ interface Part {
   geometry: BufferGeometry
   material: Material | Material[]
   matrix: Matrix4
+  // -1 en la pasada previa de profundidad (depthPrepass)
+  renderOrder: number
 }
 
 // Una pieza (malla) del modelo repetida en todos los sitios de items
@@ -47,7 +49,7 @@ function InstancedPart({ part, items }: { part: Part; items: ModelItem[] }) {
     mesh.computeBoundingSphere()
   }, [part, items])
 
-  return <instancedMesh ref={meshRef} args={[part.geometry, part.material, items.length]} />
+  return <instancedMesh ref={meshRef} args={[part.geometry, part.material, items.length]} renderOrder={part.renderOrder} />
 }
 
 /**
@@ -57,21 +59,22 @@ function InstancedPart({ part, items }: { part: Part; items: ModelItem[] }) {
  * @param model - Clave del manifiesto
  * @param node - Nodo concreto del modelo (por ejemplo, un solo tallo de un ramo)
  * @param items - Sitio (base), altura y giro de cada copia
+ * @param depthPrepass - Pasada previa de profundidad para las hojas (árboles; ver depthPrepass.ts)
  */
-function InstancedModel({ model, node, items }: { model: ModelName; node?: string; items: ModelItem[] }) {
+function InstancedModel({ model, node, items, depthPrepass = false }: { model: ModelName; node?: string; items: ModelItem[]; depthPrepass?: boolean }) {
   const { scene } = useGLTF(modelsManifest[model].url)
   const parts = useMemo(() => {
     // Modelo centrado, con la base en Y = 0 y escalado a 1 m de alto: cada copia lo escala a su altura
-    const { wrapper, scale } = prepareModel(scene, node, 1)
+    const { wrapper, scale } = prepareModel(scene, node, 1, { depthPrepass })
     wrapper.scale.setScalar(scale)
     wrapper.updateMatrixWorld(true)
     const meshes: Part[] = []
     wrapper.traverse((object) => {
       const mesh = object as Mesh
-      if (mesh.isMesh) meshes.push({ geometry: mesh.geometry, material: mesh.material, matrix: mesh.matrixWorld.clone() })
+      if (mesh.isMesh) meshes.push({ geometry: mesh.geometry, material: mesh.material, matrix: mesh.matrixWorld.clone(), renderOrder: mesh.renderOrder })
     })
     return meshes
-  }, [scene, node])
+  }, [scene, node, depthPrepass])
 
   return parts.map((part, i) => <InstancedPart key={i} part={part} items={items} />)
 }

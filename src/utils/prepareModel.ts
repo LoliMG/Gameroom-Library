@@ -6,6 +6,7 @@ import type { Object3D } from 'three'
 import { clone as cloneWithSkeleton } from 'three/examples/jsm/utils/SkeletonUtils.js'
 // Recorte por alfa para las hojas con transparencia (evita fallos de orden de dibujo)
 import { applyAlphaCutout } from '@/utils/alphaCutout'
+import { addDepthPrepass } from '@/utils/depthPrepass'
 
 /** Resultado de prepareModel: el modelo envuelto en un grupo y la escala que le da la altura pedida */
 export interface PreparedModel {
@@ -21,13 +22,14 @@ export interface PreparedModel {
  * @param scene - Escena cargada con useGLTF (drei)
  * @param node - Nombre del nodo a extraer (tal como aparece en el .glb); sin él, se usa el modelo entero
  * @param height - Altura objetivo en metros
- * @param options - alphaCutout: pasar la transparencia a recorte (false para cristal)
+ * @param options - alphaCutout: pasar la transparencia a recorte (false para cristal); depthPrepass: pasada previa de
+ *   profundidad para las hojas recortadas (ver depthPrepass.ts)
  */
 export function prepareModel(
   scene: Object3D,
   node: string | undefined,
   height: number,
-  { alphaCutout = true }: { alphaCutout?: boolean } = {}
+  { alphaCutout = true, depthPrepass = false }: { alphaCutout?: boolean; depthPrepass?: boolean } = {}
 ): PreparedModel {
   scene.updateMatrixWorld(true)
   // GLTFLoader sanea los nombres de nodo (espacios → _, sin puntos): se busca con el mismo saneado
@@ -43,6 +45,7 @@ export function prepareModel(
   // Base apoyada en Y = 0 y centrada en X/Z
   object.position.sub(new Vector3(center.x, box.min.y, center.z))
   if (alphaCutout) applyAlphaCutout(object)
+  if (depthPrepass) addDepthPrepass(object)
   const wrapper = new Group()
   wrapper.add(object)
   return { wrapper, scale: height / size.y }

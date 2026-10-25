@@ -233,9 +233,10 @@ function GardenGround() {
 }
 
 // Una planta del jardín: carga el modelo del manifiesto, lo escala a su medida y lo apoya en el suelo
-// (position: [x, z]). Los elementos del jardín no proyectan sombras (presupuesto de rendimiento del plan)
+// (position: [x, z]). Los elementos del jardín no proyectan sombras (presupuesto de rendimiento del plan). Solo árboles y
+// matas de trees.glb: llevan la pasada previa de profundidad de las hojas (lo más caro de la vista del jardín)
 function GardenPlant({ model, node, height, position, rotationY = 0 }: { model: ModelName; node?: string; height: number; position: [number, number]; rotationY?: number }) {
-  return <ModelProp model={model} node={node} height={height} position={[position[0], GROUND_Y, position[1]]} rotation={[0, rotationY, 0]} />
+  return <ModelProp model={model} node={node} height={height} position={[position[0], GROUND_Y, position[1]]} rotation={[0, rotationY, 0]} depthPrepass />
 }
 
 /**
@@ -292,7 +293,7 @@ function Outside({ night, snow }: { night: boolean; snow: number }) {
           <GardenPlant key={`shrub-${position}`} {...BUSH} position={position} height={height} rotationY={position[0]} />
         ))}
         {SIDE_TREE_NODES.map((node) => (
-          <InstancedModel key={node} model="treesGarden" node={node} items={scatter.sideTrees[node]} />
+          <InstancedModel key={node} model="treesGarden" node={node} items={scatter.sideTrees[node]} depthPrepass />
         ))}
         {GARDEN_TREES.map((tree) => (
           <GardenPlant key={`tree-${tree.position}`} model="treesGarden" {...tree} />

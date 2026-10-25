@@ -56,6 +56,7 @@ const STONE_VISIBLE_HEIGHT = 0.03
 /**
  * Un modelo del manifiesto colocado con su base en position y escalado a height.
  * alphaCutout: false para materiales con transparencia de verdad (el agua de la fuente).
+ * depthPrepass: pasada previa de profundidad para las hojas (árboles; ver depthPrepass.ts).
  */
 interface ModelPropProps {
   /** Clave del manifiesto */
@@ -66,14 +67,15 @@ interface ModelPropProps {
   position: Vector3Tuple
   rotation?: Vector3Tuple
   alphaCutout?: boolean
+  depthPrepass?: boolean
 }
 
-export function ModelProp({ model, node, height, position, rotation = [0, 0, 0], alphaCutout = true }: ModelPropProps) {
+export function ModelProp({ model, node, height, position, rotation = [0, 0, 0], alphaCutout = true, depthPrepass = false }: ModelPropProps) {
   // Con el plugin de specular-glossiness: el cojín pez y la fuente usan esa extensión y sin él salen blancos, sin texturas
   const { scene } = useGLTF(modelsManifest[model].url, true, true, withSpecularGlossiness)
   const { wrapper, scale } = useMemo(
-    () => prepareModel(scene, node, height, { alphaCutout }),
-    [scene, node, height, alphaCutout]
+    () => prepareModel(scene, node, height, { alphaCutout, depthPrepass }),
+    [scene, node, height, alphaCutout, depthPrepass]
   )
   return <primitive object={wrapper} position={position} rotation={rotation} scale={scale} />
 }
