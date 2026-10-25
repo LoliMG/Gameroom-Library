@@ -1,9 +1,11 @@
 // Pantalla de entrada: iniciar sesión, crear cuenta, pedir el enlace para cambiar la contraseña y, al volver de ese
 // enlace, poner la nueva. Las cuentas las gestiona Supabase Auth (correo + contraseña)
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import type { FormEvent } from 'react'
 import type { AuthError } from '@supabase/supabase-js'
 import { supabase } from '@/utils/supabase'
+import LegalInfo from '@/components/LegalInfo'
+import type { TabId } from '@/components/LegalInfo'
 import '@/styles/authScreen.css'
 
 type Mode = 'signin' | 'signup' | 'forgot'
@@ -40,6 +42,10 @@ function AuthScreen({ recovering, onRecovered }: AuthScreenProps) {
   const [busy, setBusy] = useState(false)
   // Aviso de error (role="alert") o de que todo ha ido bien (role="status")
   const [message, setMessage] = useState<{ text: string; error: boolean } | null>(null)
+  // Pestaña de la información legal abierta desde el registro (null = cerrada). closeLegal estable: LegalInfo vuelve
+  // a registrar su Esc si cambia
+  const [legalTab, setLegalTab] = useState<TabId | null>(null)
+  const closeLegal = useCallback(() => setLegalTab(null), [])
 
   const changeMode = (next: Mode) => {
     setMode(next)
@@ -109,6 +115,20 @@ function AuthScreen({ recovering, onRecovered }: AuthScreenProps) {
             {message.text}
           </p>
         )}
+        {/* Antes de crear la cuenta se puede leer lo que se acepta (RGPD: la información se da al recoger los datos) */}
+        {mode === 'signup' && !recovering && (
+          <p className="auth-legal">
+            Al crear una cuenta aceptas las{' '}
+            <button type="button" onClick={() => setLegalTab('terms')}>
+              condiciones de uso
+            </button>{' '}
+            y la{' '}
+            <button type="button" onClick={() => setLegalTab('privacy')}>
+              política de privacidad
+            </button>
+            .
+          </p>
+        )}
         <button type="submit" className="auth-submit" disabled={busy}>
           {busy ? 'Un momento…' : recovering ? 'Guardar contraseña' : mode === 'forgot' ? 'Enviar enlace' : title}
         </button>
@@ -132,6 +152,7 @@ function AuthScreen({ recovering, onRecovered }: AuthScreenProps) {
           </div>
         )}
       </form>
+      {legalTab && <LegalInfo initialTab={legalTab} onClose={closeLegal} />}
     </main>
   )
 }

@@ -29,7 +29,7 @@ const TABS = [
   { id: 'storage', label: 'Cookies y almacenamiento' },
   { id: 'credits', label: 'Créditos' },
 ] as const
-type TabId = (typeof TABS)[number]['id']
+export type TabId = (typeof TABS)[number]['id']
 
 const contact = <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
 
@@ -348,8 +348,9 @@ function CreditsTab() {
 
 const PANELS = { privacy: PrivacyTab, terms: TermsTab, storage: StorageTab, credits: CreditsTab } satisfies Record<TabId, unknown>
 
-function LegalInfo({ onClose }: { onClose: () => void }) {
-  const [tab, setTab] = useState<TabId>('privacy')
+// initialTab: la pestaña con la que se abre (desde la pantalla de registro, las condiciones o la privacidad)
+function LegalInfo({ onClose, initialTab = 'privacy' }: { onClose: () => void; initialTab?: TabId }) {
+  const [tab, setTab] = useState<TabId>(initialTab)
   const dialogRef = useRef<HTMLDivElement>(null)
   const bodyRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
