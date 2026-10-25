@@ -34,6 +34,8 @@ function AuthScreen({ recovering, onRecovered }: AuthScreenProps) {
   const [mode, setMode] = useState<Mode>('signin')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  // Ver lo que se escribe en la contraseña (botón "Mostrar" dentro del campo)
+  const [showPassword, setShowPassword] = useState(false)
   const [busy, setBusy] = useState(false)
   // Aviso de error (role="alert") o de que todo ha ido bien (role="status")
   const [message, setMessage] = useState<{ text: string; error: boolean } | null>(null)
@@ -80,14 +82,25 @@ function AuthScreen({ recovering, onRecovered }: AuthScreenProps) {
         {(recovering || mode !== 'forgot') && (
           <label className="auth-field">
             {recovering ? 'Contraseña nueva' : 'Contraseña'}
-            <input
-              type="password"
-              required
-              minLength={mode === 'signin' && !recovering ? undefined : MIN_PASSWORD}
-              autoComplete={mode === 'signin' && !recovering ? 'current-password' : 'new-password'}
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-            />
+            <span className="auth-password">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                required
+                minLength={mode === 'signin' && !recovering ? undefined : MIN_PASSWORD}
+                autoComplete={mode === 'signin' && !recovering ? 'current-password' : 'new-password'}
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+              />
+              <button
+                type="button"
+                className="auth-password-toggle"
+                aria-pressed={showPassword}
+                aria-label="Mostrar la contraseña"
+                onClick={() => setShowPassword((shown) => !shown)}
+              >
+                {showPassword ? 'Ocultar' : 'Mostrar'}
+              </button>
+            </span>
           </label>
         )}
         {message && (
