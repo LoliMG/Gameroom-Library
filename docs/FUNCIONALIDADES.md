@@ -21,7 +21,8 @@ El Rincón de Lectura es una sala de lectura inmersiva en 3D donde vive tu bibli
 | Mirar alrededor | Arrastra con el ratón |
 | Mirar sin arrastrar | Pulsa `C` para fijar la cámara al ratón (aparece una mirilla en el centro). Vuelve a pulsar `C` o `Esc` para soltarla |
 | Agacharte | Mantén pulsada la `Z` (ideal para examinar las baldas inferiores) |
-| Recordar los controles | Pasa el ratón por el botón `?` en la esquina superior derecha |
+| Recordar los controles | Míralos en *Ajustes* (⚙), en la pantalla de la biblioteca |
+| Ver qué puedes hacer | Pulsa el botón `?` de la esquina superior derecha: la pestaña *¿Qué puedo hacer?* lo resume todo |
 
 La habitación cuenta con colisiones reales: no puedes atravesar paredes ni muebles.
 
@@ -92,7 +93,9 @@ En la pared, junto a la chimenea, se encuentra la pantalla mural de gestión de 
 ### Ajustes (⚙)
 - **Sonidos ambientales**: activa o silencia todos los sonidos con un solo botón, o gradúa de forma individual el volumen del viento, la lluvia, los truenos y los grillos (de 0 a 150 %; 100 % es el normal).
 - **Ciudad y clima real**: busca cualquier ciudad del mundo y elígela. La luz, el cielo y el tiempo tras el ventanal seguirán los de esa ciudad.
-- **Cuenta**: botón para cerrar tu sesión de forma segura.
+- **Controles**: la lista de teclas y gestos para moverte por la sala y mover los libros.
+- **Copia de seguridad**: *Exportar mi biblioteca* descarga una copia con todos tus datos (sin los PDF y EPUB, que están en tu navegador) e *Importar una copia* la recupera.
+- **Cuenta**: cierra tu sesión o borra tu cuenta, que se elimina al momento con todos sus datos.
 
 ---
 
