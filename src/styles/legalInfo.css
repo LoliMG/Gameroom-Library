@@ -56,7 +56,8 @@
 
 .legal-tab {
   flex: 0 0 auto;
-  padding: 10px 14px;
+  /* 12px a los lados: así las cinco pestañas caben en una línea en el modal de escritorio */
+  padding: 10px 12px;
   border: 0;
   border-bottom: 2px solid transparent;
   margin-bottom: -1px;

@@ -1,4 +1,4 @@
-// Información legal en un modal con pestañas (lo abre el botón "?" de arriba a la derecha): política de privacidad,
+// Información legal en un modal con pestañas (lo abre el botón "?" de arriba a la derecha): qué se puede hacer en la web, política de privacidad,
 // cookies y almacenamiento en el navegador, y créditos. Describe lo que la web hace de verdad con los datos: si cambia
 // lo que se guarda, con quién se comparte o quién envía los correos de la cuenta, hay que cambiar también este texto
 import { useEffect, useRef, useState } from 'react'
@@ -24,6 +24,7 @@ const licenseUrl = (license: string) => {
 const CC0 = 'https://creativecommons.org/publicdomain/zero/1.0/'
 
 const TABS = [
+  { id: 'features', label: '¿Qué puedo hacer?' },
   { id: 'privacy', label: 'Privacidad' },
   { id: 'terms', label: 'Condiciones de uso' },
   { id: 'storage', label: 'Cookies y almacenamiento' },
@@ -32,6 +33,117 @@ const TABS = [
 export type TabId = (typeof TABS)[number]['id']
 
 const contact = <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
+
+// Resumen de docs/FUNCIONALIDADES.md: si se añade o cambia una funcionalidad, hay que cambiar los dos
+function FeaturesTab() {
+  return (
+    <>
+      <section>
+        <h3>Pasear por la sala</h3>
+        <ul>
+          <li>
+            <strong>Caminar:</strong> teclas W A S D o las flechas. <strong>Mirar:</strong> arrastra con el ratón, o pulsa C para fijar la
+            cámara al ratón (C o Esc para soltarla). <strong>Agacharte:</strong> mantén pulsada la Z.
+          </li>
+          <li>Tienes todos los controles en Ajustes (⚙), en la pantalla de la biblioteca.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h3>Tus libros en las estanterías</h3>
+        <ul>
+          <li>
+            <strong>Ver su ficha:</strong> haz clic en un libro para ver su portada, sus datos y su estado de lectura.
+          </li>
+          <li>
+            <strong>Cambiarlos de sitio:</strong> arrastra un libro a cualquier hueco. Con Ctrl pulsado eliges varios (clic o recuadro) y
+            los mueves juntos.
+          </li>
+          <li>
+            <strong>Desde la ficha:</strong> ponerlo de frente, verlo en 3D en grande (y escribir su sinopsis), mandarlo a la pila «por leer»
+            junto al sofá o colgar su portada como póster sobre la chimenea si es favorito.
+          </li>
+          <li>
+            <strong>Apuntar por dónde vas:</strong> escribe la página en la ficha. Al pulsar «¡Terminado!» se marca como leído y se apunta
+            en el diario. Los libros que lees llevan una cinta en el lomo con tu avance.
+          </li>
+        </ul>
+      </section>
+
+      <section>
+        <h3>Leer en el sofá</h3>
+        <ul>
+          <li>
+            Añade el EPUB o PDF de un libro desde su ficha y pulsa <strong>Leer</strong>: te sientas junto a la chimenea con el libro
+            abierto a doble página.
+          </li>
+          <li>Pasa las páginas con clic, arrastrando o con las flechas, y se abre siempre por donde lo dejaste.</li>
+          <li>Subraya en cuatro colores, escribe notas en los subrayados y deja marcadores; los tienes todos en los laterales.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h3>La pantalla de la biblioteca</h3>
+        <ul>
+          <li>
+            <strong>Mi biblioteca:</strong> todas tus portadas, con búsqueda, filtros por estado, tipo, etiquetas y favoritos, cambio de
+            estado de varios libros a la vez, «🎲 Elige por mí» y botones para localizar o editar cada libro.
+          </li>
+          <li>
+            <strong>Añadir libro:</strong> búscalo por ISBN o título, o añádelo a mano con su portada. Si aún no lo tienes, guárdalo en la
+            lista de deseos (♡).
+          </li>
+          <li>
+            <strong>Diario de lecturas (📖):</strong> reto anual, calendario de los días que lees, tus lecturas con fechas, estrellas y
+            comentarios, y «✨ Ver mi año» con el resumen.
+          </li>
+          <li>
+            <strong>Ajustes (⚙):</strong> sonidos, la ciudad para el tiempo de la sala, los controles, exportar o importar una copia de tu
+            biblioteca, cerrar sesión y borrar tu cuenta.
+          </li>
+        </ul>
+      </section>
+
+      <section>
+        <h3>Cosas que se pueden tocar</h3>
+        <p>Cuando el puntero se convierte en una mano, puedes hacer clic:</p>
+        <ul>
+          <li>
+            <strong>Chimenea, lámpara y velas:</strong> enciéndelas o apágalas (la chimenea y la lámpara se encienden solas con frío o de
+            noche).
+          </li>
+          <li>
+            <strong>Ventanal:</strong> ábrelo para oír mejor el jardín. <strong>Gramófono:</strong> pon música lofi.
+          </li>
+          <li>
+            <strong>Gato:</strong> acércate y haz clic: se sienta y ronronea.
+          </li>
+          <li>
+            <strong>Corcho:</strong> decóralo con pósits, pegatinas y frases (también las que subrayas al leer).
+          </li>
+        </ul>
+      </section>
+
+      <section>
+        <h3>Y además</h3>
+        <ul>
+          <li>
+            <strong>Modo concentración (⏳):</strong> elige de 10 a 60 minutos; el gato se duerme junto al fuego hasta que acaba.
+          </li>
+          <li>
+            <strong>Foto del rincón (📷):</strong> guarda una postal con lo que estás viendo.
+          </li>
+          <li>
+            <strong>Una sala viva:</strong> la luz, el cielo, la lluvia o la nieve siguen la hora y el tiempo reales de tu ciudad.
+          </li>
+          <li>
+            <strong>Todo se guarda solo</strong> en tu cuenta, salvo los PDF y EPUB, que se quedan en este navegador.
+          </li>
+        </ul>
+      </section>
+    </>
+  )
+}
 
 function PrivacyTab() {
   return (
@@ -346,10 +458,10 @@ function CreditsTab() {
   )
 }
 
-const PANELS = { privacy: PrivacyTab, terms: TermsTab, storage: StorageTab, credits: CreditsTab } satisfies Record<TabId, unknown>
+const PANELS = { features: FeaturesTab, privacy: PrivacyTab, terms: TermsTab, storage: StorageTab, credits: CreditsTab } satisfies Record<TabId, unknown>
 
 // initialTab: la pestaña con la que se abre (desde la pantalla de registro, las condiciones o la privacidad)
-function LegalInfo({ onClose, initialTab = 'privacy' }: { onClose: () => void; initialTab?: TabId }) {
+function LegalInfo({ onClose, initialTab = 'features' }: { onClose: () => void; initialTab?: TabId }) {
   const [tab, setTab] = useState<TabId>(initialTab)
   const dialogRef = useRef<HTMLDivElement>(null)
   const bodyRef = useRef<HTMLDivElement>(null)

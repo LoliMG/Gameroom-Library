@@ -46,8 +46,8 @@ function PlayControls({ onLock, children }: { onLock: () => void; children?: Rea
         <button
           type="button"
           className="play-controls__help"
-          aria-label="Información legal y créditos"
-          title="Información legal y créditos"
+          aria-label="Qué puedo hacer, información legal y créditos"
+          title="Qué puedo hacer, información legal y créditos"
           onClick={() => setLegalOpen(true)}
         >
           ?
