@@ -18,7 +18,8 @@ const ERRORS: Record<string, string> = {
   user_already_exists: 'Ya hay una cuenta con ese correo. Inicia sesión.',
   weak_password: `La contraseña es demasiado débil (mínimo ${MIN_PASSWORD} caracteres).`,
   over_email_send_rate_limit: 'Se han enviado demasiados correos. Espera unos minutos y vuelve a intentarlo.',
-  over_request_rate_limit: 'Demasiados intentos. Espera unos minutos y vuelve a intentarlo.',
+  user_banned: 'Esta cuenta está bloqueada.',
+  over_request_rate_limit:'Demasiados intentos. Espera unos minutos y vuelve a intentarlo.',
 }
 const errorText = (error: AuthError) => ERRORS[error.code ?? ''] ?? `No se ha podido completar: ${error.message}`
 

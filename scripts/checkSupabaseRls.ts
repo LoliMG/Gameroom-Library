@@ -14,6 +14,7 @@ await db.exec(`
   create role anon; create role authenticated;
   create schema auth;
   create table auth.users (id uuid primary key, email text, created_at timestamptz default now(), last_sign_in_at timestamptz, banned_until timestamptz);
+  create table auth.sessions (id serial primary key, user_id uuid references auth.users on delete cascade);
   -- Como en Supabase: el id de la cuenta y su app_metadata salen del token de la petición (aquí, de un ajuste de la sesión)
   create function auth.jwt() returns jsonb language sql stable as $$ select coalesce(nullif(current_setting('request.jwt.claims', true), ''), '{}')::jsonb $$;
   create function auth.uid() returns uuid language sql stable as $$ select nullif(auth.jwt() ->> 'sub', '')::uuid $$;
@@ -93,10 +94,24 @@ assert.deepEqual([summary.s.users, summary.s.active7, summary.s.active30, summar
 const users = (await as(ADMIN, 'select email, books, blocked from public.admin_users()')).rows
 assert.deepEqual(users, [{ email: 'a@test', books: 1, blocked: false }, { email: 'b@test', books: 0, blocked: false }, { email: 'admin@test', books: 0, blocked: false }], 'lista de usuarios')
 for (const table of TABLES) assert.equal((await as(ADMIN, `select * from ${table}`)).rows.length, 0, `la admin ve ${table} de otra cuenta`)
+// Bloquear corta al momento a una sesión ya abierta: no lee ni escribe su biblioteca ni sus portadas, y sus sesiones
+// se cierran. Desbloquear la deja como estaba
+await as(B, `insert into books (isbn, title) values ('9788417390617', 'Libro de B')`)
+await as(B, `insert into storage.objects (bucket_id, name) values ('covers', '${B}/9788417390617.jpg')`)
+await db.exec(`insert into auth.sessions (user_id) values ('${B}'), ('${A}')`)
 await as(ADMIN, `select public.admin_set_blocked('${B}', true)`)
 assert.equal(((await as(ADMIN, `select blocked from public.admin_users() where email = 'b@test'`)).rows[0] as { blocked: boolean }).blocked, true, 'bloquear')
+await fails(B, 'select * from books', 'una cuenta bloqueada lee sus libros')
+await fails(B, `insert into app_data (key, value) values ('tags', '{}')`, 'una cuenta bloqueada escribe')
+await fails(B, 'select * from storage.objects', 'una cuenta bloqueada lista sus portadas')
+await assert.rejects(as(B, 'select * from books'), /Tu cuenta está bloqueada/, 'mensaje del bloqueo')
+assert.deepEqual((await db.query(`select user_id from auth.sessions`)).rows, [{ user_id: A }], 'bloquear cierra solo sus sesiones')
+assert.equal((await as(A, 'select * from books')).rows.length, 1, 'el bloqueo de B afecta a A')
 await as(ADMIN, `select public.admin_set_blocked('${B}', false)`)
 assert.equal(((await as(ADMIN, `select blocked from public.admin_users() where email = 'b@test'`)).rows[0] as { blocked: boolean }).blocked, false, 'desbloquear')
+assert.equal((await as(B, 'select * from books')).rows.length, 1, 'desbloqueada vuelve a ver sus libros')
+await as(B, 'delete from books')
+await as(B, 'delete from storage.objects')
 await fails(ADMIN, `select public.admin_set_blocked('${ADMIN}', true)`, 'la admin se bloquea a sí misma')
 
 // Borrar la cuenta borra todo lo suyo
