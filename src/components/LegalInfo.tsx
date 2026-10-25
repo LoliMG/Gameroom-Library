@@ -122,7 +122,7 @@ function PrivacyTab() {
       <section>
         <h3>Cuánto tiempo</h3>
         <p>
-          Mientras tengas la cuenta. Si pides que se borre, se borran también tu biblioteca y tus portadas. Los registros de seguridad de
+          Mientras tengas la cuenta. Cuando la borras, se borran al momento también tu biblioteca y tus portadas. Los registros de seguridad de
           los proveedores se borran solos tras el plazo que fija cada uno.
         </p>
       </section>
@@ -139,7 +139,10 @@ function PrivacyTab() {
             escribe a {contact}.
           </li>
           <li>
-            <strong>Supresión, oposición y limitación:</strong> pide el borrado de tu cuenta o lo que necesites escribiendo a {contact}.
+            <strong>Supresión:</strong> en Ajustes, «Borrar mi cuenta» la borra al momento con todos sus datos.
+          </li>
+          <li>
+            <strong>Oposición y limitación:</strong> escribe a {contact}.
           </li>
         </ul>
         <p>Te responderé en un plazo máximo de un mes.</p>

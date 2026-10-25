@@ -5,7 +5,8 @@ import { useRef, useState } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
 import type { AppSettings, SoundVolumes } from '@/types'
 import { MAX_SOUND_VOLUME } from '@/types'
-import { supabase } from '@/utils/supabase'
+import { invoke, supabase } from '@/utils/supabase'
+import { deleteEbook, listEbooks } from '@/utils/ebookStore'
 import { exportLibrary, importLibrary } from '@/utils/backup'
 
 // Controles de la sala (antes, la ayuda del botón "?")
@@ -97,6 +98,70 @@ function BackupButtons() {
   )
 }
 
+// Cerrar sesión y borrar la propia cuenta con todos sus datos (función delete-account) y los PDF y EPUB de este
+// navegador. El borrado se confirma escribiendo el correo de la cuenta
+function AccountActions() {
+  // null = sin abrir; texto = lo escrito para confirmar
+  const [typed, setTyped] = useState<string | null>(null)
+  const [status, setStatus] = useState<string | null>(null) // null | 'deleting' | mensaje de error
+
+  async function remove(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const { data } = await supabase.auth.getSession()
+    const user = data.session?.user
+    if (!user || typed?.trim().toLowerCase() !== user.email?.toLowerCase()) {
+      setStatus('El correo no coincide con el de tu cuenta')
+      return
+    }
+    setStatus('deleting')
+    try {
+      await invoke('delete-account', {})
+      // La cuenta ya no existe: se quitan sus libros electrónicos de este navegador y se cierra la sesión solo aquí
+      // (App vuelve sola a la pantalla de entrada)
+      const ebooks = await listEbooks(user.id).catch(() => ({}))
+      await Promise.all(Object.keys(ebooks).map((isbn) => deleteEbook(user.id, isbn).catch(() => undefined)))
+      await supabase.auth.signOut({ scope: 'local' })
+    } catch (error) {
+      setStatus((error as Error).message)
+    }
+  }
+
+  if (typed === null) {
+    return (
+      <div className="add-book-form settings-account">
+        {/* Al cerrar la sesión, App vuelve sola a la pantalla de entrada */}
+        <button type="button" className="dashboard-action is-quiet" onClick={() => supabase.auth.signOut()}>
+          Cerrar sesión
+        </button>
+        <button type="button" className="dashboard-action is-danger" onClick={() => setTyped('')}>
+          Borrar mi cuenta
+        </button>
+      </div>
+    )
+  }
+  const deleting = status === 'deleting'
+  return (
+    <form className="add-book-form settings-delete-account" onSubmit={remove}>
+      <label>
+        Se borrarán tu cuenta, tus libros, portadas, subrayados, diario y ajustes, y los PDF y EPUB de este navegador. No se puede
+        deshacer: si quieres conservar algo, exporta antes tu biblioteca. Escribe tu correo para confirmar.
+        <input type="email" className="dashboard-search" autoFocus autoComplete="off" value={typed} disabled={deleting} onChange={(event) => setTyped(event.target.value)} />
+      </label>
+      <button type="submit" className="dashboard-action is-danger" disabled={deleting || !typed.trim()}>
+        {deleting ? 'Borrando…' : 'Borrar para siempre'}
+      </button>
+      <button type="button" className="dashboard-action is-quiet" disabled={deleting} onClick={() => (setTyped(null), setStatus(null))}>
+        Cancelar
+      </button>
+      {status && !deleting && (
+        <p className="add-book-message is-error" role="alert">
+          {status}
+        </p>
+      )}
+    </form>
+  )
+}
+
 interface SettingsPanelProps {
   settings: AppSettings
   onSetSettings: (settings: AppSettings) => void
@@ -131,97 +196,113 @@ function SettingsPanel({ settings, onSetSettings }: SettingsPanelProps) {
   }
 
   return (
-    <section className="add-book" aria-label="Ajustes">
-      <h3 className="settings-title">Sonidos</h3>
-      <div className="add-book-form">
-        <button
-          type="button"
-          className={`dashboard-action${settings.sound ? ' is-quiet' : ''}`}
-          onClick={() => onSetSettings({ ...settings, sound: !settings.sound })}
-        >
-          {settings.sound ? '🔇 Silenciar todos' : '🔊 Activar los sonidos'}
-        </button>
-        {!settings.sound && <span className="add-book-message">Los sonidos de fondo están silenciados.</span>}
-      </div>
-      <div className="settings-volumes">
-        {SOUNDS.map(({ key, label }) => {
-          const percent = Math.round(settings.volumes[key] * 100)
-          return (
-            <label key={key} className="settings-volume">
-              <span>{label}</span>
-              <input
-                type="range"
-                min={0}
-                max={MAX_SOUND_VOLUME * 100}
-                step={5}
-                value={percent}
-                disabled={!settings.sound}
-                aria-valuetext={`${percent} %`}
-                onChange={(event) => onSetSettings({ ...settings, volumes: { ...settings.volumes, [key]: Number(event.target.value) / 100 } })}
-              />
-              <output>{percent} %</output>
-            </label>
-          )
-        })}
-      </div>
+    <div className="add-book settings" role="region" aria-label="Ajustes">
+      <section className="settings-card" aria-labelledby="settings-sounds">
+        <header className="settings-card-header">
+          <h3 id="settings-sounds" className="settings-title">
+            Sonidos
+          </h3>
+          <button
+            type="button"
+            className={`dashboard-action settings-mute${settings.sound ? ' is-quiet' : ''}`}
+            onClick={() => onSetSettings({ ...settings, sound: !settings.sound })}
+          >
+            {settings.sound ? '🔇 Silenciar todos' : '🔊 Activar los sonidos'}
+          </button>
+        </header>
+        <div className="settings-volumes">
+          {SOUNDS.map(({ key, label }) => {
+            const percent = Math.round(settings.volumes[key] * 100)
+            return (
+              <label key={key} className="settings-volume">
+                <span>{label}</span>
+                <input
+                  type="range"
+                  min={0}
+                  max={MAX_SOUND_VOLUME * 100}
+                  step={5}
+                  value={percent}
+                  disabled={!settings.sound}
+                  aria-valuetext={`${percent} %`}
+                  onChange={(event) => onSetSettings({ ...settings, volumes: { ...settings.volumes, [key]: Number(event.target.value) / 100 } })}
+                />
+                <output>{percent} %</output>
+              </label>
+            )
+          })}
+        </div>
+      </section>
 
-      <h3 className="settings-title">Tiempo de la sala</h3>
-      <p className="add-book-message">
-        Ciudad: <strong>{settings.city}</strong> ({settings.latitude.toFixed(2)}, {settings.longitude.toFixed(2)})
-      </p>
-      <form className="add-book-form" onSubmit={search}>
-        <input
-          type="search"
-          className="dashboard-search"
-          placeholder="Buscar otra ciudad…"
-          aria-label="Buscar ciudad"
-          maxLength={100}
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-        />
-        <button type="submit" className="dashboard-action" disabled={status === 'searching'}>
-          {status === 'searching' ? 'Buscando…' : 'Buscar'}
-        </button>
-      </form>
-      {status && status !== 'searching' && (
-        <p className="add-book-message is-error" role="alert">
-          {status}
-        </p>
-      )}
-      {places?.length === 0 && <p className="add-book-message">No se ha encontrado ninguna ciudad con ese nombre.</p>}
-      {places && places.length > 0 && (
-        <ul className="settings-places">
-          {places.map((place) => (
-            <li key={place.id}>
-              <button type="button" className="dashboard-filter" onClick={() => choose(place)}>
-                {[place.name, place.admin1, place.country].filter(Boolean).join(', ')}
-              </button>
-            </li>
+      <section className="settings-card" aria-labelledby="settings-weather">
+        <header className="settings-card-header">
+          <h3 id="settings-weather" className="settings-title">
+            Tiempo de la sala
+          </h3>
+          <span className="add-book-message">
+            <strong>{settings.city}</strong> ({settings.latitude.toFixed(2)}, {settings.longitude.toFixed(2)})
+          </span>
+        </header>
+        <form className="add-book-form" onSubmit={search}>
+          <input
+            type="search"
+            className="dashboard-search"
+            placeholder="Buscar otra ciudad…"
+            aria-label="Buscar ciudad"
+            maxLength={100}
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+          />
+          <button type="submit" className="dashboard-action" disabled={status === 'searching'}>
+            {status === 'searching' ? 'Buscando…' : 'Buscar'}
+          </button>
+        </form>
+        {status && status !== 'searching' && (
+          <p className="add-book-message is-error" role="alert">
+            {status}
+          </p>
+        )}
+        {places?.length === 0 && <p className="add-book-message">No se ha encontrado ninguna ciudad con ese nombre.</p>}
+        {places && places.length > 0 && (
+          <ul className="settings-places">
+            {places.map((place) => (
+              <li key={place.id}>
+                <button type="button" className="dashboard-filter" onClick={() => choose(place)}>
+                  {[place.name, place.admin1, place.country].filter(Boolean).join(', ')}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section className="settings-card" aria-labelledby="settings-controls">
+        <h3 id="settings-controls" className="settings-title">
+          Controles
+        </h3>
+        <dl className="settings-controls">
+          {CONTROLS.map(([keys, action]) => (
+            <div key={keys}>
+              <dt>{keys}</dt>
+              <dd>{action}</dd>
+            </div>
           ))}
-        </ul>
-      )}
+        </dl>
+      </section>
 
-      <h3 className="settings-title">Controles</h3>
-      <dl className="settings-controls">
-        {CONTROLS.map(([keys, action]) => (
-          <div key={keys}>
-            <dt>{keys}</dt>
-            <dd>{action}</dd>
-          </div>
-        ))}
-      </dl>
+      <section className="settings-card" aria-labelledby="settings-backup">
+        <h3 id="settings-backup" className="settings-title">
+          Copia de seguridad
+        </h3>
+        <BackupButtons />
+      </section>
 
-      <h3 className="settings-title">Copia de seguridad</h3>
-      <BackupButtons />
-
-      <h3 className="settings-title">Cuenta</h3>
-      <div className="add-book-form">
-        {/* Al cerrar la sesión, App vuelve sola a la pantalla de entrada */}
-        <button type="button" className="dashboard-action is-quiet" onClick={() => supabase.auth.signOut()}>
-          Cerrar sesión
-        </button>
-      </div>
-    </section>
+      <section className="settings-card" aria-labelledby="settings-account">
+        <h3 id="settings-account" className="settings-title">
+          Cuenta
+        </h3>
+        <AccountActions />
+      </section>
+    </div>
   )
 }
 
