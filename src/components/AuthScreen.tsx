@@ -50,10 +50,13 @@ function AuthScreen({ recovering, onRecovered }: AuthScreenProps) {
   const changeMode = (next: Mode) => {
     setMode(next)
     setMessage(null)
+    setShowPassword(false)
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    // Se vuelve a ocultar al enviar: así no queda a la vista y el navegador la reconoce como contraseña para guardarla
+    setShowPassword(false)
     setBusy(true)
     setMessage(null)
     // Los enlaces de los correos vuelven a esta misma web (tiene que estar en las URL permitidas de Supabase Auth)
