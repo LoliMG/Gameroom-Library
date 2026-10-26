@@ -9,7 +9,7 @@ import '@/styles/legalInfo.css'
 // Quién es la responsable y cómo contactar (para pedir el borrado de la cuenta o ejercer cualquier derecho)
 const OWNER = 'Loli Mariscal'
 const CONTACT_EMAIL = 'loli.mariscal@hotmail.com'
-const UPDATED = '25 de octubre de 2026'
+const UPDATED = '26 de octubre de 2026'
 
 // Créditos de los modelos 3D (sus licencias CC BY piden nombrar al autor, enlazar la licencia y avisar de los
 // cambios), por título
@@ -98,8 +98,8 @@ function FeaturesTab() {
             comentarios, y «✨ Ver mi año» con el resumen.
           </li>
           <li>
-            <strong>Ajustes (⚙):</strong> sonidos, la ciudad para el tiempo de la sala, los controles, exportar o importar una copia de tu
-            biblioteca, cerrar sesión y borrar tu cuenta.
+            <strong>Ajustes (⚙):</strong> sonidos, la ciudad para el tiempo de la sala, los gráficos (alto o bajo, si la sala te va
+            lenta), los controles, exportar o importar una copia de tu biblioteca, cerrar sesión y borrar tu cuenta.
           </li>
         </ul>
       </section>
@@ -378,9 +378,13 @@ function StorageTab() {
             <strong>Tus PDF y EPUB</strong> (IndexedDB, una base de datos del navegador), para leerlos en la sala. Solo están en este
             dispositivo: si borras los datos del navegador, desaparecen.
           </li>
+          <li>
+            <strong>El nivel de gráficos</strong> que eliges en Ajustes (almacenamiento local), para que la sala vaya bien en este
+            ordenador.
+          </li>
         </ul>
         <p>
-          Las dos cosas son necesarias para darte lo que pides, así que no hace falta pedirte permiso (artículo 22.2 de la LSSI). Puedes
+          Las tres cosas son necesarias para darte lo que pides, así que no hace falta pedirte permiso (artículo 22.2 de la LSSI). Puedes
           borrarlas cuando quieras desde los ajustes de tu navegador.
         </p>
       </section>

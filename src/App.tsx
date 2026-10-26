@@ -29,6 +29,7 @@ import LoadingScreen from '@/components/LoadingScreen'
 // Botón y panel de administración (solo se dibuja para la cuenta admin)
 import AdminDashboard from '@/components/AdminDashboard'
 import { supabase } from '@/utils/supabase'
+import { GRAPHICS, useGraphicsLevel } from '@/utils/graphics'
 
 // Lector de libros electrónicos: se carga solo al abrir un libro (epub.js y PDF.js pesan bastante)
 const BookReader = lazy(() => import('@/components/reader/BookReader'))
@@ -201,6 +202,8 @@ function Bookroom({ library }: { library: LibraryState }) {
 
   // Lienzo WebGL, necesario para capturar el ratón desde el botón HTML
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
+  // Nivel de gráficos de Ajustes: entre otras cosas, cuántos píxeles pinta el lienzo
+  const graphics = GRAPHICS[useGraphicsLevel()]
 
   // Al abrir un libro se suelta el ratón para poder usar el panel
   const handleSelectBook = (book: Book | null) => {
@@ -218,6 +221,7 @@ function Bookroom({ library }: { library: LibraryState }) {
           display: 'block',
         }}
         camera={{ fov: CAMERA_FOV }}
+        dpr={graphics.dpr}
         events={centerPointerWhenLocked}
         onCreated={({ gl }) => {
           canvasRef.current = gl.domElement

@@ -1,4 +1,4 @@
-// Ajustes de la consola: los sonidos de fondo (silenciarlos o el volumen de cada uno) y la ciudad del tiempo de la sala. La ciudad se busca con el
+// Ajustes de la consola: los sonidos de fondo (silenciarlos o el volumen de cada uno), la ciudad del tiempo de la sala y el nivel de gráficos. La ciudad se busca con el
 // geocodificador de Open-Meteo (gratis y sin clave), que da sus coordenadas: con ellas la sala calcula la hora del sol
 // y pedirá el clima
 import { useRef, useState } from 'react'
@@ -8,6 +8,7 @@ import { MAX_SOUND_VOLUME } from '@/types'
 import { invoke, supabase } from '@/utils/supabase'
 import { deleteEbook, listEbooks } from '@/utils/ebookStore'
 import { exportLibrary, importLibrary } from '@/utils/backup'
+import { GRAPHICS_LEVELS, setGraphicsLevel, useGraphicsLevel } from '@/utils/graphics'
 
 // Controles de la sala (antes, la ayuda del botón "?")
 const CONTROLS: [string, string][] = [
@@ -171,6 +172,7 @@ function SettingsPanel({ settings, onSetSettings }: SettingsPanelProps) {
   const [query, setQuery] = useState('')
   const [places, setPlaces] = useState<Place[] | null>(null) // null = aún no se ha buscado
   const [status, setStatus] = useState<string | null>(null) // null | 'searching' | mensaje de error
+  const graphics = useGraphicsLevel()
 
   async function search(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -273,6 +275,25 @@ function SettingsPanel({ settings, onSetSettings }: SettingsPanelProps) {
             ))}
           </ul>
         )}
+      </section>
+
+      <section className="settings-card" aria-labelledby="settings-graphics">
+        <header className="settings-card-header">
+          <h3 id="settings-graphics" className="settings-title">
+            Gráficos
+          </h3>
+          <div className="dashboard-segmented settings-graphics" role="group" aria-labelledby="settings-graphics">
+            {GRAPHICS_LEVELS.map(({ value, label }) => (
+              <button key={value} type="button" className="dashboard-filter" aria-pressed={graphics === value} onClick={() => setGraphicsLevel(value)}>
+                {label}
+              </button>
+            ))}
+          </div>
+        </header>
+        <p className="add-book-message">
+          Si la sala te va lenta, ponlo en bajo: quita el brillo de las llamas y las sombras, y suaviza menos los bordes.
+          Se guarda solo en este navegador.
+        </p>
       </section>
 
       <section className="settings-card" aria-labelledby="settings-controls">

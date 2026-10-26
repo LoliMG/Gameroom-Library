@@ -2,6 +2,7 @@
 import type { AmbiencePalette } from '@/scene/core/ambiencePalette'
 // Vector3Tuple: [x, y, z] en metros (el formato que aceptan position y rotation en React Three Fiber)
 import type { Vector3Tuple } from 'three'
+import { GRAPHICS, useGraphicsLevel } from '@/utils/graphics'
 
 // La luz difusa y la del ventanal cambian con la hora (colores e intensidades de la atmósfera: ver ambiencePalette.ts).
 // La del ventanal entra siempre por el ventanal (es la luz del cielo, no la del sol directo: de mañana el sol queda
@@ -20,6 +21,8 @@ const SHADOW_BIAS = -0.0005  // Desplazamiento numérico para evitar acné de so
  * dejando que la iluminación provenga exclusivamente del ventanal exterior y de la luz difusa natural.
  */
 function Lights({ palette }: { palette: AmbiencePalette }) {
+  // Con gráficos bajos, la luz del ventanal no proyecta sombras
+  const { shadows } = GRAPHICS[useGraphicsLevel()]
   return (
     // Grupo contenedor para todas las fuentes de iluminación de la escena
     <group>
@@ -34,7 +37,7 @@ function Lights({ palette }: { palette: AmbiencePalette }) {
         color={palette.lightColor}
         intensity={palette.lightIntensity}
         position={WINDOW_LIGHT_POSITION}
-        castShadow
+        castShadow={shadows}
         shadow-mapSize-width={SHADOW_MAP_SIZE}
         shadow-mapSize-height={SHADOW_MAP_SIZE}
         shadow-bias={SHADOW_BIAS}

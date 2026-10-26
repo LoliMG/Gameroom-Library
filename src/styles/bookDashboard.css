@@ -737,6 +737,11 @@
   font-size: 14px;
 }
 
+/* Alto, medio y bajo: sin estirarse a todo el ancho de la cabecera */
+.settings-graphics {
+  flex: 0 1 300px;
+}
+
 /* Cerrar sesión a la izquierda y borrar la cuenta apartado a la derecha */
 .settings-account .is-danger {
   margin-left: auto;

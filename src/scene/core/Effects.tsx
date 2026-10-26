@@ -7,6 +7,7 @@ import {
   HueSaturation,
   BrightnessContrast,
 } from '@react-three/postprocessing'
+import { GRAPHICS, useGraphicsLevel } from '@/utils/graphics'
 
 // Interruptor general: false apaga todo el postprocesado y la niebla y devuelve la escena a como estaba
 export const ENABLE_EFFECTS = true
@@ -40,9 +41,6 @@ const FOG_DENSITY = 0.028
 const FOG_WEATHER_DENSITY = 4
 const RAIN_WEATHER_DENSITY = 1.8
 
-// Muestreo múltiple del compositor para mantener los bordes suaves (sustituye al antialias del lienzo)
-const COMPOSER_MULTISAMPLING = 4
-
 /**
  * Postprocesado (Bloom, viñeta, profundidad de campo opcional y corrección de color) y niebla ligera.
  */
@@ -53,6 +51,8 @@ const COMPOSER_MULTISAMPLING = 4
  */
 function Effects({ fogColor, fog, rain }: { fogColor: string; fog: boolean; rain: number }) {
   const density = FOG_DENSITY * (fog ? FOG_WEATHER_DENSITY : 1) * (1 + (RAIN_WEATHER_DENSITY - 1) * rain)
+  // Nivel de gráficos: el bajo se queda sin bloom y sin muestreo múltiple
+  const { bloom, multisampling } = GRAPHICS[useGraphicsLevel()]
   if (!ENABLE_EFFECTS) return null
 
   return (
@@ -60,8 +60,9 @@ function Effects({ fogColor, fog, rain }: { fogColor: string; fog: boolean; rain
       {/* Niebla exponencial: attach="fog" la asigna a scene.fog */}
       <fogExp2 attach="fog" args={[fogColor, density]} />
 
-      {/* EffectComposer sustituye el render normal por una cadena de pasadas de postprocesado */}
-      <EffectComposer multisampling={COMPOSER_MULTISAMPLING}>
+      {/* EffectComposer sustituye el render normal por una cadena de pasadas de postprocesado. multisampling: muestreo
+          múltiple para mantener los bordes suaves (sustituye al antialias del lienzo) */}
+      <EffectComposer multisampling={multisampling}>
         {ENABLE_DOF && (
           <DepthOfField
             focusDistance={DOF_FOCUS_DISTANCE}
@@ -69,12 +70,14 @@ function Effects({ fogColor, fog, rain }: { fogColor: string; fog: boolean; rain
             bokehScale={DOF_BOKEH_SCALE}
           />
         )}
-        <Bloom
-          intensity={BLOOM_INTENSITY}
-          luminanceThreshold={BLOOM_LUMINANCE_THRESHOLD}
-          luminanceSmoothing={BLOOM_LUMINANCE_SMOOTHING}
-          mipmapBlur={BLOOM_MIPMAP_BLUR}
-        />
+        {bloom && (
+          <Bloom
+            intensity={BLOOM_INTENSITY}
+            luminanceThreshold={BLOOM_LUMINANCE_THRESHOLD}
+            luminanceSmoothing={BLOOM_LUMINANCE_SMOOTHING}
+            mipmapBlur={BLOOM_MIPMAP_BLUR}
+          />
+        )}
         <HueSaturation hue={HUE_SHIFT} saturation={SATURATION} />
         <BrightnessContrast brightness={BRIGHTNESS} contrast={CONTRAST} />
         <Vignette offset={VIGNETTE_OFFSET} darkness={VIGNETTE_DARKNESS} />

@@ -93,6 +93,7 @@ En la pared, junto a la chimenea, se encuentra la pantalla mural de gestión de 
 ### Ajustes (⚙)
 - **Sonidos ambientales**: activa o silencia todos los sonidos con un solo botón, o gradúa de forma individual el volumen del viento, la lluvia, los truenos y los grillos (de 0 a 150 %; 100 % es el normal).
 - **Ciudad y clima real**: busca cualquier ciudad del mundo y elígela. La luz, el cielo y el tiempo tras el ventanal seguirán los de esa ciudad.
+- **Gráficos**: si la sala te va lenta, elige *Alto* (el normal) o *Bajo* (sin el brillo de las llamas ni las sombras del ventanal, y con los bordes menos suaves). Se guarda solo en ese navegador, así que puedes tener un nivel distinto en cada ordenador.
 - **Controles**: la lista de teclas y gestos para moverte por la sala y mover los libros.
 - **Copia de seguridad**: *Exportar mi biblioteca* descarga una copia con todos tus datos (sin los PDF y EPUB, que están en tu navegador) e *Importar una copia* la recupera.
 - **Cuenta**: cierra tu sesión o borra tu cuenta, que se elimina al momento con todos sus datos.
