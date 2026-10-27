@@ -2,6 +2,8 @@
 
 Una sala de lectura en 3D interactiva que se puede recorrer desde el navegador: estanterías con tus libros físicos y digitales, un rincón con sofá y chimenea, un jardín tras el ventanal que sigue la hora solar y el tiempo meteorológico reales de tu ciudad, y una pantalla en la pared para gestionar toda tu colección.
 
+**👉 Entra en [gameroom-library.vercel.app](https://gameroom-library.vercel.app)**: crea tu cuenta y tendrás tu propia sala.
+
 Desarrollado con **React**, **Vite**, **React Three Fiber** (Three.js), **TypeScript** y **Supabase**.
 
 Todas las funciones y controles detallados están explicados en [docs/FUNCIONALIDADES.md](docs/FUNCIONALIDADES.md).
