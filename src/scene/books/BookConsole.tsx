@@ -122,7 +122,7 @@ function BookConsole({ position, rotationY, occluders, ...dashboard }: BookConso
         <meshStandardMaterial color="#1a1512" roughness={0.6} metalness={0.3} />
       </mesh>
       {/* Imagen de la consola detrás del HTML: es lo que sale en las fotos del rincón (el HTML no sale en ellas) */}
-      <ConsoleSnapshot books={dashboard.books} width={SCREEN_WIDTH} z={FRAME_DEPTH / 2 + 0.001} />
+      <ConsoleSnapshot books={dashboard.books} readingStatus={dashboard.readingStatus} width={SCREEN_WIDTH} z={FRAME_DEPTH / 2 + 0.001} />
       {/* Pantalla: la página va justo delante del marco */}
       <Html
         portal={layers.portal}

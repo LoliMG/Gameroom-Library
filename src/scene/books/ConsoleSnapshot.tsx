@@ -5,7 +5,7 @@
 // imagen al hacer la foto (librería tipo html-to-image)
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { CanvasTexture, SRGBColorSpace } from 'three'
-import type { Book } from '@/types'
+import type { Book, ReadingStatus } from '@/types'
 
 // Medidas de la página de la consola (px, las de .dashboard) y de su cuadrícula de portadas (5 columnas)
 const PAGE_WIDTH = 800
@@ -39,25 +39,46 @@ function box(ctx: CanvasRenderingContext2D, x: number, y: number, width: number,
   }
 }
 
-function draw(ctx: CanvasRenderingContext2D, books: Book[], covers: Map<string, HTMLImageElement>) {
+// Texto centrado dentro de un rectángulo
+function label(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, width: number, height: number, color: string, font: string) {
+  ctx.fillStyle = color
+  ctx.font = font
+  ctx.textAlign = 'center'
+  ctx.fillText(text, x + width / 2, y + height / 2, width - 8)
+  ctx.textAlign = 'left'
+}
+
+function draw(ctx: CanvasRenderingContext2D, books: Book[], readingStatus: Record<string, ReadingStatus>, covers: Map<string, HTMLImageElement>) {
   ctx.fillStyle = BG
   ctx.fillRect(0, 0, PAGE_WIDTH, PAGE_HEIGHT)
-  // Primera línea: título y botones
+  // Primera línea: título y botones (los mismos textos que BookDashboard)
   ctx.fillStyle = ACCENT
   ctx.font = `bold 30px ${FONT}`
   ctx.textBaseline = 'middle'
   ctx.fillText('Mi biblioteca', PADDING, 53)
   box(ctx, 360, 30, 150, 46, 10, SURFACE, BORDER)
+  label(ctx, '🎲 Elige por mí', 360, 30, 150, 46, TEXT, `17px ${FONT}`)
   box(ctx, 520, 30, 120, 46, 10, ACCENT)
-  for (let i = 0; i < 3; i++) box(ctx, 650 + i * 40, 30, 34, 46, 10, SURFACE, BORDER)
+  label(ctx, 'Añadir libro', 520, 30, 120, 46, BG, `bold 17px ${FONT}`)
+  ;['📖', '♡', '⚙'].forEach((icon, i) => {
+    box(ctx, 650 + i * 40, 30, 34, 46, 10, SURFACE, BORDER)
+    label(ctx, icon, 650 + i * 40, 30, 34, 46, ACCENT, `18px ${FONT}`)
+  })
   // Buscador y filtros
   box(ctx, PADDING, 94, PAGE_WIDTH - 2 * PADDING, 52, 10, SURFACE, BORDER)
   ctx.fillStyle = MUTED
   ctx.font = `20px ${FONT}`
   ctx.fillText('Buscar por título, autor, editorial o saga…', PADDING + 18, 120)
+  const counts = { finished: 0, reading: 0, unread: 0 }
+  books.forEach((book) => counts[readingStatus[book.isbn] ?? 'unread']++)
   box(ctx, PADDING, 162, 607, 40, 20, SURFACE, BORDER)
   box(ctx, PADDING + 3, 165, 130, 34, 17, ACCENT)
+  label(ctx, `Todos ${books.length}`, PADDING + 3, 165, 130, 34, BG, `bold 16px ${FONT}`)
+  // El resto de la barra (de 133 a 604 px) se reparte entre los otros tres filtros
+  const rest = [`Acabados ${counts.finished}`, `Leyendo ${counts.reading}`, `Sin leer ${counts.unread}`]
+  rest.forEach((text, i) => label(ctx, text, PADDING + 133 + i * 157, 165, 157, 34, TEXT, `16px ${FONT}`))
   box(ctx, PADDING + 615, 162, 81, 40, 20, SURFACE, BORDER)
+  label(ctx, 'Tipo ▾', PADDING + 615, 162, 81, 40, TEXT, `16px ${FONT}`)
   // Portadas con su título debajo
   ctx.font = `14px ${FONT}`
   ctx.textBaseline = 'top'
@@ -74,10 +95,11 @@ function draw(ctx: CanvasRenderingContext2D, books: Book[], covers: Map<string, 
 
 /**
  * @param books - Libros de la colección, en el orden de la consola
+ * @param readingStatus - Estado de lectura por ISBN (para los contadores de los filtros)
  * @param width - Ancho de la pantalla (m); el alto sale de la proporción de la página
  * @param z - Distancia al centro del marco (justo por detrás de donde va el HTML)
  */
-function ConsoleSnapshot({ books, width, z }: { books: Book[]; width: number; z: number }) {
+function ConsoleSnapshot({ books, readingStatus, width, z }: { books: Book[]; readingStatus: Record<string, ReadingStatus>; width: number; z: number }) {
   const canvas = useMemo(() => Object.assign(document.createElement('canvas'), { width: PAGE_WIDTH, height: PAGE_HEIGHT }), [])
   const texture = useMemo(() => {
     const map = new CanvasTexture(canvas)
@@ -107,9 +129,9 @@ function ConsoleSnapshot({ books, width, z }: { books: Book[]; width: number; z:
   useEffect(() => {
     const ctx = canvas.getContext('2d')
     if (!ctx) return
-    draw(ctx, books, covers)
+    draw(ctx, books, readingStatus, covers)
     textureRef.current.needsUpdate = true
-  }, [canvas, books, covers])
+  }, [canvas, books, readingStatus, covers])
 
   return (
     <mesh position={[0, 0, z]}>
